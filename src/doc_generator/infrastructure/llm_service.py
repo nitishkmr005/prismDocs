@@ -11,6 +11,8 @@ from typing import Optional
 from loguru import logger
 from openai import OpenAI
 
+from .settings import get_settings
+
 
 class LLMService:
     """
@@ -20,7 +22,17 @@ class LLMService:
     and executive presentation enhancement.
     """
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "gpt-4o-mini",
+        max_summary_points: int = 5,
+        max_slides: int = 10,
+        max_tokens_summary: int = 500,
+        max_tokens_slides: int = 2000,
+        temperature_summary: float = 0.3,
+        temperature_slides: float = 0.4,
+    ):
         """
         Initialize LLM service.
 
@@ -31,6 +43,12 @@ class LLMService:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.model = model
         self.client = None
+        self.max_summary_points = max_summary_points
+        self.max_slides = max_slides
+        self.max_tokens_summary = max_tokens_summary
+        self.max_tokens_slides = max_tokens_slides
+        self.temperature_summary = temperature_summary
+        self.temperature_slides = temperature_slides
 
         if self.api_key:
             self.client = OpenAI(api_key=self.api_key)
@@ -42,7 +60,7 @@ class LLMService:
         """Check if LLM service is available."""
         return self.client is not None
 
-    def generate_executive_summary(self, content: str, max_points: int = 5) -> str:
+    def generate_executive_summary(self, content: str, max_points: Optional[int] = None) -> str:
         """
         Generate executive summary from content.
 
@@ -56,6 +74,7 @@ class LLMService:
         if not self.is_available():
             return ""
 
+        max_points = self.max_summary_points if max_points is None else max_points
         prompt = f"""Analyze the following content and create an executive summary suitable for senior leadership.
 
 Requirements:
@@ -77,8 +96,8 @@ Respond with ONLY the bullet points, no introduction or conclusion."""
                     {"role": "system", "content": "You are an executive communication specialist who creates clear, impactful summaries for senior leadership."},  # noqa: E501
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,
-                max_tokens=500
+                temperature=self.temperature_summary,
+                max_tokens=self.max_tokens_summary
             )
             summary = response.choices[0].message.content.strip()
             logger.debug(f"Generated executive summary: {len(summary)} chars")
@@ -87,7 +106,7 @@ Respond with ONLY the bullet points, no introduction or conclusion."""
             logger.error(f"Failed to generate executive summary: {e}")
             return ""
 
-    def generate_slide_structure(self, content: str, max_slides: int = 10) -> list[dict]:
+    def generate_slide_structure(self, content: str, max_slides: Optional[int] = None) -> list[dict]:
         """
         Generate optimized slide structure from content.
 
@@ -101,6 +120,7 @@ Respond with ONLY the bullet points, no introduction or conclusion."""
         if not self.is_available():
             return []
 
+        max_slides = self.max_slides if max_slides is None else max_slides
         prompt = f"""Convert the following content into a corporate presentation structure.
 
 Requirements:
@@ -117,13 +137,15 @@ Content:
 {content[:8000]}
 
 Respond in JSON format:
-[
-  {{
-    "title": "Slide Title",
-    "bullets": ["Point 1", "Point 2", "Point 3"],
-    "speaker_notes": "Context for the presenter..."
-  }}
-]"""
+{{
+  "slides": [
+    {{
+      "title": "Slide Title",
+      "bullets": ["Point 1", "Point 2", "Point 3"],
+      "speaker_notes": "Context for the presenter..."
+    }}
+  ]
+}}"""
 
         try:
             response = self.client.chat.completions.create(
@@ -132,8 +154,8 @@ Respond in JSON format:
                     {"role": "system", "content": "You are a presentation design expert who creates compelling executive presentations. Always respond with valid JSON."},  # noqa: E501
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.4,
-                max_tokens=2000,
+                temperature=self.temperature_slides,
+                max_tokens=self.max_tokens_slides,
                 response_format={"type": "json_object"}
             )
             result = response.choices[0].message.content.strip()
@@ -142,14 +164,12 @@ Respond in JSON format:
             data = json.loads(result)
 
             # Handle various response formats
-            if isinstance(data, list):
-                slides = data
-            elif isinstance(data, dict):
-                # Try common keys
+            if isinstance(data, dict):
                 slides = data.get("slides", data.get("presentation", data.get("content", [])))
                 if not slides and len(data) == 1:
-                    # Single key with array value
                     slides = list(data.values())[0]
+            elif isinstance(data, list):
+                slides = data
             else:
                 slides = []
 
@@ -277,10 +297,10 @@ For each visualization opportunity, provide:
 - title: Chart title
 - data: List of {{label, value}} pairs (use realistic numbers if not explicit)
 
-Return JSON array. If no visualizations make sense, return empty array [].
+Return JSON object with a "charts" array. If no visualizations make sense, return {{"charts": []}}.
 
 Example format:
-[{{"chart_type": "bar", "title": "Revenue by Quarter", "data": [{{"label": "Q1", "value": 100}}]}}]"""
+{{"charts": [{{"chart_type": "bar", "title": "Revenue by Quarter", "data": [{{"label": "Q1", "value": 100}}]}}]}}"""
 
         try:
             response = self.client.chat.completions.create(
@@ -295,9 +315,12 @@ Example format:
             )
             result = response.choices[0].message.content.strip()
             data = json.loads(result)
-            if isinstance(data, dict) and "charts" in data:
-                return data["charts"]
-            elif isinstance(data, list):
+            if isinstance(data, dict):
+                charts = data.get("charts", data.get("data", []))
+                if not charts and len(data) == 1:
+                    charts = list(data.values())[0]
+                return charts if isinstance(charts, list) else []
+            if isinstance(data, list):
                 return data
             return []
         except Exception as e:
@@ -458,5 +481,16 @@ def get_llm_service(api_key: Optional[str] = None) -> LLMService:
     """
     global _llm_service
     if _llm_service is None:
-        _llm_service = LLMService(api_key=api_key)
+        settings = get_settings()
+        llm_settings = settings.llm
+        _llm_service = LLMService(
+            api_key=api_key,
+            model=llm_settings.model,
+            max_summary_points=llm_settings.max_summary_points,
+            max_slides=llm_settings.max_slides,
+            max_tokens_summary=llm_settings.max_tokens_summary,
+            max_tokens_slides=llm_settings.max_tokens_slides,
+            temperature_summary=llm_settings.temperature_summary,
+            temperature_slides=llm_settings.temperature_slides,
+        )
     return _llm_service

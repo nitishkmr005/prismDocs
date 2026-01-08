@@ -77,6 +77,12 @@ llm:
   temperature_summary: 0.3
   temperature_slides: 0.4
 
+  # Claude API settings for SVG generation
+  claude_model: "claude-sonnet-4-20250514"  # Claude Sonnet 4.5
+  claude_max_tokens: 4000
+  claude_temperature: 0.3
+  use_claude_for_visuals: true
+
 # SVG generation settings
 svg:
   default_width: 800

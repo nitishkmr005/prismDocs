@@ -1,0 +1,1784 @@
+Introduction
+0:00
+0:05
+Cool. Hello everyone. Welcome to lecture 2 of CME 295.
+0:12
+So before we start, I wanted to give you a heads up about two logistical things.
+0:19
+So the first one is with Shervine, we reviewed the recording of lecture 1.
+0:25
+And we couldn't help but notice that the audio was suboptimal. So what we're doing for this lecture
+0:33
+is to have another setup. But then one issue is my voice will not
+0:38
+be propagated in the room. So I guess I have one question. Can everyone hear me very well, even from the back?
+0:47
+OK, cool. Great. So that's point number 1. Point number 2 is about the final exam.
+0:53
+So the final exam right now has a placeholder date for Wednesday, I think, December the 10th.
+1:00
+But just a heads up that we're trying to see if there is a way to move that to earlier in the week.
+1:06
+So we'll let when that's finalized. But for now, this is still TBD. But we'll make sure to let you know.
+1:14
+Cool. So with that aside, let's go into today's topic.
+1:19
+But before we do that, as always, what we will do is we'll just quickly recap what we saw in the previous episodes.
+1:28
+So if you remember, lecture 1 was all about introducing the concept of self-attention.
+Recap of Transformers
+1:38
+And if you remember, what self-attention is that each token is attending to all other tokens
+1:48
+in the sequence through this mechanism of attention. So you have these notations of queries, keys, and values.
+1:57
+So here the idea is that the query is going to ask which other tokens are
+2:03
+most similar to itself by comparing query and key.
+2:09
+And then once that's done, basically we will be taking the associated value.
+2:14
+So we saw that the self-attention mechanism can be expressed with this formula, so softmax
+2:22
+of query times key transpose over square root of dk times v. So I hope this formula is familiar for you.
+2:32
+So just know that this formula is highly optimized. These are big matrix multiplications, or hardware,
+2:41
+is very capable of doing, it's very optimized in doing that.
+2:48
+And all of that to say that we also introduced the architecture of the transformer, which
+2:54
+you can see on the right. So here, if you remember, the transformer
+3:00
+is composed of two main components. So the encoder on the left side and the decoder
+3:07
+on the right side. And the transformer was initially introduced in the context of machine translation.
+3:16
+So you can think of the left side as processing the input text in the source language,
+3:23
+say English. And the right side is responsible for decoding
+3:29
+the translation in a target language, let's say in French.
+3:34
+And this multi-head attention layer is where the self-attention mechanism happens.
+3:43
+And I remember there was a lot of questions regarding-- it's called multi-head attention layer.
+3:51
+So there are several heads. What does that correspond to? So in the transformer paper, which is the "Attention is All
+3:59
+You Need" paper, you have this figure, which actually represents each of these heads.
+4:07
+And you can think of each head as an opportunity for the model
+4:13
+to learn one way of projecting the input into being
+4:18
+a query, a key, or a value.
+4:23
+So just being a bit more clear, so for instance, for the query and the key, so this is like each head.
+4:29
+So the number of these little boxes is basically the number of heads.
+4:36
+And to better visualize and understand what this means,
+4:43
+I also wanted to show I guess what is being shown in the paper, which is a way to interpret what
+4:51
+each of these heads do. So we have this concept called attention map, which basically
+4:59
+tries to represent the value of each of these query,
+5:08
+dot product query. So in this example, what we're interested in
+5:14
+is to see which other token is being most similar to token its.
+5:23
+And so what we do is we take a look at the quantities,
+5:29
+the query that is representing its, dot product, all other keys.
+5:37
+And we look at what are the keys are leading to a high value of the dot product query times key.
+5:47
+And when you do that, basically what you see or what the paper sees is you have these two words, so
+5:53
+application and law, which are highlighted as being with the high-attention weight.
+5:58
+So attention weight here being the dot product of the query its, and the key for each
+6:07
+of these tokens. And I guess there is also a way to interpret those.
+6:13
+And here you can see that the tokens that are being highlighted are law and application, which
+6:21
+basically makes sense because the token its is referring to law.
+6:28
+So basically, the model needs to learn how to associate these words with what happened before.
+6:35
+And its is also referring to application, which is also another way of explaining why that is the case.
+6:42
+And so here what the authors chose to do was to show these values as a function
+6:50
+of these different heads. So for instance, on the left side, these are the intensity for heads,
+6:58
+for let's say the first heads. And then the second heads shows that the intensity
+7:04
+is very high for law. So basically, long story short, these heads may learn,
+7:10
+I guess, different ways of figuring out what words matters.
+7:17
+Yeah.
+7:30
+Great question. So the question is, when we're doing all these computations, are they going through different MLPs.
+7:37
+The answer is that we're going to have different projection
+7:42
+matrices for each of them.
+7:48
+So we had this detailed example that actually went through that where each head is going to have its own projection.
+7:58
+And in parallel, you're going to have that computation that's going to happen.
+8:03
+So each head is going to have one result here, that is then
+8:08
+going to be concatenated and then projected once again when
+8:13
+the output matrix. So yeah, long story short, it's highly parallelized.
+8:20
+And it's basically just like projections. And here you have some matrix multiplication and softmax.
+8:29
+Does that make sense? Cool. Any other questions on this?
+8:38
+Cool. So I guess this is just a way to illustrate the conversation we had for lecture 1.
+8:43
+There was some questions about these attention
+8:48
+heads, what they do. And I guess looking at the attention maps
+8:54
+is one way of making sense of what they mean.
+9:00
+Cool. With that, I highly recommend that you read the transformers
+9:06
+paper, so "Attention is All You Need." So it's a very dense paper. It's just a few pages long.
+9:12
+But I hope that what you've seen in lecture 1, you'll be able to digest the content in a way that
+9:20
+will make sense to you. Cool. So with that, we're going to start the actual meat of what
+9:28
+we're going to discuss today. So surprisingly, this transformer architecture,
+9:35
+which was introduced in 2017, is actually an architecture that has still stayed relevant along the years.
+9:47
+And there are a few components that have slightly changed.
+9:52
+And we're going to see which ones they are. So there are some slight variations. But overall, today's models are, we're
+10:00
+going to see, all more or less based on the initial transformer architecture.
+10:07
+So we're going to try to divide the class in two parts. So the first one is what I'm going to cover,
+10:13
+which is what are the parts of the transformer that are important and that had some variation.
+10:20
+And in the second part, Shervine is going to talk about, I guess, the nomenclature of today's models
+10:27
+and how they relate to the original transformer. Cool.
+10:34
+OK, so let's start with the first important concept that's in this architecture.
+Overview of position embeddings
+10:39
+And this is the position embedding.
+10:44
+So if you remember, here we're letting tokens interact
+10:50
+with all other tokens in a direct fashion. So they have direct links.
+10:57
+But contrary to things like RNNs, where you have a sequential dependency where
+11:03
+you process each token one at a time, here you're basically losing this idea of a token being
+11:13
+processed before another one. So you lose this position information.
+11:21
+So as a result of that, we need to somehow quantify tokens
+11:29
+at each position and try to inject that information when
+11:35
+the transformer is processing the inputs.
+11:40
+So how are we going to do that? So the original transformer paper authors,
+11:46
+they chose to have a dedicated embedding.
+11:52
+And when I say dedicated, what that means is each position has one embedding.
+11:59
+So position 1 has one embedding, position 2 has one embedding, et cetera, et cetera.
+12:04
+And what they chose to do is to add that embedding
+12:10
+to the input-token embedding. So for instance, if I say a cute teddy bear is reading,
+12:18
+which is position number 1, representing
+12:24
+the token a, plus the embedding representing the first position.
+12:33
+Yeah.
+12:39
+It's a great question. So the question is, are the position embeddings learned or static?
+12:44
+Both, as in the authors have tried both.
+12:50
+And we're going to see what the second one is. But I guess here let's suppose that they are learned.
+12:57
+So what does that mean? So that means that basically you need to learn
+13:03
+embeddings for each position. And the problem with this approach
+13:10
+is that you're very much dependent on what is in your training set.
+13:16
+So for instance, like here, if you have somehow a text that always has something that is happening at position number
+13:23
+2, your learned embeddings will have that bias kind of learned.
+13:30
+So that's one limitation of that. Second limitation is you can only learn positions up
+13:39
+to the max number of position that is in your training set. So let's suppose you train your transformer on sequences
+13:47
+that are up to, let's say, 512, let's say. You can only learn position embeddings up to that position.
+13:56
+Right?
+14:06
+Yeah. So the question is, I guess, how do you parameterize that? So I guess what you do is you have
+14:12
+a placeholder of a learnable position embedding, let's say between position 1 and 512.
+14:20
+And basically, when you do your training, you're just letting these weights
+14:26
+be learned through the regular gradient descent, all these things.
+14:33
+So yeah, so this is like the first method. But as I was mentioning, it has its limitations,
+14:39
+because you can only learn embeddings of positions up to the max position that is present in the training set.
+14:48
+So for instance, if you have at inference time a position that is beyond the position that
+14:54
+was in the training set, well, you have not learned that. So you need to find a way to infer the value.
+15:02
+So that's the second limitation. But yeah, but on the pro side, I guess you're just
+15:09
+letting your model learn. And we've seen that the gradient descent does wonders when it comes to just learning from the data.
+15:19
+So yeah. And for these reasons, these methods was something that the authors said that was performing well,
+15:29
+along with the second method, which is different,
+15:34
+which is around having an arbitrary formula for each dimension corresponding
+Sinusoidal embeddings
+15:44
+to a position embedding. And we're going to see that now. So first method was you have one embedding per position,
+15:54
+and you just learn that. Second method is you have one embedding per position,
+16:01
+but you're not going to learn that. You're going to have something that is predetermined that you're going to use.
+16:08
+And we're going to see that what the authors choose was a formulation using sine and cosine.
+16:18
+So it can feel weird, why did they choose this. But we're going to see why that makes sense.
+16:24
+So the idea here is for a given position, let's say m,
+16:32
+have a vector of size d model. So d needs to match the dimension
+16:38
+of your token embeddings, because of course you're adding them. And what you're going to do is, for every index
+16:48
+you're going to compute the corresponding value with respect to these formulas.
+16:54
+So what are these formulas? So it's basically sine of something times m.
+17:02
+And we're going to see what that something means. And then the second one is cosine of something times m.
+17:11
+So who remembers trigonometry formulas?
+17:17
+Cool. Everyone. So before we go into that, let's just simplify the notations.
+17:24
+Let's just assume that this big quantity that you saw is actually something like omega.
+17:29
+So let's suppose it's omega as a function of i times m.
+17:35
+And you note omega i as being this quantity, so 10,000 to the power of minus 2i over d model.
+17:44
+Let's suppose you construct your embeddings to have this way.
+17:50
+Then, I guess I want us to think about why that would make sense.
+17:57
+Because if you think about it, what you want is to represent positions in a way
+18:06
+that reflects the following fact-- words that are close together are
+18:13
+likely to be more relevant, as opposed to words that are further together.
+18:19
+So if you have two words that are like just one position apart
+18:24
+versus 10,000 position apart, what you want is that the one that is one position apart is more similar than the other one.
+18:34
+So let's see if the formula makes sense. So let's suppose you have two position embeddings, so one
+18:41
+at position m and the other one at position n.
+18:46
+And let's suppose you compute in all the values from this predetermined formula.
+18:54
+Well, it turns out, if you remember your trigonometry formulas, so cosine of a minus b
+19:05
+is equal to cosine of a cosine of b, plus sine a sine b.
+19:12
+Right? Well, turns out that if you express cosine of omega i,
+19:21
+factor of m minus n, this is something that you obtain. It's just the identity that I mentioned.
+19:29
+Well, it just turns out that this quantity is just one component that appears
+19:38
+when you do the dot product of these two position embeddings.
+19:43
+Right? Because basically here, when you do the dot product of position m and position n, what you do
+19:50
+is you take the first position, you multiply them, then you plus the second position,
+19:55
+you multiply them, et cetera, et cetera. And then you come here, it's sign of this times sine of this,
+20:02
+plus cosine of this times cosine of this, which is just this quantity.
+20:11
+So at the end of the day, what you realize is that when you perform a dot product of these embeddings,
+20:19
+you end up with a sum of cosine that
+20:24
+are a function of the relative distance between m and n.
+20:32
+Yep.
+20:42
+What do you mean by pair, by the way?
+21:01
+Exactly, yeah. So the question is, so the closer they are, the more similar they are.
+21:07
+So that's the intuition, that basically this way of formulating the embeddings
+21:13
+is trying to approximate or it's trying to mimic. So with that, you basically obtain a dot product
+21:22
+that is just a function of m and n, the relative distance between them, actually.
+21:27
+And just as a reminder, so why do I care about the dot product? Because if you remember, in the embedding world
+21:35
+when we try to quantify the similarity between two embeddings, what we do is typically
+21:41
+something that is involving the dot product of these two. So you typically have the cosine similarity.
+21:48
+The cosine similarity is just dot product over the norm of each embedding.
+21:53
+So which is basically a dot product. Right? So that's why we care about the dot product.
+22:00
+And here we see, great, it's a function of the relative distance between the two.
+22:06
+So in particular, again, if you remember your trigonometry class, cosine of 0 is 1.
+22:19
+And the higher this number, the lower the value of cosine of this number.
+22:27
+Of course, it's periodic, so what I'm saying is not necessarily true. Past pi, just goes the other way.
+22:38
+But I guess what I'm trying to say is for m equal to n,
+22:44
+you have basically a sum of cosine of 0.
+22:49
+And it is the value at which this quantity is maximum.
+22:57
+So when m is equal to n, this quantity is maximum. Which means basically if you're looking at the position itself,
+23:05
+it's the most similar. Basically, it matches our intuition.
+23:10
+And so now when you plot the values of the embeddings,
+23:17
+this is what you obtain. So here in this graph on the y-axis,
+23:22
+I'm basically representing all the embeddings for each of the, let's say, 50 positions.
+23:29
+And on the x-axis, it's basically values along a given vector across several dimensions
+23:38
+of a vector. So if you take, let's say, the first row, you're looking at the first or number 0 position,
+23:45
+depending on how you index your vector. And you're looking at all the values of the position 0
+23:53
+embedding. And so you see that for low dimensions,
+24:02
+this value goes up and down very frequently.
+24:07
+So it's more high frequency. And when the dimension is high, it basically
+24:14
+takes a lot of time for the value to go up and down. So it's basically more low frequency.
+24:22
+So this relates to this omega i that I mentioned, this omega i.
+24:28
+So omega i is very high for low values of i,
+24:36
+which is the dimension. And it's very low for high values of i.
+24:43
+So this basically just determines how quickly your cosine and sine basically vary.
+24:49
+Cool. So this is what the original authors have tried.
+24:58
+And basically what they said, what they noted was that using these methods
+25:05
+leads to comparable results compared to the learned one. But here we have a big advantage,
+25:12
+because it can extend to any sequence length, not just a sequence length that you saw at training time.
+25:19
+And this is one of the reasons why this may be something that is preferable.
+25:26
+So yeah, this is the intuition and this is what the authors chose. Now, fast forward to 2025.
+25:32
+I guess you may ask me, are we still using that? And the answer is kind of.
+25:39
+So we're still using this idea of we want far-- I guess, tokens to be less similar than closer tokens.
+25:49
+But we're not injecting the embedding like they did. And we're going to see why.
+T5 bias, ALiBi
+25:56
+Because if you remember, what you care about is determining how similar tokens
+26:05
+are in the self-attention computation.
+26:10
+And where does the self-attention computation happen? In the attention layer.
+26:17
+But here, what did I say? I said, let's compute these embeddings
+26:22
+and let's add them here. But actually what we want is to reflect this similarity
+26:30
+in the attention layer.
+26:35
+Do you have a question? Yeah.
+26:40
+So in this first method, yes. So the question is, is it added to the input feature. Yes.
+26:47
+Yes, just add. Yeah, yeah. But the problem is, we mostly want these,
+26:55
+I guess, intuition to hold true in the multi-head attention
+27:02
+layer. So this is one of the reasons why people have tried different variations, and in particular
+27:12
+have these position embeddings intervene directly
+27:17
+in the attention layer, as opposed to the input. Because basically when you do it at the input--
+27:24
+just here, fair, OK-- it's going to be roughly something that is going to go into this attention layer,
+27:31
+but it's kind of indirect. So what we want is to directly do something about the attention
+27:41
+formula that would, I guess, reflect the fact that we want close tokens to be more similar,
+27:48
+compared to further tokens. And the way we do that is, if you remember,
+27:56
+the self-attention layer is basically the softmax of qk
+28:02
+transpose over square root of d times v. So what we want is to add a little something
+28:10
+inside that softmax, which is basically where you quantify how similar a token is to another token.
+28:18
+You want to add a little something to reflect the fact that some tokens,
+28:26
+they're supposed to be more similar compared to that token, compared to others.
+28:32
+So there's a few methods that have tried to have some variation of that.
+28:41
+So for those of us who know the T5 paper, what we're
+28:48
+going to see a little bit later, they have tried these relative position bias
+28:57
+by learning the bias term, which is in the formula above.
+29:04
+So what they did was, let's suppose you have a given distance between the positions m and n.
+29:13
+So their idea was, let's learn that. Let's basically bucketize all m minus n into some buckets.
+29:24
+And let's just have the model learn these quantities that are then going
+29:29
+to be injected into softmax. Yeah.
+29:43
+So the question is, does that pose a problem that the bias is here with respect to the probability at the end?
+29:49
+Because it has to sum to 1. Well, you can do whatever you want inside the softmax, because the softmax is going to normalize it anyways.
+29:56
+So you can think of the bias as being something that is maybe
+30:02
+more negative for things that are far apart, compared to things that are closer together.
+30:08
+So T5 says, let's learn them.
+30:13
+We have another message from, I guess, this "Train Short,
+30:19
+Test Long" paper, which introduced this method called ALiBi. ALiBi stands for Attention with linear bias, I believe.
+30:30
+And what they did was, say instead of learning those biases, let's actually
+30:37
+have a deterministic formula, which is as a function of the relative difference between those two
+30:45
+positions. And they said that. So they had some results.
+30:51
+So all these papers, they always compare based on one another to see which one is, I guess, more performant.
+31:01
+But the reality is is that in today's models,
+RoPE
+31:06
+most models actually use another kind of position embedding
+31:14
+method. And we're going to see it now. So this method relies on rotating
+31:24
+the query and the key vector by some angle.
+31:30
+And I guess you can think of it as, you have your query, you have your key, let's suppose in a 2D space.
+31:37
+So what you're going to do is rotate your query by some angle that is a function of its position.
+31:45
+And you're going to rotate the key vector by some angle that is
+31:53
+a function of its position n. And I guess how do you do that, by the way?
+32:01
+I wasn't supposed to show this thing. So let's suppose you have a vector, by the way.
+32:06
+And you want to rotate that vector, because I had the answer on the slide. But how would you go about this, I guess,
+32:12
+for people who just want to talk about this with intuition?
+32:18
+So who here has done, I don't know, rotations in space?
+32:28
+Yeah. That's correct, yeah.
+32:35
+Matrix multiplication. And you're going to use a quantity that's called rotation matrix.
+32:41
+And the rotation matrix is expressed as follows. So it's basically a 2 by 2 matrix in the 2D plane that has
+32:51
+cosine of this angle, minus sine of this angle, sine of this angle, cosine of this angle.
+32:56
+I'm looking at the time. It's quite simple to just show that it works,
+33:02
+but we may run out of time. Do you want me to quickly show you that it's indeed a way to rotate the vector?
+33:12
+OK. So here as a reminder what we're trying to show is that we can
+33:19
+use a matrix multiplication to rotate a vector in 2D space.
+33:25
+So let's suppose we have the following vector. That is something that you can quantify with two dimensions,
+33:38
+let's say x and y. You can express your vector in 2D space with this.
+33:45
+Right? But I guess this, if you note, are the norm of the vector,
+33:57
+and phi, the angle with respect to the x-axis.
+34:05
+You can also write v as R with vector cosine
+34:16
+of phi and sine of phi.
+34:21
+Right? So if you multiply the rotation matrix
+34:27
+with this phi, what you're going to obtain is some multiplication of cosine minus sine, sine and cosine
+34:37
+of this and that. And I will leave this exercise for you.
+34:42
+But you can show that rotation times this v
+34:53
+can be expressed as R of cosine of theta plus phi,
+35:02
+and sine of theta plus phi.
+35:09
+So this is a quick proof. So I'll just leave you the multiplication of the rotation
+35:14
+matrix and v. But you will obtain these trigonometric identities that will, I guess,
+35:24
+lead you to this formula. This basically shows that if you multiply this matrix and this vector, you're basically rotating
+35:33
+the vector by this angle. Yeah. So the question is, why do you want to do this?
+35:40
+It's a great question. It's my next slide. So this is just a little intro.
+35:45
+So I guess here, just going back to this method, what
+35:52
+we want to do is to quantify the similarity between tokens,
+35:58
+and have close tokens be more similar compared to tokens that are more afar.
+36:06
+So the problem that we had with the previous methods was--
+36:12
+so in the first method, this learned embedding, you always had this overfitting issue.
+36:18
+Because basically when you learn these biases, it always depends on which training set you have.
+36:25
+So maybe your data set is in a way that, let's say, tokens that are close are similar, but in a different way
+36:32
+compared to what you see at inference time. And this ALiBi method, it didn't have that learnable component,
+36:41
+but it was quite restrictive, because it's a very simple formula after all, just the relative difference
+36:48
+between n and m. So I guess people have tried different ways of coming up with something that tells you that, I guess, an embedding that
+36:59
+reflects the fact that you want further positions to be less similar than closer ones.
+37:06
+So in this method, we're going back to the sine and cosine world from what
+37:13
+the author had proposed. And think about similarity from the lens
+37:19
+of cosine and sine functions.
+37:24
+So this is a little intro. And their method is called RoPE.
+37:29
+So I'm not sure if you've heard of it. So it stands for Rotary Position Embeddings.
+37:36
+And we're going to see that this method-- so why do we care about this method? So this method has two great things.
+37:45
+So the first one is that if you rotate the query and the key,
+37:53
+you will end up with a quantity that will be a function of the relative distance between the two.
+37:59
+That's going to be very nice, and that's why I wrote this thing on the blackboard. Not sure if you can see, by the way,
+38:06
+but we won't have time to go into the mathematical detail. But if you want to just express these things at home,
+38:14
+this is just the foundation. And so in particular, if you remember your attention formula,
+38:26
+so you have query times key transpose. So if you rotate the query by an angle m
+38:35
+and the key by an angle n, what you're going to end up
+38:40
+is a formula that has the rotation matrix of angle theta
+38:48
+and, I guess, n minus m. And this is great because this is
+38:55
+a function of the relative distance between these two positions.
+39:01
+OK, so why do I talk about this in detail? Well, it turns out that most models these days, they use RoPE, which is why it's important.
+39:12
+And I would say another thing, it's maybe a little bit hard to get the intuition as to why that works.
+39:19
+But hopefully, the explanation that I gave regarding the sine and cosine at the very beginning can help you just
+39:26
+build that intuition. And speaking of that, it turns out
+39:34
+that the upper bound of the attention weight given
+39:40
+by the query and the key is such that we observe a long-term decay.
+39:48
+Meaning that as n minus m is large, we do see the upper bound that gets smaller and smaller.
+39:58
+Well, you see these little oscillations, it's not perfect either.
+40:04
+But we do have some mathematical, I guess, results as to just the upper bounds
+40:13
+decaying over the long-term. Cool.
+40:19
+Any questions on this? Yeah, yeah.
+40:38
+Exactly, yeah. So the question is the relative distance is captured in the rotation matrix--
+40:43
+and yes, yes.
+40:49
+Oh, yeah. It's a great question. So the question is, what is theta?
+40:56
+So theta is actually fixed. So do you remember this omega that I talked about here?
+41:01
+Here. So it's basically some function of i and d.
+41:08
+I actually pass it quite quickly. But what I showed you is in the 2D space.
+41:17
+But here we're in a d-dimensional space, which is greater than 2. So I glossed it very quickly.
+41:25
+But the way you extend this method is by having these 2D
+41:30
+space by block. But then the theta is a function of typically something
+41:36
+that you fix, but a function of i, which is the dimension.
+41:43
+It's basically between 1 and d over 2. It's a function of that, and it's a function of d as well.
+41:52
+You will see this theta as being roughly equal to omega i, just
+41:57
+this one, more or less, more or less.
+42:04
+Sorry? Oh, so the question is, so that it has the same dimension
+42:11
+as the latent dimension? So, well, here you have a product of matrices.
+42:21
+So you need to have the dimensions match. So I guess your answer-- yeah.
+42:30
+Does that make sense? I'll take that as a yes.
+42:35
+So I spent a bunch of time on this, because I think this is actually quite important.
+42:41
+A lot of models use this. And yeah, I guess the intuition is not super obvious.
+42:47
+So I hope this was helpful. So this was position embeddings.
+42:54
+Yeah. Oh, yeah.
+42:59
+Yeah, so the question is about, how do you obtain this curve? So this is actually a curve that I believe
+43:05
+is shown mathematically. So it's kind of complicated.
+43:11
+We're not going to write down the formula. But if you're interested, so in this paper, in the RoFormer paper, there's an appendix
+43:18
+where they show mathematically that it is upper bounded by some quantity. And this is what this is showing.
+43:25
+Yeah, great question. Cool.
+43:30
+So, position embeddings is one part of the transformer that has changed a little bit.
+43:36
+And we've seen how that changed, and why. So now we're going to see another component
+Layer normalization
+43:42
+of the transformer that has also a little bit changed. And that component is the layer normalization.
+43:52
+So if you remember, the transformer architecture, which is composed, again, of encoder,
+43:58
+decoder, and then you have the components inside. So you have these boxes that say add and norm.
+44:08
+So what do they mean? So basically, here, what we do is we take the input, as well as
+44:17
+the output of this sublayer. We add them together, and then we normalize.
+44:27
+So this is a little trick that the authors do. And it is shown in practice to improve convergence and just
+44:37
+make the convergence be quicker. So the idea is as follows--
+44:42
+if you have a vector, sometimes the components of the vector
+44:48
+can be super large, sometimes they can be super small. The idea here is to normalize the components of your vector
+44:57
+within some range, some normalized range. So the way you're going to do that is you're
+45:04
+going to take your vector, and then subtract it by the computed mean, which is basically
+45:12
+the sum of its components, and normalize it by basically its standard deviation.
+45:20
+And what you're going to do is you're going to learn two quantities--
+45:25
+one, gamma, which is going to be the rescaling factor, and then beta, which is another term as well that you learn.
+45:38
+And you're going to let these two quantities be learned by your model.
+45:43
+And so in practice, as I mentioned, so what this does is it helps with training stability
+45:50
+and with convergence time. So this was a technique that was used in the original transformer
+45:57
+paper. I just want to call out that there has been some changes since then.
+46:04
+So we went from normalizing the input plus the output of the sublayer, to having a sum of the input
+46:16
+and the sublayer of the normalized input.
+46:21
+So in other words, what we've done is to change where the normalization is located.
+46:28
+So here in the transformer paper, it was what we now call a post-norm version.
+46:36
+And nowadays, we use a pre-norm version, which basically consists of having the LayerNorm right
+46:43
+before the vector goes into the sublayer. And sublayer here can be either the attention layer or the FFN.
+46:51
+But not only that, there is also another change.
+47:00
+So nowadays, people, they do not use LayerNorm. They use something else called RMSNorm--
+47:07
+RMS, Root Mean Square, Normalization, which is basically a variation of what you've seen before.
+47:15
+So instead of computing this, basically what people do is they just normalize x by the root
+47:23
+mean square of the components of x,
+47:29
+and they learn gamma, only gamma. So why do they do that?
+47:35
+Basically, they show that the convergence properties, they're basically comparable.
+47:41
+But here you have fewer parameters to learn. So it's basically quicker.
+47:47
+Yeah.
+48:12
+Good question. So the question is, what is the intuition behind normalizing? So the intuition is that, if you look at your model,
+48:22
+you have several layers. In some layers your vector--
+48:27
+your activation, to be more precise-- so do you know the vector that you see that goes from here to here is basically called activation.
+48:35
+Sometimes the activation has extreme values in one part of its component, sometimes in another part.
+48:41
+And the model is typically having trouble in learning the weights in each of these layers
+48:50
+if these activations, they vary too much. So the idea is to bring the values of the components
+48:59
+of the activation to some range that is not too far off in some direction.
+49:09
+So in case you're interested, there is this key word, internal covariate shift,
+49:16
+which is basically the term that is given to the phenomenon that I'm describing here. So yeah, that's the intuition.
+49:24
+Yeah. Oh, great, great question. So question is, what is the difference between this
+49:30
+and batch normalization? So batch normalization is normalization
+49:36
+across the other dimension, which is the dimension of the batch. So let's suppose you have a bunch of vectors.
+49:44
+What you do is you normalize each component with respect
+49:49
+to all the other components for the same dimension,
+49:55
+but of the other vectors. So you can think of it as just another way of normalizing.
+50:01
+But that being said, when it comes to these transformer-based models, typically people use LayerNorm, probably
+50:08
+because empirically it works better. But also because BatchNorm, you're
+50:15
+basically also dependent on the batch. And it can introduce, I guess, differences between training
+50:23
+and then inference. So that's basically the reason why.
+50:30
+Cool, great. So we've seen position embeddings. We've seen layer normalization.
+50:36
+So now we're going to see a third important component of the transformer, which is the attention.
+Sparse attention
+50:44
+And in particular, I guess there is something I've not really emphasized. But when you do self-attention, you're
+50:51
+basically letting every token interact with all other tokens.
+50:57
+So when you look at, let's, say a matrix that shows all the interactions, so you
+51:03
+have n, the sequence length. And the sequence length, you basically have o of n squared complexity, which is a lot, especially
+51:14
+as n grows longer. So people have tried to approximate this o of n squared
+51:23
+into something that is a little bit more tractable, but does not lose the performance.
+51:30
+So there is this paper in 2020 that came out, "LongFormer." So what it did was just try different versions
+51:37
+of the attention by restricting the window at which it operates. So here, instead of letting each token interact with everyone,
+51:46
+each token only interacts with its neighborhood.
+51:52
+Yeah. Oh, again, a great question.
+51:58
+So question is, do you do that after the attention matrix computation?
+52:03
+You mean the softmax, right, softmax? So you raise a great point, which is, if you do the softmax of everything,
+52:10
+why would you do this? So in practice there is a bunch of implementations
+52:17
+that does a clever-- so it's called tiling-- a bunch of clever operations that
+52:24
+do not involve this huge matrix operation that you see in the softmax.
+52:30
+Again, I guess, like against the softmax of qk transpose over d. You're not going to compute the whole thing.
+52:37
+You're going to have some cleverness in how you compute that, basically.
+52:54
+Yeah, so the question is, can it be something that's comparable to convolutions?
+53:00
+And we're going to see that in a second. But you have some similarities with the vision world.
+53:06
+And we're going to see that in a second. Cool.
+53:12
+So nowadays when you have local attention like this, like this,
+53:19
+people use the term sliding window attention. So when they use that term, they mean
+53:26
+this, which is basically just restricting the attention to neighboring tokens.
+53:32
+And nowadays what people do is in some layers they will have local attention.
+53:40
+In some others, they will have global attention. And they interleave these layers.
+53:47
+So depending on the model, they typically try different combinations. So there's not a set recipe.
+53:54
+But it's typically something that is used nowadays. So the window here, I mean, for, illustrative, purposes,
+54:02
+the window is super small in my illustration. But I guess nowadays with the sequence lengths
+54:10
+that can be very big, you can think of this window as being, o of several, thousands.
+54:20
+And just to give you another example. So back to the convolution comparison that you mentioned.
+54:29
+So you have some architectures. And here I'm going to take the example of a mistral that
+54:36
+has these sliding window attention at every layer. But then when you think about it,
+54:44
+the token here can attend up to the token here, but then the token here can attend up
+54:50
+to the token here, et cetera, et cetera. So I guess, if you think about it,
+54:56
+it's similar to the idea of the receptive field in computer vision. So I'm not sure if you're familiar or from the computer
+55:04
+vision world. But if you are, what this means is just taking one token
+55:13
+and trying to think what other tokens has this token effectively interacted with,
+55:21
+which is basically the question that people also sometimes ask. When they do convolution, they're
+55:27
+like, OK, so this value, what are the values did it actually see?
+55:33
+So you can also think it this way. OK, so first variation is, instead
+Sharing attention heads
+55:43
+of doing the full n by n attention,
+55:48
+people sometimes do local attention. The second variation that is orthogonal to all of this
+55:56
+is to not have one projection matrix per head,
+56:04
+but to share projection matrices across heads.
+56:10
+So here the idea is you have, let's say, h heads.
+56:15
+The idea is you're going to have some number of projection matrices for the query.
+56:22
+But then what you're going to do is to group the projection matrices for the key and the value
+56:29
+that you're going to share across several heads.
+56:34
+Now you may ask, why do you share projection matrices for the keys and the values, but not for the queries?
+56:42
+Is this the question that you're wondering? Well here, I guess, people do things to just try out
+56:53
+if something works or not. I guess here you can intuitively think that the query is basically wondering if something
+57:01
+is similar to another thing. So I guess you can ask yourself this question in different ways.
+57:06
+So it may make sense to keep that diversity.
+57:11
+But one of the core reasons why we choose to group projection matrices for the keys and the values
+57:18
+and not the query is because, when you decode,
+57:25
+you perform attention between the current word and all
+57:31
+the words before. So in other words, every time you generate a new word,
+57:38
+you're going to attend that word to all the words before.
+57:43
+So the keys and the values, they're going to come up a lot. So every time you want to decode something,
+57:49
+you need to attend to all other things, again and again. So we're going to see in, I think,
+57:56
+next, lecture there's something called the KV cache, which basically saves the values of the keys
+58:07
+and values. And one thing that we want is for that cache
+58:12
+to not become too big. So if you share projection matrices across heads,
+58:20
+just allows you to save a little bit of space, a little bit of memory.
+58:25
+That's the why. Does that roughly make sense?
+58:33
+OK, cool. So speaking of that, there are some variations as to, I guess,
+58:39
+just how many projection matrices to share. So you have the extreme example where
+58:47
+all h heads, they all share the same projection matrices for v and k.
+58:56
+And in that case, this method is called MQA, Multi-Query Attention.
+59:04
+You have the in-between case where you share g,
+59:11
+where g is the number of groups g projection matrices for v and k.
+59:17
+And then you have groups of size, let's say, h over g.
+59:24
+So this one is called Group Query Attention, GQA.
+59:30
+And then you have the case that you are very familiar with from the transformer, which is
+59:36
+every head has its own query projection, key projection,
+59:43
+and value projection matrices. And this is the standard, multi-head attention.
+59:53
+Cool. So I'm, going to just take a pause to see if what I mentioned
+59:59
+makes sense. I'm going to soon transition it to Shervine. But before I do, I just want to make sure that what I discussed
+1:00:05
+is making sense, roughly. Yeah.
+1:00:21
+So the question is, do we apply this to self-attention and cross-attention? I don't want to spoil the show.
+1:00:28
+So I'm going to talk about something later on. But where is my trans?
+1:00:34
+So if you take a look at the transformer architecture, we're going to see soon that what we care about most
+1:00:42
+is what is in the decoder, because we actually forego of the encoder in nowadays' models.
+1:00:49
+We have not seen this yet, but I'm just telling you. And so this typically comes into play
+1:00:55
+for the masked self-attention in the decoder.
+1:01:01
+But this technique can be applied in all attention layers. But I guess what I'm telling you is
+1:01:07
+modern LLMs, their decoder only models which basically only
+1:01:13
+have the decoder part of the transformer. We're going to see this in a second, which
+1:01:20
+is the masked self-attention. So I'm not going to say too much because Shervine is going to cover that. But yeah, just a quick peek of what we're going to see.
+1:01:30
+Cool, yeah.
+1:01:36
+Yeah.
+1:01:41
+Great question. So the question is, when do you know which one you should use? I would say the choice is always driven by a few factors.
+1:01:50
+One is how well it performs. Second is how much do you care about things like latency costs.
+1:01:58
+And so it really depends how big is your model, how much you want to save on, let's say, compute,
+1:02:04
+how is your input length, for instance if you have a shorter input length. So here what we want to do is to avoid
+1:02:11
+having to do all these things for the whole o of n squared thing. So I guess all of these come into play.
+1:02:17
+So I would say it's not straightforward as to what the answer should be. But I would say a lot of recent models,
+1:02:24
+they tend to share projection matrices. So typically, I would say GQA is what you would see.
+1:02:31
+But it's not necessarily the case for all models.
+1:02:36
+Cool. We're running out of time. So I'm going to have Shervine here for the second part.
+Transformer-based models
+1:02:42
+Thank you. OK, great. Thank you, Afshine. So we're going to continue this lecture with some deeper dive
+1:02:51
+into the kinds of models that we have in the transformer landscape.
+1:02:56
+And then we're going to do a deep dive into one specific architecture that is very useful for classification settings.
+1:03:05
+So first, we're going to come back to the architecture
+1:03:11
+that we saw together last time, so this traditional encoder/decoder architecture
+1:03:16
+where you have both components. And so you have the original transformer paper from 2017
+1:03:24
+that had this architecture. But also later on, you see more architectures
+1:03:29
+that built on top of it. So here we talk about the T5 family of models.
+1:03:38
+So T5 is a paper that's an abbreviation of multiple Ts.
+1:03:44
+So the first one is transfer, and then it's text-to-text, transformers.
+1:03:49
+So this is where the T5 naming comes from. And then it's derived into multiple versions.
+1:03:56
+So the T5 is like the vanilla paper. And then it had mT5.
+1:04:02
+m stands for multilingual where there was some more work on the data it was trained on,
+1:04:09
+as well as the vocabulary that it was computed over.
+1:04:14
+And then you have ByT5, which is some of tokenizer-free method of all of this where you forego
+1:04:24
+of the fact of tokenizing. And instead of that, you basically
+1:04:29
+operate at the byte level. So By is like byte. And basically, you have a vocabulary size
+1:04:37
+that is much smaller. So instead of having an o of 30k, you have 2 to the power of 8.
+1:04:45
+So a byte is 8 bits. And then you can represent every character into bytes.
+1:04:52
+So that's what they do. OK, great. And then one thing I want to mention
+1:04:58
+regarding the T5 family is that the objective function changes a bit with what the original transformer did.
+1:05:07
+So the original transformer did next token prediction for the training task.
+1:05:13
+But the T5 family, what they did is that they operated on the so-called span corruption task.
+1:05:23
+So basically you would have your sentence as an input to the encoder.
+1:05:29
+And instead of putting everything to the encoder, you would leave blanks.
+1:05:35
+And this is what we call span corruption. And then the span corruption could be
+1:05:41
+one or multiple tokens missing. So if I want to give an example, so for example,
+1:05:49
+my teddy bear is cute and reading. So you could have my teddy bear span corrupted, and is reading.
+1:05:58
+So that could be one potential encoder input.
+1:06:03
+And then you could have up to n-- I mean, n is the parameterization
+1:06:08
+of the number of spans that are corrupted. So you would have n such tokens here.
+1:06:14
+And then the T5 families calls them sentinel tokens. So if you see sentinel tokens, they
+1:06:20
+represent a span of corrupted tokens. So you have them here in the encoder.
+1:06:26
+And then the decoder's work is to find each of these spans in series.
+1:06:33
+So you start with a token that denotes the first corrupted span.
+1:06:38
+And then you start the decoding process until it hits a prediction that predicts the next sentinel token
+1:06:47
+up to the n plus 1, 1, where the tokens that are decoded
+1:06:54
+between two consecutive sentinel tokens corresponds to the corrupted spans that are recovered.
+1:07:03
+So these parentheses is basically a shift from the next token prediction objective function.
+1:07:08
+Yep.
+1:07:27
+Yeah. So the question is, can you elaborate with the decoding process? So what you said regarding the reconstruction is exactly right.
+1:07:34
+So you have sentinel tokens that denote some missing text. So what you want to decode is that missing text.
+1:07:41
+So the decoder output will be exactly like each span reconstructed.
+1:07:48
+And then if you want to know how training works, you do a teacher-forcing mechanism
+1:07:54
+where you input everything in the decoder, and then try to reconstruct everything at once.
+1:08:00
+So any other questions?
+1:08:07
+Great. And then now we're going to talk about another class
+1:08:13
+of transformers where basically you have this encoder/decoder
+1:08:18
+structure, where you just forget about the decoder and then just deal with the encoder.
+1:08:25
+So you might tell me, OK, hey, you cannot do generation with this.
+1:08:30
+And then I would respond to you, yes, that's exactly the point.
+1:08:37
+So it has encoder representations that can be used for tasks that might be more
+1:08:42
+geared towards classification. So sentiment extraction, token classification,
+1:08:49
+all of these things that used to be done with specific language models, they can be done with the encoder
+1:08:56
+part of the transformer. And we're going to dive deeper a bit later
+1:09:02
+into a three-key encoder only models. So BERT, which is like the central one,
+1:09:10
+I would say in this landscape, and then two other architectures, DistilBERT and RoBERTa,
+1:09:16
+that are investigating on axis of improvements. So it's going to be good to see.
+1:09:24
+So OK, great. And then there is one last class.
+1:09:29
+So as Afshine just mentioned, two days LLMs, they remove the encoder part altogether.
+1:09:38
+And then when you have no encoder, you don't have your encoder embeddings at the end of your stacked encoders
+1:09:45
+that could be fed to the cross-attention. So this module disappears altogether.
+1:09:52
+So each decoder that is stacked just has masked self-attention and an FFN as part of it.
+1:10:02
+And yeah, that's basically something that has caught up since then.
+1:10:08
+Because when you look at the popularity of each of these models, so you used to have
+1:10:14
+these transformer-like architecture that was popular towards the beginning, where the main hypothesis was
+1:10:20
+that the encoder part is very useful for getting to the decoder's representation.
+1:10:28
+But as time went, people realized that your compute budget could be best invested
+1:10:36
+in the decoder only. And then there has been more investment into the kind
+1:10:44
+of tasks that is, I would say, easiest to scale up and generalize-- next-word prediction--
+1:10:50
+as opposed to the task I just mentioned for T5, which might be more bespoke.
+1:10:57
+So you need to corrupt things. So it's more complex. Whereas next-word prediction is, I would say,
+1:11:04
+the simplest thing you can do. And it proved to be wonders and well-aligned
+1:11:09
+with the task of being a helpful kind of chatbot,
+1:11:14
+which is like two days' applications mainly. And then the decoder-only architectures-- so I'm not
+1:11:24
+going to talk about them today. But it's going to be the central part of the next lectures
+1:11:30
+when we're going to talk about LLMs more and more. OK, awesome.
+1:11:36
+So now we can dive deep, as promised, into encoder-only architectures and with BERT.
+BERT deep dive
+1:11:45
+So first we're going to start by seeing what does BERT mean.
+1:11:52
+So BERT, it's an acronym that denotes Bidirectional Encoder
+1:11:58
+Representations from Transformers. And we're going to see together how
+1:12:03
+does each section of this acronym, what does it correspond to? So let's just start with the encoder part,
+1:12:11
+which is the easiest to grasp. So as we said, we just dropped the decoder.
+1:12:18
+So this encoder from transformer is basically exactly what it means.
+1:12:24
+Now on the other part, so why do we talk about bidirectionality?
+1:12:32
+So it's a way, so the paper's result is remarkable,
+1:12:39
+because we are able from a given input to get output representations that have attended to everything
+1:12:49
+for each token. And this is the case. Because since we only have the encoder,
+1:12:55
+we have this self-attention layer that truly attends to every other token.
+1:13:02
+And this is in contrast with the masked self-attention
+1:13:07
+that you have where we said that the mask is making the attention mechanism causal.
+1:13:14
+So every token can attend to itself and to the tokens before it.
+1:13:19
+And this is, by the way, something that the authors discuss a lot in the paper,
+1:13:25
+saying that GPT came out, GPT they're not truly bidirectional. And then these encodings that can be used for classification
+1:13:33
+tasks, they truly are. Any questions?
+1:13:40
+Yep.
+1:13:50
+Yep, that's right. So the question is, when you don't have the mask, each token can attend to each other.
+1:13:55
+That's exactly right. And then the mask is exactly there to prevent links from tokens to those that come after them.
+1:14:04
+Yeah. OK, great. So I just want to put this paper in context.
+1:14:12
+And the field of NLP was booming back then. So you had another landmark paper
+1:14:18
+that same year, which was called ELMo, so Embeddings from Language Models.
+1:14:24
+And I would say that the timing of that paper was a bit unfortunate, because it truly
+1:14:31
+had new insights of also building bidirectional representations.
+1:14:37
+But it just turns out that it came the same year as the transformer, as the kind of transformer-based same line
+1:14:44
+of work. So it got a bit masked by it. So ELMo, just to give the main lines,
+1:14:52
+it was based on a bidirectional LSTM where you had multiple layers, each
+1:14:59
+stacked on top of each other. And basically you were able to build
+1:15:04
+a bidirectional representation for each word, thanks to this architecture.
+1:15:10
+And so why didn't it become as popular as BERT?
+1:15:17
+It's because you had the same downsides as the previous models, where basically it's hard to scale because of this recurrence.
+1:15:27
+And I think a lot of you, when you think about ELMo and BERT,
+1:15:33
+you don't think about these papers at first, because they are characters in Sesame Street.
+1:15:40
+And I grew up in a place where I did not know about Sesame Street. So for me, ELMo and BERT is like paper names.
+1:15:47
+But it might be what represents to you at first. So I thought that was quite funny.
+1:15:53
+And then researchers, they are generally quite playful. They try to fit their acronyms into themes.
+1:16:03
+So if you look at paper names, you will get entertained.
+1:16:11
+OK, great. So to dive deeper into what I mentioned to be the goal of encoder-only models,
+1:16:19
+so you have your set of tokens as input. And the goal here is to perform tasks
+1:16:27
+that might be focused on projecting some representation somewhere, so typically classification
+1:16:33
+tasks. And here, the way BERT works is very specific.
+1:16:41
+So you have two kinds of tokens that you will see are structural here.
+1:16:46
+So you have first the CLS token, which stands for classification.
+1:16:53
+And it's basically a placeholder token that is put at the beginning of the sequence that will then,
+1:17:00
+at the end of the whole attention and then projection and the whole encoder mechanism,
+1:17:07
+be projected into an embedding that we can then use for classification.
+1:17:13
+So CLS is just some kind of placeholder that will carry the bidirectional information
+1:17:20
+of your whole input. And another token that might be useful to see is this SEP token.
+1:17:27
+So it's like separator. And then you will see very soon we're going to see the objective functions that it operates on.
+1:17:36
+It aims at separating two sentences. Yeah.
+1:17:43
+So this is the very high level. And then so one thing that is very interesting
+1:17:49
+to see with this model is that you have this concept of multi-stage training.
+1:17:56
+So you don't train the model in one shot. You do it in multiple stages.
+1:18:02
+So the first stage is aimed at being aligned with the task of interest.
+1:18:07
+And so this is what we call pre-training. And this pre-training, we will see in detail,
+1:18:14
+is done with two objective functions that are respectively MLM and NSP.
+1:18:20
+So MLM stands for Masked Language Model. And NSP is the Next Sentence Prediction.
+1:18:30
+So masked language model, it's a way for the model to learn the internal structure
+1:18:35
+of the inputs. And then NSP, it might be seen as a way
+1:18:42
+to see if the ordering of sentences makes sense. So we're going to go a bit deeper into each,
+1:18:49
+but it's a combination of objective function that the authors assumed to be helpful for learning
+1:18:58
+general embeddings of high quality. OK.
+1:19:03
+So the second thing that I want to mention is that, once you have all of this, you have a further stage where you keep the embeddings that you
+1:19:11
+have learned. And then you attach to it some other network, like typically
+1:19:17
+a linear projection, to then fine tune
+1:19:22
+the embeddings that you have learned into some target task. So this is what we call fine tuning.
+1:19:29
+Yep.
+1:19:46
+So yeah. So the question is, do we still have just an encoder here?
+1:19:52
+Because a next-sentence prediction could be seen as a decoder task. So actually I'm going to go in detail.
+1:19:59
+The next-sentence prediction task is actually us putting two sentences, one after the other,
+1:20:05
+and predicting whether they are truly consecutive. So it's a classification task.
+1:20:12
+Yeah, great point. And yeah, we're going to see that in detail very soon. So before we see that in detail, I'm
+1:20:21
+going to discuss the pros and cons that this method usually has.
+1:20:27
+So regarding on the pro side, this pre-training mechanism
+1:20:35
+can be done on fairly unlabeled data. So you still have this next-sentence prediction task.
+1:20:41
+But this is something that you control, because you know which sentences follow each other.
+1:20:46
+So it's something that you know it's self-supervised.
+1:20:51
+And the masked language model task, we're going to see how it consists.
+1:20:57
+But it's also something that is unsupervised. So this is a very interesting way
+1:21:04
+to learn interesting embeddings out of unlabeled data. And then in practice is that we see
+1:21:12
+that these unlabeled data leads to helpful representations being learned.
+1:21:17
+And then you need very little data to build on top of it. So at the fine tuning stage, you just
+1:21:24
+start from these very nice embeddings that you have learned, and you just have a few weights to tune.
+1:21:30
+And then this usually leads to a performance that exceeds state of the art back then.
+1:21:37
+And then regarding the downsides, we have of course all the text generation
+1:21:45
+tasks that are out of reach because we don't have a decoder. And also, we can see these two stage process and the fact
+1:21:52
+that we need to further tune embeddings as something that can be over hurdled.
+1:21:59
+So it might be, when you compare this kind of methodology with respect to more traditional methods, that can be one shot.
+1:22:08
+This could be seen as a downside. OK, great. And I have some names regarding variants here.
+1:22:18
+We're going to dive deep into two of them a bit later on.
+1:22:24
+OK. So I want us to focus on the original transformer. And we're going to go step by step into what happened to it,
+1:22:31
+and then how we get the BERT architecture. So this is what we had in the original transformer paper
+1:22:38
+that we saw last week. And what BERT did is extract the encoder part of it
+1:22:46
+and attach basically these new objective functions that I just
+1:22:52
+mentioned, alongside some new set of tricks when it comes to representing tokens.
+1:23:00
+So I think we're going to go through them one by one.
+1:23:08
+So first of all, one interesting note is that it uses a specific tokenizer called WordPiece.
+1:23:15
+So you can see it as a tokenizer that learns on your training set, based on merge rules that
+1:23:25
+maximize the likelihood. So basically, you have some huge training set, and you train a tokenizer that merges atomic tokens together
+1:23:34
+to build your target vocabulary. And some order of magnitude, I mentioned o of 30k.
+1:23:41
+So it's typically, I think this is the size that they chose in this paper. And in general, like vocabulary sizes in these sorts of paper
+1:23:51
+are in the order of magnitude of 10 to the power of 4, 10 to the power of 5, except for our token-free method
+1:23:59
+that we saw, like ByT5, which is like this very restricted set of tokens, like 2 to the power of 8, which is 256.
+1:24:08
+Apart from this specific case, you always have this order of magnitude.
+1:24:14
+And basically, we are going to make use of the tokens
+1:24:21
+that I mentioned. Like at the beginning, so you have the CLS token that is going to carry the bidirectional representation
+1:24:30
+of all your sequence. And then you have SEP tokens to separate
+1:24:37
+the two sentences towards the next-sentence prediction task.
+1:24:42
+And there is something that I haven't talked about just yet. So I think maybe we can talk about it
+1:24:49
+at the time of the deep dive. So in order to have this masked language model task,
+1:24:57
+so of course you need to mask some tokens. So we're going to see the technique that is basically
+1:25:04
+applying these sorts of mask and where and at which frequency.
+1:25:09
+And we're going to see with respect to the output what is going to be our task based on the resulting representation.
+1:25:17
+So I'm just going to pass quickly on it here, but we're going to come back very soon.
+1:25:24
+OK, great. So one big piece of news regarding your input
+1:25:29
+embeddings-- so what stays the same? So you still have these huge dictionary lookup
+1:25:37
+of embeddings for each token that you're going to learn. And you're going to additively add the positional encoding
+1:25:45
+that we saw at last lecture. And Afshine talked about earlier in this lecture,
+1:25:51
+which can either be hard-coded or learned. I think the authors here just used a hard-coded version here,
+1:26:02
+but I'm not too sure. But it's roughly the same performance usually. But there is something new.
+1:26:09
+There is the introduction of a new kind of encoding called segment encoding that is going to still
+1:26:17
+be additively added to tokens, with the exception that we just
+1:26:23
+have two possible encodings there. So you have segment A that represents the first sentence,
+1:26:30
+and then segment B that represents the second sentence. And it's supposed to help with the NSP task
+1:26:37
+to represent what could be features that can helpfully represent a sentence that precedes another one.
+1:26:46
+So at least that was the hypothesis admitted by the authors. We're going to see it has been challenged later on.
+1:26:53
+But this is one of the key concepts that was introduced here.
+1:26:59
+Any questions so far? Yep.
+1:27:28
+Yep, so a great point. So the question is, what does segment encoding do at all?
+1:27:34
+So it's basically something that is learned. So you have two indices, two basically
+1:27:39
+embeddings that you can learn. You just additively add them, segment A for tokens in the first part of the sentence,
+1:27:47
+and then segment B in the second part. And you just learn it with gradient descent.
+1:27:53
+So you do nothing with it. I think there was another question here? Yeah.
+1:27:58
+1:28:07
+That's right. So the question is, is every token in the same sentence going to have the same segment encoding?
+1:28:13
+Yes, yeah. OK, awesome. So I'm seeing I might need to speed up a tiny bit.
+1:28:22
+So yeah, the second thing that I want to highlight here is that we take the encoder part of the transformer.
+1:28:29
+And nothing new here. It's just the same. We have self-attention, followed by these FFN.
+1:28:37
+So this is where you're going to get your bidirectional nature of your encodings.
+1:28:43
+And then basically we're assuming that training both MLM and NSP on it
+1:28:49
+is going to help us learn helpful projection matrices in this encoder that can be suited
+1:28:57
+for any classification task. OK, great.
+1:29:02
+And as promised, I talked about detailing more about what
+1:29:08
+this MLM task was going to do. So when you look at the input, you're
+1:29:15
+going to basically have your input sentence, and replace at random some tokens.
+1:29:23
+So it will be replaced either with the token mask. So it's in 80% of the time.
+1:29:31
+In 10% of the time, the tokens selected for this MLM objective function are not
+1:29:38
+going to be replaced at all. So we're just saying, it's the same token, just predict the same token.
+1:29:43
+And then 10% of the time, it's going to be changed to some random other word.
+1:29:49
+So at the end of it, you have the subset of tokens you're going to perform your MLM task on.
+1:29:55
+And then this is how it's composed. OK, great. And so basically the intuition here
+1:30:04
+is that when you want to predict what a token is, you need to know about its context.
+1:30:10
+So we're going to force the model to learn about what surrounds it, left and right.
+1:30:15
+So this is the bidirectional property of this architecture
+1:30:20
+put into action. OK, great. And now we're going to talk about the next-sentence
+1:30:28
+prediction task where basically the process here
+1:30:33
+is to select two sentences from a given corpus, and then present them side by side in order 50% of the time,
+1:30:44
+and in some random order the other part of the time.
+1:30:49
+And the goal is for some classification head on top of the CLS token to determine whether A and B are
+1:30:57
+consecutive. So that's all it does. And so the assumption is that it also helps
+1:31:05
+learn some useful embeddings. OK, great.
+1:31:11
+And here I'm going to present the notation that is used in the paper.
+1:31:16
+So the paper is something I recommend reading. It's a very nice read, alongside the "Attention is All You Need."
+1:31:21
+I would say it's a landmark paper. I think it has a 170k citations, something really impressive.
+1:31:31
+And basically what we called n in the original transformer paper is now called L. H, that was called d model,
+1:31:40
+is the dimension of our embeddings. And A is the number of attention heads,
+1:31:47
+which was called the little h. So here I'm just showing these new notations for information,
+1:31:53
+just to give you the mapping. But of course, together with Afshine, we're going to stay consistent with the original notations we
+1:32:00
+had, so just like for information. And one interesting note is that you
+1:32:06
+will see that the BERT model, when you look at some repository of models such as Hugging Face,
+1:32:14
+so usually it's given in several versions. So you will see sometimes like case, uncased.
+1:32:20
+So this denotes what kind of preprocessing was done to the data, whether you only have lowercase words in there or whether casing matters.
+1:32:30
+So based on your task of interest, it might be one thing you want to choose from.
+1:32:38
+OK, great. And I give some orders of magnitude from the paper on what values were chosen for each of these.
+1:32:51
+So if I remember correctly, I think the original transformer had 12 stacked encoders and decoders.
+1:33:00
+So I think some numbers here were taken from there.
+1:33:08
+So yeah, order of magnitude is 100 million parameters.
+1:33:16
+Any questions so far? OK, great.
+BERT finetuning
+1:33:24
+And then now we're going to talk about the fine-tuning stage where the goal is to basically take
+1:33:33
+whatever we have learned at pre-training stage, and then freeze those weights.
+1:33:39
+And instead of training again on those same weights, you have some classification linear layer
+1:33:45
+that is put on top of either the CLS token or on top of tokens of interest.
+1:33:50
+And you're going to learn about the linear embeddings there. So you're going to have some classification task.
+1:33:57
+So you could either freeze all these pre-trained weights and just train on these small weights.
+1:34:03
+Or you can just retrain the whole thing. I think there is multiple classification schemes.
+1:34:09
+And some of it will be influenced by your willingness to retrain a lot of the network and how
+1:34:15
+different the classification task is with respect to the original pre-training task.
+1:34:23
+OK, great. And then just to give some examples of what could be fine-tuning tasks for tasks of interest,
+1:34:31
+you can have a sentiment extraction where you build a classification layer on top of the CLS token.
+1:34:39
+And we give some other example question answering where basically you are given some input.
+1:34:46
+And the goal of the model is to detect beginning and end spans of the response.
+1:34:53
+So it's basically some objective function that is at the token level.
+1:34:59
+OK, great. So now I propose that we do some deep dive
+1:35:05
+into one specific example. Our favorite example, this teddy bear is so cute.
+1:35:13
+Let's just see how BERT works in practice. So basically what you would do in an uncased setting
+1:35:21
+is take the sentence, pre-process it, just put everything lowercase.
+1:35:28
+Then you apply the WordPiece algorithm on whatever tokenization mechanism that your tokenizer
+1:35:37
+has learned. So for example here, apparently it had all these merge rules. So this is the tokens that appear in the vocabulary.
+1:35:46
+And then as I promised, we add the CLS token at the beginning. And then we add the SEP token.
+1:35:54
+And you also have this PAD tokens that are basically used to fill out the sequence until the end.
+1:36:05
+Because when you train, you train by batch, and then batches are composed of matrices that have a fixed length.
+1:36:13
+Yeah. So let's just have this deep dive a bit the same as what we had in the transformer deep dive last time.
+1:36:23
+So you have the embeddings that are learned. So it's some huge lookup table between the index of each token
+1:36:31
+and the learned representation. So you add to it the position embedding of the token.
+1:36:37
+And something that's new here-- the segment embedding. So exactly as we said, it's an embedding
+1:36:44
+that is added to each token. And the same embedding is added to the same tokens.
+1:36:50
+So all the tokens have the same segment A. Then some other embedding B is added to all the tokens
+1:36:57
+of the segment B. OK, great.
+1:37:02
+So now you have, similarly as the transformer, something that is position-aware and context-aware--
+1:37:10
+so not context-aware just yet, but segment-aware here.
+1:37:15
+OK, great. And basically it goes through this encoder architecture.
+1:37:22
+And then at the end of it, for the case of sentiment extraction, we do not care about the embeddings that are
+1:37:30
+corresponding to each token that is not the CLS token. Because what we care about is the output embedding of the CLS
+1:37:39
+token, where we plug a linear layer that will learn some classification task.
+1:37:47
+So any question here?
+1:37:55
+So does the fact that we drop all the output embeddings, apart from the CLS token, make sense?
+1:38:02
+Yeah, yep.
+1:38:11
+1:38:21
+Yeah, so the question is, what does this FFN, is that right? What does this FFN correspond to?
+1:38:27
+So basically you have a map between the dimension of the output embedding and your task of interest.
+1:38:34
+So it might be classification of either positive or negative.
+1:38:40
+So you have some hidden layer with some length. So you have typically two matrices
+1:38:46
+to learn the projection from one to that hidden layer, and then the hidden layer to the output.
+1:38:51
+And then you learn these weights in order to do the classification task, based on the embeddings that it has learned here.
+1:38:57
+Yeah, great question. So that was the question I was waiting for.
+1:39:02
+So the question is, why do we throw away all these other output embeddings?
+1:39:08
+So we don't need them here. So we are in a classification task. We have put as convention to operate on top of some token,
+1:39:19
+like the CLS token. And then the magic of this token is that all these self-attention mechanisms that
+1:39:25
+are in the encoder has mixed the representation of each of the other tokens in that representation, such
+1:39:34
+that the output embeddings, they are context-aware. So basically, it's an embedding that is
+1:39:41
+geared towards classification. And this is what we say will be what we
+1:39:46
+plug in to that linear layer. And so when I say we throw out all the other embeddings,
+1:39:56
+it's actually something that we do for the case of classification. But if we do classification at the token level,
+1:40:02
+then each of them may be used. So for example, when I say question answering, if you want
+1:40:07
+to detect whether a given token is the beginning of an answer,
+1:40:14
+beginning of end of an answer, you would typically have two FFNs that
+1:40:19
+respectively predict the start and end of the answer. And you would apply it on each of these embeddings.
+1:40:25
+Any other questions?
+1:40:31
+Yep.
+1:40:37
+So the question is, what is query, key, and value for CLS? So it's going to be the same process as all the other tokens.
+1:40:44
+So you learn here a representation for the embedding, for the token CLS.
+1:40:50
+It gets projected to query. It gets projected to key. It gets projected to value.
+1:40:56
+It does all its attention computation. And at the end, you get this embedding
+1:41:01
+that basically that has attended to all the other ones. So it's like the answer is, it's the same as
+1:41:08
+for the other tokens. So, yeah. So just treat it as one token, it could be any token,
+1:41:15
+and it's the same. OK, awesome. So I see we have five more minutes.
+1:41:21
+And I'm going to quickly go through the end of it. And one thing that was great with BERT,
+1:41:29
+and it was also great with ELMo, is that you have embeddings that are contextual.
+1:41:35
+And here you can see that it's very easy to learn any classification task that you want,
+1:41:42
+based on these learn embeddings. So this is a flexibility that was greatly appreciated here.
+1:41:48
+And it's widely used in the industry. So anything that comes with sentiment detection
+1:41:55
+or other classification-related tasks, it's very common to use a BERT-like model nowadays.
+1:42:03
+And I'm going to talk a bit about its limitations now. So as you see in the original paper,
+1:42:12
+I think the context length was of size 512. So it was typically limited in this early paper.
+1:42:20
+Afshine has mentioned of techniques as to how we can further grow this context
+1:42:26
+size without making the complexity go completely, basically like hike.
+1:42:35
+And then you have some approximation methods where you compute local attention, and so on.
+1:42:40
+And then the use of these tricks helps you grow the size of the context while staying within reasonable computation requirement bounds.
+1:42:50
+And I'm going to talk about two other limitations that we're going to see what other models try to remedy.
+1:42:58
+So there is one where the latency could be seen as high. You have a still 110 million parameters for a BERT base,
+1:43:06
+so it's quite a lot. Is there a way to make this smaller and faster? And then the second one is basically
+1:43:14
+you have these two objective functions of MLM and NSP. Are those two truly helpful?
+1:43:21
+Is there any way we can simplify the pre-training process? So we're going to see in a second how.
+1:43:27
+So first, regarding this second limitation that we had,
+Extensions of BERT
+1:43:37
+this basically sensitivity to cost. So who here has heard of distillation?
+1:43:45
+Good, few people.
+1:43:51
+So I just want to flash this quote from Hinton, Vinyals, and Jeff Dean, which
+1:44:00
+I think has been informative. And it's a good mindset to have to see
+1:44:06
+that the distribution that is output by a given model is actually super helpful to know what it has learned.
+1:44:14
+So the soft targets contain almost all the knowledge. So it's some lecture from them that contain this quote.
+1:44:23
+So basically they were at the origin of the concept of distillation later on. And you quickly see in practice that basically learning
+1:44:32
+the distribution of a model is more helpful than directly
+1:44:37
+learning the hard labels. So you have this concept of teacher and student models,
+1:44:45
+where basically the goal in distillation is going to be to map this output distribution of a smaller
+1:44:53
+model directly to your more complex model, rather than the hard labels.
+1:45:00
+And the objective function that you use for this to minimize this is the KL divergence, which
+1:45:09
+basically says in a world that is described by the teacher,
+1:45:15
+the teacher T, how bad is it to model with the student S.
+1:45:22
+So it basically tries to assess how close the student distribution is going to be to the world's T.
+1:45:30
+And one interesting note that you will see here is that you find the cross-entropy loss
+1:45:36
+if your yT distribution is just a hard label. So if you have just a 1 at one position
+1:45:43
+and then 0 everywhere else, you have minus log of yS, which is very interesting.
+1:45:52
+And then what the DistilBERT folks have done-- so by the way, it's a very clean paper,
+1:45:57
+it's like four pages, but super impactful. So it says that if you reduce the number of layers by 2,
+1:46:06
+you have a lot of gains and almost the same performance, which is very remarkable.
+1:46:13
+And they basically used distillation as a way to retain that performance. So this has been like the key, alongside diminishing
+1:46:21
+the number of layers. And last, I'm going to talk about RoBERTa.
+1:46:27
+That studied the fact that removing the NSP objective
+1:46:32
+function led to no decrease in performance almost. So they just dropped it.
+1:46:38
+And they added some tricks, such as dynamically doing the masking.
+1:46:44
+So for example, for a given piece of text, at each epoch, so every time you see the same kind of text,
+1:46:50
+you would change the masking. And they also had some data strategy where they saw that the model was vastly undertrained.
+1:46:58
+So they increased the diversity and the size of the data lot. And they saw that benchmark performance increased quite
+1:47:07
+a bit on the same benchmarks. And that's it for today. Thank you, everyone.
+1:47:12
+Have a great weekend.

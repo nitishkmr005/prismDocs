@@ -8,6 +8,7 @@ Works with or without LLM - parses figure references and generates diagrams auto
 from loguru import logger
 
 from ...domain.models import WorkflowState
+from ...infrastructure.claude_svg_generator import generate_visualization_with_claude
 from ...infrastructure.llm_service import get_llm_service
 from ...infrastructure.settings import get_settings
 from ...infrastructure.svg_generator import generate_visualization
@@ -42,7 +43,7 @@ def generate_visuals_node(state: WorkflowState) -> WorkflowState:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Try to get visualizations from LLM or parse content directly
-        llm = get_llm_service()
+        llm = state.get("llm_service") or get_llm_service()
         visualizations = []
 
         if llm.is_available():
@@ -57,18 +58,33 @@ def generate_visuals_node(state: WorkflowState) -> WorkflowState:
                 if not vis_type or not data:
                     continue
 
-                # Generate SVG
+                # Generate SVG using Claude if available, otherwise use basic generator
                 svg_filename = f"visual_{i}_{vis_type}.svg"
                 svg_path = output_dir / svg_filename
 
-                svg_content = generate_visualization(
-                    visual_type=vis_type,
-                    data=data,
-                    title=title,
-                    output_path=svg_path,
-                    width=800,
-                    height=500
-                )
+                # Try Claude-powered generation first
+                settings = get_settings()
+                if settings.llm.use_claude_for_visuals:
+                    svg_content = generate_visualization_with_claude(
+                        visual_type=vis_type,
+                        data=data,
+                        title=title,
+                        output_path=svg_path
+                    )
+                else:
+                    svg_content = ""
+
+                # Fallback to basic generator if Claude fails
+                if not svg_content:
+                    logger.debug(f"Using basic SVG generator for {vis_type}")
+                    svg_content = generate_visualization(
+                        visual_type=vis_type,
+                        data=data,
+                        title=title,
+                        output_path=svg_path,
+                        width=800,
+                        height=500
+                    )
 
                 if svg_content:
                     visualizations.append({

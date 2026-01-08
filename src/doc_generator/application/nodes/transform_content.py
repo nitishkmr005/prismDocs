@@ -44,7 +44,7 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         }
 
         # Try to enhance with LLM
-        llm = get_llm_service()
+        llm = state.get("llm_service") or get_llm_service()
 
         if llm.is_available():
             logger.info("LLM service available - enhancing content")

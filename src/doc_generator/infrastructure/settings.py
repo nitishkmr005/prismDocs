@@ -120,6 +120,12 @@ class LlmSettings(BaseSettings):
     temperature_summary: float = 0.3
     temperature_slides: float = 0.4
 
+    # Claude API settings for SVG generation
+    claude_model: str = "claude-sonnet-4-20250514"
+    claude_max_tokens: int = 4000
+    claude_temperature: float = 0.3
+    use_claude_for_visuals: bool = True
+
 
 class SvgSettings(BaseSettings):
     """SVG generation settings."""
