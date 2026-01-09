@@ -95,19 +95,21 @@ class PDFGenerator:
             # Get visualizations and marker mapping
             visualizations = content.get("visualizations", [])
             marker_to_path = content.get("marker_to_path", {})
-            
+            section_images = content.get("section_images", {})
+
             # Build visualization lookup by title for inline replacement
             visual_lookup = self._build_visual_lookup(visualizations)
 
             # Create PDF
             self._create_pdf(
-                output_path, 
-                title, 
-                markdown_content, 
-                metadata, 
+                output_path,
+                title,
+                markdown_content,
+                metadata,
                 visualizations,
                 marker_to_path,
-                visual_lookup
+                visual_lookup,
+                section_images
             )
 
             logger.info(f"PDF generated successfully: {output_path}")
@@ -188,7 +190,8 @@ class PDFGenerator:
         metadata: dict,
         visualizations: list[dict],
         marker_to_path: dict,
-        visual_lookup: dict
+        visual_lookup: dict,
+        section_images: dict = None
     ) -> None:
         """
         Create blog-like PDF document with inline visualizations.
@@ -199,6 +202,7 @@ class PDFGenerator:
         - Section dividers for visual separation
         - Inline SVG visualizations where markers appear
         - Mermaid diagrams rendered as images
+        - Gemini-generated images for sections (infographic/decorative)
 
         Args:
             output_path: Path to output PDF
@@ -208,7 +212,9 @@ class PDFGenerator:
             visualizations: List of visualization dictionaries
             marker_to_path: Mapping of marker IDs to file paths
             visual_lookup: Lookup dict for finding visualizations
+            section_images: Dict mapping section_id -> image info (from Gemini)
         """
+        section_images = section_images or {}
         # Create document with blog-like margins
         doc = SimpleDocTemplate(
             str(output_path),
@@ -259,6 +265,9 @@ class PDFGenerator:
         # Track which visualizations we've used (for any remaining at end)
         used_visualizations = set()
 
+        # Track section index for section images
+        section_index = -1  # Will be incremented on first ## header
+
         # Parse and add markdown content with inline visualizations
         for kind, content_item in parse_markdown_lines(markdown_content):
             if kind == "spacer":
@@ -270,9 +279,23 @@ class PDFGenerator:
                 story.append(Paragraph(inline_md(content_item), self.styles["Heading2Custom"]))
 
             elif kind == "h2":
+                section_index += 1
                 story.append(Spacer(1, 16))
                 story.append(make_banner(content_item, self.styles))
                 story.append(Spacer(1, 12))
+
+                # Check for Gemini-generated section image
+                if section_index in section_images:
+                    img_info = section_images[section_index]
+                    img_path = Path(img_info.get("path", ""))
+                    if img_path.exists():
+                        story.extend(make_image_flowable(
+                            img_info.get("section_title", content_item),
+                            img_path,
+                            self.styles
+                        ))
+                        story.append(Spacer(1, 12))
+                        logger.debug(f"Embedded section image for: {content_item}")
 
             elif kind == "h3":
                 story.append(Paragraph(inline_md(content_item), self.styles["Heading3Custom"]))

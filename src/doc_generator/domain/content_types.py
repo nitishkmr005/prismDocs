@@ -24,3 +24,14 @@ class OutputFormat(str, Enum):
 
     PDF = "pdf"
     PPTX = "pptx"
+
+
+class ImageType(str, Enum):
+    """Supported image generation types."""
+
+    INFOGRAPHIC = "infographic"  # Gemini - explains concepts visually
+    DECORATIVE = "decorative"    # Gemini - thematic header image
+    DIAGRAM = "diagram"          # SVG - architecture, flowcharts
+    CHART = "chart"              # SVG - data comparisons
+    MERMAID = "mermaid"          # Mermaid - sequence diagrams, flows
+    NONE = "none"                # Skip image for this section

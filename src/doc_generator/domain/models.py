@@ -9,7 +9,7 @@ from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
-from .content_types import OutputFormat
+from .content_types import ImageType, OutputFormat
 
 
 class WorkflowState(TypedDict, total=False):
@@ -71,3 +71,37 @@ class ContentSection(BaseModel):
     type: str
     text: str
     metadata: dict = Field(default_factory=dict)
+
+
+class ImageDecision(BaseModel):
+    """
+    Decision from auto-detection about what image type to generate.
+
+    Attributes:
+        image_type: The type of image to generate
+        prompt: Description/prompt for image generation
+        section_title: Title of the section this image is for
+        confidence: Confidence score (0-1) for the decision
+    """
+
+    image_type: ImageType
+    prompt: str
+    section_title: str = ""
+    confidence: float = Field(default=0.8, ge=0.0, le=1.0)
+
+
+class SectionImage(BaseModel):
+    """
+    Represents a generated image for a section.
+
+    Attributes:
+        path: Path to the image file
+        image_type: Type of image that was generated
+        section_id: ID/index of the section
+        embed_base64: Base64 encoded image data for PDF embedding
+    """
+
+    path: str
+    image_type: ImageType
+    section_id: int
+    embed_base64: str = ""

@@ -135,14 +135,14 @@ class LlmSettings(BaseSettings):
     temperature_slides: float = 0.4
 
     # SVG/Visual generation settings (Claude Sonnet 4)
-    svg_model: str = "claude-sonnet-4-20250514"
-    svg_provider: str = "claude"  # Always Claude for visuals
+    svg_model: str = "gpt-5.2"
+    svg_provider: str = "openai"  # Always Claude for visuals
     svg_max_tokens: int = 4000
     svg_temperature: float = 0.3
     use_claude_for_visuals: bool = True
     
     # Legacy Claude settings (for backwards compatibility)
-    claude_model: str = "claude-sonnet-4-5-20250929"
+    claude_model: str = "gpt-5.2"
     claude_max_tokens: int = 4000
     claude_temperature: float = 0.3
 
@@ -176,6 +176,32 @@ class SvgSettings(BaseSettings):
     )
 
 
+class ImageGenerationSettings(BaseSettings):
+    """Image generation settings for Gemini and auto-detection."""
+
+    # Provider selection: "auto", "gemini", "svg", "mermaid"
+    default_provider: str = "auto"
+
+    # Gemini settings
+    gemini_model: str = "gemini-3-pro-image-preview"
+    gemini_rate_limit: int = 20  # images per minute
+    gemini_request_delay: float = 3.0  # seconds between requests
+
+    # Image storage
+    images_dir: Path = Path("src/output/images")
+    embed_in_pdf: bool = True
+    embed_in_pptx: bool = False
+
+    # Auto-detection options
+    enable_decorative_headers: bool = True
+    enable_infographics: bool = True
+    enable_diagrams: bool = True
+
+    # Image generation quality
+    default_width: int = 1024
+    default_height: int = 768
+
+
 class Settings(BaseSettings):
     """
     Main application settings.
@@ -191,6 +217,7 @@ class Settings(BaseSettings):
     parsers: ParserSettings = Field(default_factory=ParserSettings)
     llm: LlmSettings = Field(default_factory=LlmSettings)
     svg: SvgSettings = Field(default_factory=SvgSettings)
+    image_generation: ImageGenerationSettings = Field(default_factory=ImageGenerationSettings)
 
     class Config:
         env_prefix = "DOC_GENERATOR_"
@@ -275,6 +302,9 @@ def _merge_config(yaml_config: dict) -> dict:
 
     if "svg" in yaml_config:
         merged["svg"] = yaml_config["svg"]
+
+    if "image_generation" in yaml_config:
+        merged["image_generation"] = yaml_config["image_generation"]
 
     return merged
 

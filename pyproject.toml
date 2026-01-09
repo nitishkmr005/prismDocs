@@ -12,6 +12,7 @@ dependencies = [
     # LLM integration
     "openai>=1.40.0",
     "anthropic>=0.40.0",  # Claude API support
+    "google-genai>=1.0.0",  # Gemini API for image generation
 
     # Configuration and validation
     "pydantic==2.10.5",

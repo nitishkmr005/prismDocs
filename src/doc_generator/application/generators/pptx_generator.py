@@ -158,6 +158,10 @@ class PPTXGenerator:
             # Add visualization slides if generated
             visualizations = structured_content.get("visualizations", [])
             self._add_visualization_slides(prs, visualizations)
+
+            # Add section image slides (Gemini-generated)
+            section_images = structured_content.get("section_images", {})
+            self._add_section_image_slides(prs, section_images)
         else:
             # No LLM enhancement - use markdown-based generation
             self._add_slides_from_markdown(prs, markdown_content)
@@ -243,6 +247,36 @@ class PPTXGenerator:
                 logger.debug(f"Added {vis_type} visualization slide: {title}")
             except Exception as e:
                 logger.warning(f"Failed to add visualization slide: {e}")
+
+    def _add_section_image_slides(self, prs, section_images: dict) -> None:
+        """
+        Add slides from Gemini-generated section images.
+
+        Args:
+            prs: Presentation object
+            section_images: Dict mapping section_id -> image info
+        """
+        if not section_images:
+            return
+
+        for section_id, img_info in section_images.items():
+            title = img_info.get("section_title", f"Section {section_id}")
+            img_path = img_info.get("path", "")
+            image_type = img_info.get("image_type", "image")
+
+            if not img_path:
+                continue
+
+            img_path = Path(img_path)
+            if not img_path.exists():
+                logger.warning(f"Section image not found: {img_path}")
+                continue
+
+            try:
+                add_image_slide(prs, title, img_path, f"{image_type.title()} for {title}")
+                logger.debug(f"Added {image_type} slide for section: {title}")
+            except Exception as e:
+                logger.warning(f"Failed to add section image slide: {e}")
 
     def _add_slides_from_markdown(self, prs, markdown_content: str) -> None:
         """
