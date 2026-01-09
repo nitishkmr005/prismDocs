@@ -1,8 +1,8 @@
 """
-Prompts for image type auto-detection.
+Prompts for image type auto-detection and content-aware image generation.
 
-These prompts are used by the LLM to analyze section content and decide
-what type of image would best illustrate the section.
+These prompts are used by the LLM to analyze section content, extract
+key visual concepts, and generate content-specific image prompts.
 """
 
 # System prompt for image type detection
@@ -120,4 +120,167 @@ FALLBACK_PROMPTS = {
     "diagram": "Technical architecture diagram showing components and relationships for {topic}",
     "chart": "Clean comparison chart visualizing key aspects of {topic}",
     "mermaid": "flowchart TD\n    A[Start] --> B[Process]\n    B --> C[End]",
+}
+
+
+# =============================================================================
+# CONTENT-AWARE IMAGE GENERATION PROMPTS
+# =============================================================================
+
+# System prompt for concept extraction
+CONCEPT_EXTRACTION_SYSTEM_PROMPT = """You are an expert at analyzing technical content and identifying 
+concepts that would benefit from visual illustration.
+
+Your task is to extract SPECIFIC visual concepts from the content - not generic descriptions,
+but actual components, relationships, formulas, and comparisons mentioned in the text.
+
+You always respond with valid JSON."""
+
+
+# Main concept extraction prompt
+CONCEPT_EXTRACTION_PROMPT = """Analyze this technical section and identify SPECIFIC concepts that should be visualized.
+
+## Section Information
+**Title:** {section_title}
+**Content:** {content}
+
+## What to Extract
+
+Identify concepts in THIS SPECIFIC CONTENT that would benefit from visualization:
+
+1. **Architecture concepts**: Systems, components, layers, data flows mentioned
+   - Example: "Transformer has encoder and decoder, each with attention layers and FFN"
+   
+2. **Comparisons**: Features, methods, or approaches being compared
+   - Example: "RoPE vs Sinusoidal vs Learned position embeddings"
+   
+3. **Processes/Algorithms**: Step-by-step procedures or computations
+   - Example: "Self-attention: Q*K^T -> softmax -> multiply by V"
+   
+4. **Mathematical concepts**: Formulas, equations, or calculations to illustrate
+   - Example: "Attention(Q,K,V) = softmax(QK^T/sqrt(d_k))V"
+   
+5. **Hierarchies/Classifications**: Categories, types, or taxonomies
+   - Example: "Types of attention: MHA, GQA, MQA"
+
+## Response Format
+Return ONLY valid JSON:
+{{
+    "primary_concept": {{
+        "type": "architecture|comparison|process|formula|hierarchy",
+        "title": "Specific title for the visual",
+        "elements": ["List of specific components/items to show"],
+        "relationships": ["How elements connect or relate"],
+        "details": "Key technical details from the content to include"
+    }},
+    "secondary_concepts": [
+        {{
+            "type": "...",
+            "title": "...",
+            "elements": ["..."],
+            "details": "..."
+        }}
+    ],
+    "recommended_style": "architecture_diagram|comparison_chart|process_flow|formula_illustration|handwritten_notes",
+    "key_terms": ["Technical terms that must appear in the visual"]
+}}
+
+## Examples
+
+For content about "Position embeddings use sine/cosine functions. RoPE rotates Q and K vectors...":
+{{
+    "primary_concept": {{
+        "type": "comparison",
+        "title": "Position Embedding Methods",
+        "elements": ["Sinusoidal PE", "RoPE", "Learned embeddings"],
+        "relationships": ["All encode position info", "Sinusoidal is fixed, RoPE rotates vectors"],
+        "details": "Sinusoidal uses PE(pos,2i)=sin(pos/10000^(2i/d)), RoPE applies rotation matrices to Q,K"
+    }},
+    "secondary_concepts": [],
+    "recommended_style": "comparison_chart",
+    "key_terms": ["position embedding", "sine", "cosine", "rotation matrix", "Q", "K"]
+}}
+
+Now analyze the provided section:"""
+
+
+# Content-aware image generation prompt
+CONTENT_AWARE_IMAGE_PROMPT = """Create a {style} that visualizes:
+
+## Main Concept: {title}
+
+**Elements to include:**
+{elements}
+
+**Relationships/Connections:**
+{relationships}
+
+**Technical Details:**
+{details}
+
+**Key Terms that MUST appear:**
+{key_terms}
+
+## Style Requirements for {style}:
+{style_requirements}
+
+Generate an image that clearly explains these SPECIFIC concepts from the content.
+The image should help readers understand the technical details, not just the general topic."""
+
+
+# Style-specific requirements
+IMAGE_STYLE_TEMPLATES = {
+    "architecture_diagram": """
+- Show system components as labeled boxes/shapes
+- Use arrows to show data flow and connections
+- Include layer names and component labels
+- Use a clean, technical diagram style
+- Color-code different types of components
+- Add brief annotations explaining key parts
+- Professional whiteboard or technical documentation style""",
+
+    "comparison_chart": """
+- Create a side-by-side or tabular comparison
+- List features/characteristics for each item
+- Use visual indicators (checkmarks, icons) for differences
+- Include brief descriptions under each item
+- Highlight key differentiators
+- Show formulas or key equations if applicable
+- Clean, educational infographic style""",
+
+    "process_flow": """
+- Show steps in sequential order with arrows
+- Label each step clearly
+- Include decision points if applicable
+- Show inputs and outputs at each stage
+- Add brief descriptions of what happens at each step
+- Use consistent shapes for similar operations
+- Include any mathematical operations inline""",
+
+    "formula_illustration": """
+- Show the mathematical formula prominently
+- Break down each component with labels
+- Use visual representations of variables
+- Show example values or dimensions
+- Include annotations explaining each term
+- Connect formula to visual representation
+- Educational math-heavy style with clarity""",
+
+    "handwritten_notes": """
+- Whiteboard or notebook paper style
+- Hand-drawn looking diagrams and arrows
+- Key concepts circled or highlighted
+- Annotations and side notes
+- Informal but clear labeling
+- Mix of text, diagrams, and formulas
+- Study notes aesthetic with personal touch""",
+
+    "technical_infographic": """
+- Modern infographic design
+- Icons representing key concepts
+- Clear visual hierarchy
+- Numbered steps or sections if applicable
+- Key statistics or facts highlighted
+- Professional color scheme (blues, teals)
+- Balance of visuals and text""",
 }

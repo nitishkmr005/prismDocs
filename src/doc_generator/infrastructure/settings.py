@@ -135,14 +135,14 @@ class LlmSettings(BaseSettings):
     temperature_slides: float = 0.4
 
     # SVG/Visual generation settings (Claude Sonnet 4)
-    svg_model: str = "gpt-5.2"
-    svg_provider: str = "openai"  # Always Claude for visuals
+    svg_model: str = "claude-sonnet-4-20250514"
+    svg_provider: str = "claude"  # Always Claude for visuals
     svg_max_tokens: int = 4000
     svg_temperature: float = 0.3
     use_claude_for_visuals: bool = True
     
     # Legacy Claude settings (for backwards compatibility)
-    claude_model: str = "gpt-5.2"
+    claude_model: str = "claude-sonnet-4-20250514"
     claude_max_tokens: int = 4000
     claude_temperature: float = 0.3
 

@@ -55,7 +55,8 @@ def process_folder(
     folder_path: Path,
     output_dir: Path,
     llm_service: Optional[LLMService] = None,
-    verbose: bool = False
+    verbose: bool = False,
+    skip_image_generation: bool = False
 ) -> tuple[Optional[Path], Optional[Path]]:
     """
     Process all files in a folder and generate PDF and PPTX outputs.
@@ -65,11 +66,14 @@ def process_folder(
         output_dir: Directory for output files
         llm_service: Optional LLM service for content enhancement
         verbose: Enable verbose logging
+        skip_image_generation: Whether to reuse existing images
 
     Returns:
         Tuple of (pdf_path, pptx_path) or (None, None) on failure
     """
     logger.info(f"Processing folder: {folder_path}")
+    if skip_image_generation:
+        logger.info("Image generation will be skipped - reusing existing images")
 
     # Discover all supported files
     files = discover_files(folder_path)
@@ -143,12 +147,18 @@ def process_folder(
 
     # Generate PDF
     logger.info(f"Generating PDF: {pdf_output}")
+    
+    # Add image reuse flag to metadata
+    pdf_metadata = merged_content["metadata"].copy()
+    if skip_image_generation:
+        pdf_metadata["skip_image_generation"] = True
+    
     pdf_result = run_workflow(
         input_path=merged_content["temp_file"],
         output_format="pdf",
         output_path=str(pdf_output),
         llm_service=llm_service,
-        metadata=merged_content["metadata"]
+        metadata=pdf_metadata
     )
 
     pdf_path = None
@@ -161,12 +171,18 @@ def process_folder(
 
     # Generate PPTX
     logger.info(f"Generating PPTX: {pptx_output}")
+    
+    # Add image reuse flag to metadata
+    pptx_metadata = merged_content["metadata"].copy()
+    if skip_image_generation:
+        pptx_metadata["skip_image_generation"] = True
+    
     pptx_result = run_workflow(
         input_path=merged_content["temp_file"],
         output_format="pptx",
         output_path=str(pptx_output),
         llm_service=llm_service,
-        metadata=merged_content["metadata"]
+        metadata=pptx_metadata
     )
 
     pptx_path = None
@@ -230,6 +246,12 @@ Examples:
         default=None,
         help="Path to log file (optional)"
     )
+    
+    parser.add_argument(
+        "--skip-images",
+        action="store_true",
+        help="Skip image generation and reuse existing images"
+    )
 
     args = parser.parse_args()
 
@@ -266,7 +288,8 @@ Examples:
             folder_path=folder_path,
             output_dir=output_dir,
             llm_service=llm_service,
-            verbose=args.verbose
+            verbose=args.verbose,
+            skip_image_generation=args.skip_images
         )
 
         # Report results

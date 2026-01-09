@@ -81,9 +81,9 @@ llm:
   claude_model: "claude-sonnet-4-20250514"  # Claude Sonnet 4.5
   claude_max_tokens: 4000
   claude_temperature: 0.3
-  use_claude_for_visuals: true
+  use_claude_for_visuals: false  # DISABLED - using Gemini images only
 
-# SVG generation settings
+# SVG generation settings (DISABLED - using Gemini images)
 svg:
   default_width: 800
   default_height: 500
@@ -103,3 +103,27 @@ svg:
     external: "#D76B38"
     infrastructure: "#5C946E"
     default: "#3A7CA5"
+
+# Image generation settings (Gemini-based)
+image_generation:
+  # Provider: "gemini" for Gemini images only (no SVG)
+  default_provider: "gemini"
+  
+  # Gemini Imagen settings
+  gemini_model: "imagen-3.0-generate-001"
+  gemini_rate_limit: 20  # images per minute
+  gemini_request_delay: 3.0  # seconds between requests
+  
+  # Image storage and embedding
+  images_dir: "src/output/images"
+  embed_in_pdf: true
+  embed_in_pptx: false
+  
+  # Auto-detection options (what types to generate)
+  enable_decorative_headers: true
+  enable_infographics: true
+  enable_diagrams: false  # DISABLED - diagrams would use SVG
+  
+  # Image quality settings
+  default_width: 1024
+  default_height: 768

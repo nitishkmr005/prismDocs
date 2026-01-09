@@ -369,7 +369,7 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
             else:  # OpenAI
                 response = self.content_client.chat.completions.create(
                     model=self.content_model,
-                    max_tokens=100,
+                    max_completion_tokens=100,
                     temperature=0.3,
                     messages=[{"role": "user", "content": prompt}]
                 )
@@ -397,7 +397,7 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
         else:  # OpenAI
             response = self.content_client.chat.completions.create(
                 model=self.content_model,
-                max_tokens=max_tokens,
+                max_completion_tokens=max_tokens,
                 temperature=self.settings.llm.content_temperature,
                 messages=[
                     {"role": "system", "content": self._get_system_prompt()},
@@ -709,7 +709,7 @@ Generate the blog post middle sections:"""
             else:  # OpenAI fallback
                 response = self.visual_client.chat.completions.create(
                     model=self.visual_model,
-                    max_tokens=2000,
+                    max_completion_tokens=2000,
                     temperature=self.settings.llm.svg_temperature,
                     response_format={"type": "json_object"},
                     messages=[

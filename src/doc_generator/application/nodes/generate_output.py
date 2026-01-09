@@ -56,6 +56,14 @@ def generate_output_node(state: WorkflowState) -> WorkflowState:
 
         state["output_path"] = str(output_path)
 
+        # Cache structured content for future use
+        metadata = state.get("metadata", {})
+        if metadata.get("cache_content", False):
+            from ...utils.content_cache import save_structured_content
+            input_path = state.get("input_path", "")
+            if input_path:
+                save_structured_content(state["structured_content"], input_path)
+
         logger.info(f"Generated output: {output_path}")
 
     except GenerationError as e:

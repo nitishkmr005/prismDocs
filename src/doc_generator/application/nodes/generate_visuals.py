@@ -164,6 +164,12 @@ def generate_visuals_node(state: WorkflowState) -> WorkflowState:
         Updated state with generated visualization paths mapped to marker IDs
     """
     try:
+        # Check if SVG generation is enabled
+        settings = get_settings()
+        if not settings.llm.use_claude_for_visuals:
+            logger.info("SVG generation disabled (use_claude_for_visuals=false), skipping")
+            return state
+        
         structured_content = state.get("structured_content", {})
         markdown_content = structured_content.get("markdown", "")
         visual_markers = structured_content.get("visual_markers", [])
@@ -173,7 +179,6 @@ def generate_visuals_node(state: WorkflowState) -> WorkflowState:
             return state
 
         # Get output directory for SVG files from settings
-        settings = get_settings()
         output_dir = settings.generator.visuals_dir
         output_dir.mkdir(parents=True, exist_ok=True)
 

@@ -309,6 +309,11 @@ class PDFGenerator:
                 marker_title = content_item.get("title", "")
                 marker_desc = content_item.get("description", "")
                 
+                # Skip SVG processing if disabled
+                if not self.settings.llm.use_claude_for_visuals:
+                    logger.debug(f"SVG generation disabled, skipping visual marker: {marker_title}")
+                    continue
+                
                 logger.debug(f"Processing visual marker: {marker_type} - {marker_title}")
                 
                 # Find matching visualization
@@ -393,30 +398,32 @@ class PDFGenerator:
 
         # Add any remaining visualizations that weren't placed inline
         # (from LLM suggestions or figure parsing fallback)
-        remaining_visuals = [
-            v for v in visualizations 
-            if v.get("marker_id", v.get("title", "")) not in used_visualizations
-        ]
-        
-        if remaining_visuals:
-            story.append(Spacer(1, 20))
-            story.append(make_banner("Additional Diagrams", self.styles))
-            story.append(Spacer(1, 12))
+        # Skip if SVG generation is disabled
+        if self.settings.llm.use_claude_for_visuals:
+            remaining_visuals = [
+                v for v in visualizations 
+                if v.get("marker_id", v.get("title", "")) not in used_visualizations
+            ]
+            
+            if remaining_visuals:
+                story.append(Spacer(1, 20))
+                story.append(make_banner("Additional Diagrams", self.styles))
+                story.append(Spacer(1, 12))
 
-            for visual in remaining_visuals:
-                vis_title = visual.get("title", "Visualization")
-                svg_path = visual.get("path", "")
+                for visual in remaining_visuals:
+                    vis_title = visual.get("title", "Visualization")
+                    svg_path = visual.get("path", "")
 
-                if svg_path:
-                    svg_path = Path(svg_path)
-                    if svg_path.exists():
-                        # Rasterize SVG to PNG for PDF embedding
-                        png_path = rasterize_svg(svg_path, self.image_cache)
-                        if png_path:
-                            story.extend(make_image_flowable(vis_title, png_path, self.styles))
-                            story.append(Spacer(1, 8))
-                            vis_type = visual.get("type", "diagram")
-                            logger.debug(f"Added remaining {vis_type} to PDF: {vis_title}")
+                    if svg_path:
+                        svg_path = Path(svg_path)
+                        if svg_path.exists():
+                            # Rasterize SVG to PNG for PDF embedding
+                            png_path = rasterize_svg(svg_path, self.image_cache)
+                            if png_path:
+                                story.extend(make_image_flowable(vis_title, png_path, self.styles))
+                                story.append(Spacer(1, 8))
+                                vis_type = visual.get("type", "diagram")
+                                logger.debug(f"Added remaining {vis_type} to PDF: {vis_title}")
 
         # Build PDF
         element_count = len(story)
