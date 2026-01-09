@@ -1,119 +1,53 @@
 # Claude Code Instructions
 
-## Table of Contents
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Code Style](#code-style)
-- [Documentation](#documentation)
-- [Configuration](#configuration)
-- [Development](#development)
+## Commands
+```bash
+make setup      # First-time setup (creates venv, installs deps)
+make run        # Run the application
+make test       # Run tests
+make lint       # Format + lint check
+make all        # lint + test + build
+```
 
 ## Architecture
+Three-layer clean architecture: `Domain → Application → Infrastructure`
+- Domain: Zero external dependencies (pure business logic)
+- Application: Orchestrates domain (use cases)
+- Infrastructure: External connections (API, DB, LLM)
 
-**Three-Layer Clean Architecture** with strict dependency rules:
-
+## Project Layout
 ```
-Domain (Core Logic)
-  ↑
-Application (Use Cases)
-  ↑
-Infrastructure (External)
-```
-
-**Dependency Rules:**
-- Domain: ⛔ Zero dependencies on other layers
-- Application: ✅ Domain only
-- Infrastructure: ✅ Application + Domain
-
-**Think of it like building blocks:** Domain is the foundation (pure business logic), Application stacks on top (orchestration), Infrastructure wraps around (external connections).
-
-## Project Structure
-
-```
-src/{project_name}/
-├── domain/          # Core logic (memory, prompts, tools)
-├── application/     # Services (chat, evaluation, ingest)
-└── infrastructure/  # External (API, DB, LLM, monitoring)
-
-tests/              # All test files here
-docs/               # All documentation except README/QUICKSTART
+src/{project}/domain|application|infrastructure/
+tests/           # All tests (mirrors src/ structure)
+docs/            # Extended docs (see docs/README.md for index)
 ```
 
-## Code Style
+## Key Files
+- `pyproject.toml`: All dependencies (use `uv`, pin versions)
+- `Makefile`: Single entry point for all commands
+- `.env`: Secrets (never commit, use `.env.example`)
+- `tests/conftest.py`: Shared fixtures
 
-**Naming:**
-- Variables/Functions: `snake_case` → `process_data()`
-- Classes: `PascalCase` → `ChatService`
-- Constants: `UPPER_SNAKE_CASE` → `MAX_TOKENS`
-
-**Organization:**
+## Code Conventions
+- Linting handled by pre-commit hooks (ruff/biome) - no manual style enforcement
+- Use `loguru` for logging, never `print()`
 - One responsibility per module
-- Reusable code → `utils/` folder
-- Use `loguru` for logging (never `print()`)
-- Descriptive names (no abbreviations)
+- Reference patterns: see `src/{project}/domain/` for examples
 
 ## Documentation
+- Root: `README.md` only (objective, setup, run, structure)
+- Extended docs: `docs/` with index
+- Docstrings: Google style, required for public APIs
 
-**Every `.md` file starts with Table of Contents**
+## Workflow
+1. Read relevant files before changes (use `file:line` references)
+2. Simplest working version first
+3. Run `make lint` after code changes
+4. Run `make test` before committing
+5. One end-to-end test minimum
 
-**Docstrings required** for all functions/classes:
-```python
-def process_documents(file_path: str, batch_size: int = 10) -> list[str]:
-    """
-    Process documents from file in batches.
-    
-    Args:
-        file_path: Path to input file
-        batch_size: Documents per batch
-        
-    Returns:
-        List of processed document IDs
-    """
-```
-
-**README.md must include:**
-1. Title & Objective
-2. Implementation Plan
-3. Input Data format
-4. Tech Stack
-5. Output Format (with examples)
-6. Setup Instructions
-7. Run Instructions
-8. Project Structure
-
-**Documentation placement:**
-- Root: Only `README.md` + `QUICKSTART.md`
-- Everything else: `docs/` subfolders
-
-## Configuration
-
-**Required files:**
-- `docker-compose.yaml`
-- `Dockerfile`
-- `pyproject.toml` (dependencies here, not requirements.txt)
-- `Makefile` (setup, lint, test automation)
-- `tests/conftest.py` (shared fixtures)
-
-**Environment:**
-- Package manager: `uv`
-- Secrets: `.env` file
-- Validation: Pydantic Settings
-- ⛔ Never hardcode API keys
-- Pin exact dependency versions
-
-## Development
-
-**Workflow:**
-1. Start with simplest working version
-2. Build modular, testable components
-3. Avoid premature abstraction
-4. Keep performance high (low latency)
-5. One end-to-end test in `tests/`
-
-**Best Practices:**
-- Use pre-commit hooks
-- Remove unused imports
-- Profile before optimizing
-- Update README with every change
-
-**Core Principle:** Simplicity > Complexity. Make it work, make it testable, make it clear.
+## Principles
+- Simplicity over complexity
+- No premature abstraction
+- Delete unused code (no backwards-compat hacks)
+- Evidence before assertions (run tests, don't assume)
