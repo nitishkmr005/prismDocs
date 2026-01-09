@@ -27,10 +27,7 @@ Skills are:
 |---------|--------|---------|
 | commit | `/commit` | Create git commit |
 | five-whys | `/five-whys` | Root cause analysis |
-| lecture-to-blog | `/lecture-to-blog` | Convert lecture to blog post |
-| reflect | `/reflect` | Session reflection |
-| requirements | `/requirements` | Requirements gathering |
-| review-article | `/review-article` | Review blog article |
+| retro | `/retro` | Create retrospective |
 | save-prompt | `/save-prompt` | Save prompt to file |
 
 ### Workflow Commands (`.claude/commands/`)
@@ -41,7 +38,6 @@ Skills are:
 | session-end | `/session-end` | Update status, optional retro |
 | update-status | `/update-status` | Update STATUS.md |
 | retro | `/retro` | Create retrospective |
-| create-issues | `/create-issues` | Milestones → GitHub issues |
 | new-milestone | `/new-milestone` | Add milestone template |
 
 ## Using Skills

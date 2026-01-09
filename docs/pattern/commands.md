@@ -49,9 +49,21 @@
 | --- | --- | --- |
 | 1 | `/session-start` | Use when resuming previous work |
 | 2 | `/brainstorm` | Create initial `spec.md` |
-| 3 | `/status` | Check current status if needed |
-| 4 | `/agent` or `/subagent` | Delegate if multi-agent work |
-| 5 | Work phase | Implement changes, update docs, run tests |
-| 6 | `/update-status` | Update `docs/project/STATUS.md` |
-| 7 | `/retro` | Update `docs/learnings/YYYY-MM-DD-retro.md` |
-| 8 | `/session-end` | Wrap up, optionally run updates |
+| 3 | `/agent` or `/subagent` | Delegate if multi-agent work |
+| 4 | Work phase | Implement changes, update docs, run tests |
+| 5 | `/update-status` | Update `docs/project/STATUS.md` |
+| 6 | `/retro` | Update `docs/learnings/YYYY-MM-DD-retro.md` |
+| 7 | `/session-end` | Wrap up, optionally run updates |
+
+## Recommendations
+
+| Area | Recommendation | Benefit |
+| --- | --- | --- |
+| Scope | Keep tasks small and time-boxed | Faster feedback and cleaner status updates |
+| Status | Update `docs/project/STATUS.md` every session | Avoids lost context |
+| Branching | Use one branch per task | Easier review and rollback |
+| Worktrees | Use worktrees for parallel work | Fewer context switches |
+| Testing | Run quick tests before commits | Catch regressions early |
+| Docs | Capture decisions in `docs/project/DECISIONS.md` | Maintains rationale |
+| Retros | Add patterns to `docs/learnings/` | Compounds learnings |
+| Remote | Push frequently | Backup and collaboration ready |
