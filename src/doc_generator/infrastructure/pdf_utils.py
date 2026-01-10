@@ -32,17 +32,21 @@ from reportlab.platypus import (
 
 from ..utils.markdown_utils import strip_frontmatter  # noqa: F401
 
-# Color palette (migrated from build_transformer_pdf.py lines 33-43)
+# Corporate-ready color palette - Modern, professional styling
 PALETTE = {
-    "ink": colors.HexColor("#1C1C1C"),
-    "muted": colors.HexColor("#4A4A4A"),
-    "paper": colors.HexColor("#F6F1E7"),
-    "panel": colors.HexColor("#FFFDF8"),
-    "accent": colors.HexColor("#D76B38"),
-    "teal": colors.HexColor("#1E5D5A"),
-    "line": colors.HexColor("#E2D7C9"),
-    "code": colors.HexColor("#F2EEE7"),
-    "table": colors.HexColor("#F8F4ED"),
+    "ink": colors.HexColor("#1a1a2e"),         # Deep navy for text
+    "muted": colors.HexColor("#4a5568"),       # Sophisticated gray
+    "paper": colors.HexColor("#fafafa"),       # Clean white background
+    "panel": colors.HexColor("#f7fafc"),       # Light panel
+    "accent": colors.HexColor("#2563eb"),      # Professional blue
+    "accent_light": colors.HexColor("#3b82f6"), # Lighter blue for highlights
+    "teal": colors.HexColor("#0d9488"),        # Modern teal
+    "line": colors.HexColor("#e2e8f0"),        # Subtle dividers
+    "code": colors.HexColor("#f1f5f9"),        # Code background
+    "table": colors.HexColor("#f8fafc"),       # Table background
+    "success": colors.HexColor("#10b981"),     # Green for positive
+    "warning": colors.HexColor("#f59e0b"),     # Amber for warnings
+    "mermaid_bg": colors.HexColor("#eef2ff"),  # Light blue for diagrams
 }
 
 
@@ -355,15 +359,26 @@ def rasterize_svg(svg_path: Path, image_cache: Path) -> Path | None:
         return None
 
 
+# Global figure counter for image numbering
+_figure_counter = 0
+
+
+def reset_figure_counter():
+    """Reset the global figure counter for a new document."""
+    global _figure_counter
+    _figure_counter = 0
+
+
 def make_image_flowable(
     alt: str,
     image_path: Path,
     styles: dict,
     max_width: float = 6.9 * inch,
-    max_height: float = 4.4 * inch
+    max_height: float = 4.4 * inch,
+    add_figure_number: bool = True
 ) -> list:
     """
-    Create image flowable with caption.
+    Create image flowable with professional caption.
 
     Args:
         alt: Alt text / caption
@@ -371,10 +386,13 @@ def make_image_flowable(
         styles: ReportLab styles dictionary
         max_width: Maximum image width
         max_height: Maximum image height
+        add_figure_number: Whether to add "Figure X:" prefix
 
     Returns:
         List of flowables (Image + caption + spacer)
     """
+    global _figure_counter
+
     if not image_path.exists():
         logger.warning(f"Image not found: {image_path}")
         return [Paragraph(f"Image placeholder: {inline_md(alt)}", styles["ImageCaption"])]
@@ -386,8 +404,17 @@ def make_image_flowable(
     render_h = height_px * scale
 
     flow = [Image(str(image_path), width=render_w, height=render_h)]
-    flow.append(Paragraph(inline_md(alt), styles["ImageCaption"]))
-    flow.append(Spacer(1, 6))
+
+    # Generate professional caption with figure number
+    if add_figure_number:
+        _figure_counter += 1
+        # Create a more descriptive caption
+        caption_text = f"<b>Figure {_figure_counter}:</b> {inline_md(alt)}"
+    else:
+        caption_text = inline_md(alt)
+
+    flow.append(Paragraph(caption_text, styles["ImageCaption"]))
+    flow.append(Spacer(1, 10))
 
     return flow
 
@@ -486,15 +513,49 @@ def make_mermaid_flowable(
         mmdc_path: Path to mermaid CLI (optional)
 
     Returns:
-        List of flowables (Image + spacer or placeholder)
+        List of flowables (Image + spacer or styled code block)
     """
     rendered = render_mermaid(mermaid_text, image_cache, mmdc_path)
 
     if not rendered:
-        return [
-            Paragraph("Mermaid diagram (rendering not available)", styles["ImageCaption"]),
-            Spacer(1, 6)
-        ]
+        # Show mermaid code in a styled diagram box instead of generic placeholder
+        flow = []
+
+        # Header for the diagram box
+        header = Table(
+            [[Paragraph("<b>Diagram</b>", styles["ImageCaption"])]],
+            colWidths=[6.9 * inch]
+        )
+        header.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), PALETTE["accent"]),
+            ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ]))
+        flow.append(header)
+
+        # Show a preview of the mermaid code (truncated for display)
+        preview_lines = mermaid_text.strip().split('\n')[:8]
+        if len(mermaid_text.strip().split('\n')) > 8:
+            preview_lines.append("...")
+        preview_text = '\n'.join(preview_lines)
+
+        code_block = Preformatted(preview_text, styles["CodeBlock"])
+        code_table = Table([[code_block]], colWidths=[6.9 * inch])
+        code_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), PALETTE["mermaid_bg"]),
+            ("BOX", (0, 0), (-1, -1), 0.8, PALETTE["line"]),
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ]))
+        flow.append(code_table)
+        flow.append(Spacer(1, 12))
+
+        return flow
 
     img = ImageReader(str(rendered))
     width_px, height_px = img.getSize()
@@ -573,24 +634,25 @@ def create_custom_styles() -> dict:
     """
     Create custom ReportLab styles for PDF generation.
 
-    Blog-like styling with larger typography, more whitespace,
-    and improved readability.
+    Corporate-ready styling with professional typography, balanced whitespace,
+    and excellent readability for executive presentations.
 
     Returns:
         Dictionary of custom ParagraphStyle objects
     """
     styles = getSampleStyleSheet()
 
-    # Title styles - Blog-like hero header
+    # Title styles - Professional corporate header
     styles.add(ParagraphStyle(
         name="TitleCover",
         parent=styles["Title"],
-        fontName="Times-Bold",
-        fontSize=36,
-        leading=44,
+        fontName="Helvetica-Bold",
+        fontSize=32,
+        leading=40,
         textColor=PALETTE["ink"],
-        spaceAfter=12,
-        spaceBefore=24,
+        spaceAfter=16,
+        spaceBefore=32,
+        alignment=0,  # Left align for corporate look
     ))
 
     styles.add(ParagraphStyle(
@@ -607,41 +669,42 @@ def create_custom_styles() -> dict:
     styles.add(ParagraphStyle(
         name="TOCHeading",
         parent=styles["Heading1"],
-        fontName="Times-Bold",
-        fontSize=20,
-        leading=28,
-        textColor=PALETTE["teal"],
+        fontName="Helvetica-Bold",
+        fontSize=18,
+        leading=24,
+        textColor=PALETTE["accent"],
         spaceBefore=24,
-        spaceAfter=16,
+        spaceAfter=12,
     ))
 
     styles.add(ParagraphStyle(
         name="TOCEntry",
         parent=styles["BodyText"],
         fontName="Helvetica",
-        fontSize=12,
-        leading=20,
+        fontSize=11,
+        leading=18,
         textColor=PALETTE["ink"],
         leftIndent=12,
-        spaceAfter=6,
+        spaceAfter=4,
     ))
 
-    # Section banner - Blog-style section divider
+    # Section banner - Corporate section header
     styles.add(ParagraphStyle(
         name="SectionBanner",
         parent=styles["BodyText"],
         fontName="Helvetica-Bold",
-        fontSize=14,
+        fontSize=13,
         leading=18,
+        textColor=colors.white,
     ))
 
-    # Heading styles - Blog-like larger headings with more space
+    # Heading styles - Clean corporate headings
     styles.add(ParagraphStyle(
         name="Heading2Custom",
         parent=styles["Heading2"],
-        fontName="Times-Bold",
-        fontSize=24,
-        leading=32,
+        fontName="Helvetica-Bold",
+        fontSize=22,
+        leading=28,
         textColor=PALETTE["ink"],
         spaceBefore=24,
         spaceAfter=12,
@@ -650,82 +713,86 @@ def create_custom_styles() -> dict:
     styles.add(ParagraphStyle(
         name="Heading3Custom",
         parent=styles["Heading3"],
-        fontName="Times-Bold",
-        fontSize=18,
-        leading=24,
-        textColor=PALETTE["ink"],
-        spaceBefore=16,
+        fontName="Helvetica-Bold",
+        fontSize=16,
+        leading=22,
+        textColor=PALETTE["accent"],
+        spaceBefore=18,
         spaceAfter=8,
     ))
 
-    # Body text - Blog-like readable body
+    # Body text - Professional readable body
     styles.add(ParagraphStyle(
         name="BodyCustom",
         parent=styles["BodyText"],
         fontName="Helvetica",
-        fontSize=12,
-        leading=20,
+        fontSize=11,
+        leading=18,
         textColor=PALETTE["muted"],
-        spaceAfter=12,
+        spaceAfter=10,
+        alignment=4,  # Justify for professional look
     ))
 
-    # Bullets - Larger for readability
+    # Bullets - Clean corporate bullets
     styles.add(ParagraphStyle(
         name="BulletCustom",
         parent=styles["BodyText"],
         fontName="Helvetica",
-        fontSize=12,
-        leading=20,
-        leftIndent=20,
-        bulletIndent=8,
-        spaceAfter=8,
+        fontSize=11,
+        leading=18,
+        leftIndent=24,
+        bulletIndent=12,
+        spaceAfter=6,
         textColor=PALETTE["muted"],
     ))
 
-    # Code block - Blog-style with better readability
+    # Code block - Professional code styling
     styles.add(ParagraphStyle(
         name="CodeBlock",
         parent=styles["BodyText"],
         fontName="Courier",
-        fontSize=10,
-        leading=14,
+        fontSize=9,
+        leading=13,
         leftIndent=8,
         rightIndent=8,
-        spaceAfter=12,
+        spaceAfter=10,
         textColor=PALETTE["ink"],
     ))
 
-    # Image caption - Blog-style centered caption
+    # Image caption - Professional centered caption
     styles.add(ParagraphStyle(
         name="ImageCaption",
         parent=styles["BodyText"],
-        fontName="Helvetica-Oblique",
-        fontSize=11,
-        leading=16,
+        fontName="Helvetica",
+        fontSize=10,
+        leading=14,
         textColor=PALETTE["muted"],
         alignment=1,  # Center
-        spaceAfter=16,
+        spaceAfter=14,
+        spaceBefore=4,
     ))
 
-    # Quote - Blog-style blockquote
+    # Quote - Professional blockquote with accent
     styles.add(ParagraphStyle(
         name="Quote",
         parent=styles["BodyText"],
-        fontName="Times-Italic",
-        fontSize=14,
-        leading=22,
+        fontName="Helvetica-Oblique",
+        fontSize=12,
+        leading=20,
         textColor=PALETTE["ink"],
-        leftIndent=20,
-        rightIndent=20,
+        leftIndent=24,
+        rightIndent=24,
+        borderColor=PALETTE["accent"],
+        borderPadding=8,
     ))
 
-    # Table cell - Blog-style readable tables
+    # Table cell - Professional table styling
     styles.add(ParagraphStyle(
         name="TableCell",
         parent=styles["BodyText"],
         fontName="Helvetica",
-        fontSize=11,
-        leading=16,
+        fontSize=10,
+        leading=14,
         textColor=PALETTE["ink"],
     ))
 
@@ -734,11 +801,23 @@ def create_custom_styles() -> dict:
         name="HeroCaption",
         parent=styles["BodyText"],
         fontName="Helvetica-Bold",
-        fontSize=12,
-        leading=18,
+        fontSize=11,
+        leading=16,
         textColor=PALETTE["accent"],
         alignment=1,  # Center
-        spaceAfter=24,
+        spaceAfter=20,
+    ))
+
+    # Key Takeaways style
+    styles.add(ParagraphStyle(
+        name="KeyTakeaway",
+        parent=styles["BodyText"],
+        fontName="Helvetica-Bold",
+        fontSize=11,
+        leading=18,
+        textColor=PALETTE["ink"],
+        leftIndent=16,
+        spaceAfter=8,
     ))
 
     return styles

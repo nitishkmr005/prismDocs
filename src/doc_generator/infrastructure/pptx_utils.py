@@ -13,18 +13,20 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches, Pt
 
-# Blog-style color theme - Modern and approachable
+# Corporate-ready color theme - Professional and polished
 THEME_COLORS = {
-    "ink": RGBColor(28, 28, 28),         # Rich black for text
-    "muted": RGBColor(74, 74, 74),       # Softer gray
-    "accent": RGBColor(215, 107, 56),    # Warm orange (blog-like)
-    "accent_dark": RGBColor(180, 85, 45),  # Darker orange
-    "teal": RGBColor(30, 93, 90),        # Deep teal
-    "success": RGBColor(92, 148, 110),   # Soft green
-    "warning": RGBColor(241, 143, 1),    # Warm amber
+    "ink": RGBColor(26, 26, 46),          # Deep navy for text
+    "muted": RGBColor(74, 85, 104),       # Sophisticated gray
+    "accent": RGBColor(37, 99, 235),      # Professional blue
+    "accent_dark": RGBColor(29, 78, 216), # Darker blue
+    "teal": RGBColor(13, 148, 136),       # Modern teal
+    "success": RGBColor(16, 185, 129),    # Green for positive
+    "warning": RGBColor(245, 158, 11),    # Amber for warnings
     "background": RGBColor(255, 255, 255),
-    "light_bg": RGBColor(246, 241, 231),  # Warm paper background (blog-like)
-    "dark_bg": RGBColor(30, 93, 90),      # Teal background for contrast
+    "light_bg": RGBColor(248, 250, 252),  # Clean white background
+    "dark_bg": RGBColor(30, 41, 59),      # Slate background for contrast
+    "gradient_start": RGBColor(37, 99, 235),  # Blue gradient start
+    "gradient_end": RGBColor(13, 148, 136),   # Teal gradient end
 }
 
 
@@ -45,9 +47,9 @@ def create_presentation() -> Presentation:
 
 def add_title_slide(prs: Presentation, title: str, subtitle: str = "") -> None:
     """
-    Add blog-style title slide to presentation.
+    Add corporate-style title slide to presentation.
 
-    Features a warm, modern design with large typography.
+    Features a clean, professional design with modern typography.
 
     Args:
         prs: Presentation object
@@ -57,61 +59,71 @@ def add_title_slide(prs: Presentation, title: str, subtitle: str = "") -> None:
     slide_layout = prs.slide_layouts[6]  # Blank layout for custom design
     slide = prs.slides.add_slide(slide_layout)
 
-    # Set warm paper background for blog-like feel
+    # Clean white background for corporate feel
     background = slide.background
     fill = background.fill
     fill.solid()
-    fill.fore_color.rgb = THEME_COLORS["light_bg"]
+    fill.fore_color.rgb = THEME_COLORS["background"]
 
-    # Add accent bar at top (thicker for blog style)
+    # Accent bar at top (thin for professional look)
     accent_bar = slide.shapes.add_shape(
         1,  # Rectangle
         Inches(0), Inches(0),
-        prs.slide_width, Inches(0.2)
+        prs.slide_width, Inches(0.12)
     )
     accent_bar.fill.solid()
     accent_bar.fill.fore_color.rgb = THEME_COLORS["accent"]
     accent_bar.line.fill.background()
 
-    # Title - large, dark, centered (blog-like)
+    # Left accent bar for visual interest
+    left_bar = slide.shapes.add_shape(
+        1,  # Rectangle
+        Inches(0.4), Inches(1.3),
+        Inches(0.08), Inches(2.5)
+    )
+    left_bar.fill.solid()
+    left_bar.fill.fore_color.rgb = THEME_COLORS["accent"]
+    left_bar.line.fill.background()
+
+    # Title - large, professional, left-aligned
     title_box = slide.shapes.add_textbox(
-        Inches(0.5), Inches(1.5),
-        Inches(9), Inches(2)
+        Inches(0.7), Inches(1.4),
+        Inches(8.5), Inches(2)
     )
     tf = title_box.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = title
-    p.font.size = Pt(54)
+    p.font.size = Pt(44)
     p.font.color.rgb = THEME_COLORS["ink"]
     p.font.bold = True
-    p.alignment = PP_ALIGN.CENTER
+    p.alignment = PP_ALIGN.LEFT
 
     # Subtitle
     if subtitle:
         subtitle_box = slide.shapes.add_textbox(
-            Inches(0.5), Inches(3.6),
-            Inches(9), Inches(0.8)
+            Inches(0.7), Inches(3.4),
+            Inches(8.5), Inches(0.8)
         )
         tf = subtitle_box.text_frame
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.text = subtitle
-        p.font.size = Pt(22)
+        p.font.size = Pt(18)
         p.font.color.rgb = THEME_COLORS["muted"]
-        p.alignment = PP_ALIGN.CENTER
+        p.alignment = PP_ALIGN.LEFT
 
-    # Bottom accent line (centered)
+    # Bottom accent line (left-aligned for corporate look)
     bottom_line = slide.shapes.add_shape(
         1,  # Rectangle
-        Inches(4), Inches(4.8),
-        Inches(2), Inches(0.06)
+        Inches(0.7), Inches(4.6),
+        Inches(3), Inches(0.04)
     )
     bottom_line.fill.solid()
-    bottom_line.fill.fore_color.rgb = THEME_COLORS["accent"]
+    bottom_line.fill.fore_color.rgb = THEME_COLORS["teal"]
     bottom_line.line.fill.background()
 
-    logger.debug(f"Added blog-style title slide: {title}")
+    logger.debug(f"Added corporate title slide: {title}")
 
 
 def add_content_slide(
@@ -122,9 +134,9 @@ def add_content_slide(
     speaker_notes: str = ""
 ) -> None:
     """
-    Add blog-style content slide with title and bullet points.
+    Add corporate-style content slide with title and bullet points.
 
-    Features warm background and larger, more readable typography.
+    Features clean design with professional typography and spacing.
 
     Args:
         prs: Presentation object
@@ -136,33 +148,43 @@ def add_content_slide(
     slide_layout = prs.slide_layouts[6]  # Blank for custom styling
     slide = prs.slides.add_slide(slide_layout)
 
-    # Add accent bar at top (blog-style)
+    # Add thin accent bar at top
     accent_bar = slide.shapes.add_shape(
         1,  # Rectangle
         Inches(0), Inches(0),
-        prs.slide_width, Inches(0.1)
+        prs.slide_width, Inches(0.06)
     )
     accent_bar.fill.solid()
     accent_bar.fill.fore_color.rgb = THEME_COLORS["accent"]
     accent_bar.line.fill.background()
 
-    # Title with left-aligned blog style (larger)
+    # Title with left-aligned corporate style
     title_box = slide.shapes.add_textbox(
-        Inches(0.6), Inches(0.35),
-        Inches(8.8), Inches(0.9)
+        Inches(0.5), Inches(0.3),
+        Inches(9), Inches(0.8)
     )
     tf = title_box.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = title
-    p.font.size = Pt(36)
+    p.font.size = Pt(32)
     p.font.color.rgb = THEME_COLORS["ink"]
     p.font.bold = True
 
-    # Content area (blog-style with more spacing)
+    # Underline for title
+    title_line = slide.shapes.add_shape(
+        1,  # Rectangle
+        Inches(0.5), Inches(1.1),
+        Inches(1.5), Inches(0.03)
+    )
+    title_line.fill.solid()
+    title_line.fill.fore_color.rgb = THEME_COLORS["accent"]
+    title_line.line.fill.background()
+
+    # Content area (corporate-style with professional spacing)
     content_box = slide.shapes.add_textbox(
-        Inches(0.6), Inches(1.4),
-        Inches(8.8), Inches(3.8)
+        Inches(0.5), Inches(1.3),
+        Inches(9), Inches(3.9)
     )
     tf = content_box.text_frame
     tf.word_wrap = True
@@ -178,14 +200,14 @@ def add_content_slide(
 
         if is_bullets:
             p.text = f"•  {clean_item}"
-            p.font.size = Pt(22)
+            p.font.size = Pt(20)
             p.font.color.rgb = THEME_COLORS["ink"]
-            p.space_after = Pt(16)
+            p.space_after = Pt(14)
         else:
             p.text = clean_item
-            p.font.size = Pt(20)
+            p.font.size = Pt(18)
             p.font.color.rgb = THEME_COLORS["muted"]
-            p.space_after = Pt(14)
+            p.space_after = Pt(12)
 
     # Add speaker notes if provided
     if speaker_notes:
@@ -193,12 +215,12 @@ def add_content_slide(
         notes_tf = notes_slide.notes_text_frame
         notes_tf.text = speaker_notes
 
-    logger.debug(f"Added blog-style content slide: {title} ({len(content)} items)")
+    logger.debug(f"Added corporate content slide: {title} ({len(content)} items)")
 
 
 def add_section_header_slide(prs: Presentation, section_title: str) -> None:
     """
-    Add blog-style section header slide with warm teal background.
+    Add corporate-style section header slide with professional dark background.
 
     Args:
         prs: Presentation object
@@ -207,46 +229,56 @@ def add_section_header_slide(prs: Presentation, section_title: str) -> None:
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
 
-    # Warm teal background (blog-like)
+    # Professional dark slate background
     background = slide.background
     fill = background.fill
     fill.solid()
     fill.fore_color.rgb = THEME_COLORS["dark_bg"]
 
-    # Accent bar on left side (thicker for blog style)
+    # Accent bar on left side
     accent_bar = slide.shapes.add_shape(
         1,  # Rectangle
         Inches(0), Inches(0),
-        Inches(0.2), prs.slide_height
+        Inches(0.15), prs.slide_height
     )
     accent_bar.fill.solid()
     accent_bar.fill.fore_color.rgb = THEME_COLORS["accent"]
     accent_bar.line.fill.background()
 
-    # Section indicator (decorative line)
+    # Section indicator line
     indicator = slide.shapes.add_shape(
         1,  # Rectangle
-        Inches(0.6), Inches(2.3),
-        Inches(1.5), Inches(0.06)
+        Inches(0.5), Inches(2.2),
+        Inches(2), Inches(0.04)
     )
     indicator.fill.solid()
     indicator.fill.fore_color.rgb = THEME_COLORS["accent"]
     indicator.line.fill.background()
 
-    # Section title - large and bold (blog-like)
+    # Section title - large and bold
     title_box = slide.shapes.add_textbox(
-        Inches(0.6), Inches(2.5),
+        Inches(0.5), Inches(2.4),
         Inches(9), Inches(1.5)
     )
     tf = title_box.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = section_title
-    p.font.size = Pt(48)
+    p.font.size = Pt(42)
     p.font.color.rgb = THEME_COLORS["background"]
     p.font.bold = True
 
-    logger.debug(f"Added blog-style section header: {section_title}")
+    # Bottom decorative line
+    bottom_line = slide.shapes.add_shape(
+        1,  # Rectangle
+        Inches(0.5), Inches(4.2),
+        Inches(1.5), Inches(0.03)
+    )
+    bottom_line.fill.solid()
+    bottom_line.fill.fore_color.rgb = THEME_COLORS["teal"]
+    bottom_line.line.fill.background()
+
+    logger.debug(f"Added corporate section header: {section_title}")
 
 
 def add_image_slide(
@@ -329,16 +361,16 @@ def add_executive_summary_slide(
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
 
-    # Light background with accent bar
+    # Clean white background
     background = slide.background
     fill = background.fill
     fill.solid()
-    fill.fore_color.rgb = THEME_COLORS["light_bg"]
+    fill.fore_color.rgb = THEME_COLORS["background"]
 
     # Accent bar at top
     accent_bar = slide.shapes.add_shape(
         1, Inches(0), Inches(0),
-        prs.slide_width, Inches(0.08)
+        prs.slide_width, Inches(0.06)
     )
     accent_bar.fill.solid()
     accent_bar.fill.fore_color.rgb = THEME_COLORS["accent"]
@@ -346,43 +378,63 @@ def add_executive_summary_slide(
 
     # Title
     title_box = slide.shapes.add_textbox(
-        Inches(0.6), Inches(0.3),
-        Inches(8.8), Inches(0.7)
+        Inches(0.5), Inches(0.25),
+        Inches(9), Inches(0.7)
     )
     tf = title_box.text_frame
     p = tf.paragraphs[0]
     p.text = title
-    p.font.size = Pt(32)
+    p.font.size = Pt(28)
     p.font.color.rgb = THEME_COLORS["ink"]
     p.font.bold = True
 
-    # Key points with icons/numbers
-    for i, point in enumerate(summary_points[:5]):  # Max 5 points
-        y_pos = 1.2 + i * 0.8
+    # Title underline
+    title_line = slide.shapes.add_shape(
+        1, Inches(0.5), Inches(0.9),
+        Inches(1.8), Inches(0.03)
+    )
+    title_line.fill.solid()
+    title_line.fill.fore_color.rgb = THEME_COLORS["accent"]
+    title_line.line.fill.background()
 
-        # Number indicator
+    # Key points with numbered indicators
+    for i, point in enumerate(summary_points[:5]):  # Max 5 points
+        y_pos = 1.1 + i * 0.8
+
+        # Number circle indicator
+        num_circle = slide.shapes.add_shape(
+            9,  # Oval
+            Inches(0.5), Inches(y_pos),
+            Inches(0.35), Inches(0.35)
+        )
+        num_circle.fill.solid()
+        num_circle.fill.fore_color.rgb = THEME_COLORS["accent"]
+        num_circle.line.fill.background()
+
+        # Number text
         num_box = slide.shapes.add_textbox(
-            Inches(0.6), Inches(y_pos),
-            Inches(0.5), Inches(0.5)
+            Inches(0.5), Inches(y_pos + 0.02),
+            Inches(0.35), Inches(0.35)
         )
         tf = num_box.text_frame
         p = tf.paragraphs[0]
         p.text = f"{i + 1}"
-        p.font.size = Pt(24)
-        p.font.color.rgb = THEME_COLORS["accent"]
+        p.font.size = Pt(16)
+        p.font.color.rgb = THEME_COLORS["background"]
         p.font.bold = True
+        p.alignment = PP_ALIGN.CENTER
 
         # Point text
         point_box = slide.shapes.add_textbox(
-            Inches(1.2), Inches(y_pos),
-            Inches(8.2), Inches(0.7)
+            Inches(1.0), Inches(y_pos),
+            Inches(8.4), Inches(0.7)
         )
         tf = point_box.text_frame
         tf.word_wrap = True
         p = tf.paragraphs[0]
         clean_point = point.lstrip("•-* ").strip()
         p.text = clean_point
-        p.font.size = Pt(18)
+        p.font.size = Pt(16)
         p.font.color.rgb = THEME_COLORS["ink"]
 
     logger.debug(f"Added executive summary slide: {len(summary_points)} points")

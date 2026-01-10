@@ -26,6 +26,7 @@ from ...infrastructure.pdf_utils import (
     make_table_of_contents,
     parse_markdown_lines,
     rasterize_svg,
+    reset_figure_counter,
 )
 from ...infrastructure.settings import get_settings
 from ...utils.image_utils import resolve_image_path
@@ -72,6 +73,9 @@ class PDFGenerator:
             # Ensure output directory exists
             output_dir.mkdir(parents=True, exist_ok=True)
             self.image_cache.mkdir(parents=True, exist_ok=True)
+
+            # Reset figure counter for new document
+            reset_figure_counter()
 
             # Get title for document content
             title = metadata.get("title", "document")
