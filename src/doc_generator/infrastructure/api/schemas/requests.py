@@ -93,8 +93,8 @@ class GenerateRequest(BaseModel):
         min_length=1,
     )
     provider: Provider = Provider.GEMINI
-    model: str = "gemini-3-pro-preview"
-    image_model: str = "gemini-3-pro-image-preview"
+    model: str = "gemini-2.5-flash"
+    image_model: str = "gemini-2.5-flash"
     preferences: Preferences = Field(default_factory=Preferences)
     cache: CacheOptions = Field(default_factory=CacheOptions)
 
@@ -109,8 +109,8 @@ class GenerateRequest(BaseModel):
                         {"type": "text", "content": "Raw text to include"},
                     ],
                     "provider": "gemini",
-                    "model": "gemini-3-pro-preview",
-                    "image_model": "gemini-3-pro-image-preview",
+                    "model": "gemini-2.5-flash",
+                    "image_model": "gemini-2.5-flash",
                     "preferences": {
                         "audience": "technical",
                         "image_style": "auto",
