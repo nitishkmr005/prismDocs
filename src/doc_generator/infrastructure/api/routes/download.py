@@ -41,7 +41,16 @@ def find_file(file_path: str) -> Path | None:
     return None
 
 
-@router.get("/download/{file_path:path}")
+@router.get(
+    "/download/{file_path:path}",
+    summary="Download a generated document",
+    description=(
+        "Download a generated file by its `file_path` (from the generate response). "
+        "Example: `/api/download/f_abc123/pdf/output.pdf`. The optional `token` "
+        "query param is accepted for future auth."
+    ),
+    response_description="The generated file as a streamed response.",
+)
 async def download_file(file_path: str, token: str | None = None) -> FileResponse:
     """Download a generated document.
 
@@ -92,4 +101,3 @@ async def download_file(file_path: str, token: str | None = None) -> FileRespons
         filename=found_path.name,
         media_type=media_type,
     )
-

@@ -305,6 +305,7 @@ Requirements:
 - Use clear, concise language
 - Format as bullet points
 - Each point should be 1-2 sentences max
+- Use ONLY information present in the content; do not add new facts or assumptions
 
 Content:
 {content[:8000]}
@@ -352,6 +353,7 @@ Requirements:
 - Use professional business language
 - Structure for logical flow
  - Ensure bullet points are parallel in structure and style
+- Use ONLY information from the content; do not introduce new facts or examples
 
 Content:
 {content[:8000]}
@@ -460,6 +462,7 @@ Requirements:
 - Avoid filler phrases and long sentences
 - Bullets should align to the section content and image hint
 - Provide 1-2 sentence speaker notes per slide
+- Use ONLY information from each section; do not add new facts or examples
 
 Sections:
 {chr(10).join(section_blocks)}

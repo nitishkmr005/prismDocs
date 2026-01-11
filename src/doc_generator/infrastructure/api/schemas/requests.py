@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OutputFormat(str, Enum):
@@ -96,3 +96,30 @@ class GenerateRequest(BaseModel):
     image_model: str = "gemini-3-pro-image-preview"
     preferences: Preferences = Field(default_factory=Preferences)
     cache: CacheOptions = Field(default_factory=CacheOptions)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "output_format": "pdf",
+                    "sources": [
+                        {"type": "file", "file_id": "f_abc123"},
+                        {"type": "url", "url": "https://example.com/article"},
+                        {"type": "text", "content": "Raw text to include"},
+                    ],
+                    "provider": "gemini",
+                    "model": "gemini-3-pro-preview",
+                    "image_model": "gemini-3-pro-image-preview",
+                    "preferences": {
+                        "audience": "technical",
+                        "image_style": "auto",
+                        "temperature": 0.4,
+                        "max_tokens": 8000,
+                        "max_slides": 10,
+                        "max_summary_points": 5,
+                    },
+                    "cache": {"reuse": True},
+                }
+            ]
+        }
+    )

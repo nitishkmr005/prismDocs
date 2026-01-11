@@ -19,7 +19,17 @@ def get_storage_service() -> StorageService:
     return _storage_service
 
 
-@router.post("/upload", response_model=UploadResponse)
+@router.post(
+    "/upload",
+    response_model=UploadResponse,
+    summary="Upload a source file",
+    description=(
+        "Upload a file to use as a generation source. Send a multipart form with "
+        "a single `file` field. The response includes `file_id` to reference in "
+        "`POST /api/generate`."
+    ),
+    response_description="Upload metadata including `file_id`.",
+)
 async def upload_file(file: UploadFile = File(...)) -> UploadResponse:
     """Upload a file for document generation.
 

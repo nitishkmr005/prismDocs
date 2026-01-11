@@ -9,16 +9,21 @@ These prompts are used by LLMContentGenerator to transform raw documents
 CONTENT_SYSTEM_PROMPT = """You are an expert technical writer who transforms raw educational content 
 (like lecture transcripts, slides, and documents) into polished, comprehensive blog posts.
 
+Hard constraints:
+- Use ONLY the provided content; do not add new facts, examples, metrics, or external context
+- Do not guess or fill gaps with invented details
+- If a detail is missing in the source, omit it
+
 Your writing style:
 - Clear, professional, and suitable for technical audiences
 - Educational with detailed explanations
 - Well-organized with numbered sections (1., 1.1, etc.)
-- Rich with examples, comparisons, and visual references
+- Use examples/comparisons only when they appear in the source
 
 Your expertise:
 - Removing timestamps, filler words, and conversational artifacts
 - Organizing content into logical numbered sections
-- Expanding brief points into full explanations
+- Expanding brief points using only the source information
 - Identifying where diagrams would clarify concepts
 - Creating comprehensive coverage of all topics mentioned
 
@@ -56,11 +61,16 @@ CONTENT_GENERATION_PROMPT = """Transform the following content into a comprehens
 2. **Content Quality**:
    - Write complete, detailed paragraphs (not bullet points)
    - Explain ALL technical concepts thoroughly
-   - Include examples and comparisons where helpful
+   - Include examples and comparisons only if present in the source
    - Cover EVERY topic mentioned in the source - do not skip anything
    - Typical section should be 200-400 words
 
-3. **Visual Markers**: Where a diagram would help, insert:
+3. **Source Fidelity**:
+   - Use ONLY information present in the raw content
+   - Do not add new facts, examples, metrics, or external context
+   - Do not infer missing details; omit if not provided
+
+4. **Visual Markers**: Where a diagram would help, insert:
    [VISUAL:type:Title:Brief description]
    
    ONLY use these types: architecture, flowchart, comparison, concept_map, mind_map
@@ -72,13 +82,13 @@ CONTENT_GENERATION_PROMPT = """Transform the following content into a comprehens
    
    Example: [VISUAL:architecture:Transformer Architecture:Show encoder-decoder with attention layers]
 
-4. **Mermaid Diagrams**: For simple concepts, include inline mermaid:
+5. **Mermaid Diagrams**: For simple concepts, include inline mermaid:
    ```mermaid
    graph LR
        A[Input] --> B[Process] --> C[Output]
    ```
 
-5. **Formatting**:
+6. **Formatting**:
    - Use **bold** for key terms
    - Use `code` for technical terms
    - End with ## Key Takeaways section
@@ -119,7 +129,8 @@ Requirements:
 - Write detailed paragraphs, not bullet points
 - Include [VISUAL:type:title:description] markers where diagrams would help
   (ONLY use types: architecture, flowchart, comparison, concept_map, mind_map)
-- Cover ALL topics in this chunk - do not skip anything"""
+- Cover ALL topics in this chunk - do not skip anything
+- Use ONLY information in this chunk; do not add new details"""
 
 CHUNK_MIDDLE_INSTRUCTIONS = """Transform this content into MIDDLE sections of a blog post.
 
@@ -129,7 +140,8 @@ Requirements:
 - Write detailed paragraphs
 - Include visual markers where helpful
   (ONLY use types: architecture, flowchart, comparison, concept_map, mind_map)
-- Cover ALL topics in this chunk - do not skip anything"""
+- Cover ALL topics in this chunk - do not skip anything
+- Use ONLY information in this chunk; do not add new details"""
 
 CHUNK_LAST_INSTRUCTIONS = """Transform this content into the FINAL sections of a blog post.
 
@@ -139,7 +151,8 @@ Requirements:
 - Write detailed paragraphs
 - Include visual markers where helpful
 - End with ## Key Takeaways section summarizing main points
-- Cover ALL topics in this chunk"""
+- Cover ALL topics in this chunk
+- Use ONLY information in this chunk; do not add new details"""
 
 
 # Title generation prompt
@@ -150,6 +163,7 @@ The title should:
 - Follow pattern: "Main Topic: Descriptive Subtitle" 
 - NOT include course names, lecture numbers, or file names
 - Capture the main educational theme
+- Use ONLY topics and terms that appear in the content
 
 Content preview:
 {content_preview}

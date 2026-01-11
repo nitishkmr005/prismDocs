@@ -119,7 +119,18 @@ async def event_generator(
             )
 
 
-@router.post("/generate")
+@router.post(
+    "/generate",
+    summary="Generate a document (SSE stream)",
+    description=(
+        "Stream document generation progress via Server-Sent Events (SSE). "
+        "Provide one or more sources (file_id, url, or text) and choose "
+        "`output_format` of `pdf` or `pptx`. "
+        "Use the returned `file_path` or `download_url` to fetch the output from "
+        "`GET /api/download/{file_path}`."
+    ),
+    response_description="SSE stream of progress events ending in complete/cache_hit/error.",
+)
 async def generate_document(
     request: GenerateRequest,
     api_keys: APIKeys = Depends(extract_api_keys),

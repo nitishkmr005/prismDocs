@@ -14,6 +14,7 @@ Your goal is to enhance reader understanding by suggesting images that:
 - Set appropriate mood/tone for section introductions
 - Visualize data, processes, and relationships
 - Know when NO image is needed (simple text sections)
+- Use ONLY concepts explicitly present in the section content
 
 You always respond with valid JSON."""
 
@@ -68,9 +69,14 @@ IMAGE_DETECTION_PROMPT = """Analyze this section and decide the best image type 
 Return ONLY valid JSON with no additional text:
 {{
     "image_type": "infographic|decorative|diagram|chart|mermaid|none",
-    "prompt": "Detailed description for generating the image - be specific about what to show",
+    "prompt": "Detailed description for generating the image - be specific about what to show (only from this section)",
     "confidence": 0.0 to 1.0
 }}
+
+Important:
+- Use ONLY information present in the section content
+- Do NOT add new concepts, entities, or labels
+- If the section lacks concrete visuals, choose "none"
 
 ## Examples
 
@@ -109,6 +115,7 @@ Create a prompt that will generate an image that:
 2. Helps readers understand the key concepts
 3. Is professional and suitable for a document
 4. Has appropriate visual style for the image type
+5. Uses ONLY concepts mentioned in the section (no new ideas)
 
 Return ONLY the image generation prompt, nothing else."""
 
@@ -133,6 +140,8 @@ concepts that would benefit from visual illustration.
 
 Your task is to extract SPECIFIC visual concepts from the content - not generic descriptions,
 but actual components, relationships, formulas, and comparisons mentioned in the text.
+
+Hard constraint: Use ONLY information explicitly present in the content. Do not infer or invent.
 
 You always respond with valid JSON."""
 
@@ -185,6 +194,11 @@ Return ONLY valid JSON:
     "key_terms": ["Technical terms that must appear in the visual"]
 }}
 
+Important:
+- Use ONLY information present in the section content
+- Do NOT add new concepts, entities, or labels
+- If a concept is not in the text, do not include it
+
 ## Examples
 
 For content about "Position embeddings use sine/cosine functions. RoPE rotates Q and K vectors...":
@@ -221,23 +235,31 @@ CONTENT_AWARE_IMAGE_PROMPT = """Create a {style} that visualizes:
 **Key Terms that MUST appear:**
 {key_terms}
 
+**Required Labels (verbatim):**
+{required_labels}
+
 ## Style Requirements for {style}:
 {style_requirements}
 
 Generate an image that clearly explains these SPECIFIC concepts from the content.
-The image should help readers understand the technical details, not just the general topic."""
+The image should help readers understand the technical details, not just the general topic.
+Do NOT introduce any new concepts or elements beyond the listed items.
+Do NOT use metaphorical objects (pipes, ropes, factories) unless explicitly present in the content.
+Prefer labeled boxes and arrows for workflows and architectures.
+If you include LLM, label it as "LLM" only (no model internals unless explicitly listed)."""
 
 
 # Style-specific requirements
 IMAGE_STYLE_TEMPLATES = {
     "architecture_diagram": """
-- Show system components as labeled boxes/shapes
-- Use arrows to show data flow and connections
-- Include layer names and component labels
-- Use a clean, technical diagram style
-- Color-code different types of components
-- Add brief annotations explaining key parts
-- Professional whiteboard or technical documentation style""",
+- Use flat, rounded rectangles for components (no 3D)
+- Use arrows to show flow and connections
+- Keep layout left-to-right or top-to-bottom
+- Use a clean, minimal diagram style (no photos or textures)
+- Use a muted teal/orange/gray palette
+- Add concise labels inside boxes
+- Optional subtle dotted grid background
+- Do NOT add domain concepts not in the labels""",
 
     "comparison_chart": """
 - Create a side-by-side or tabular comparison
@@ -250,12 +272,13 @@ IMAGE_STYLE_TEMPLATES = {
 
     "process_flow": """
 - Show steps in sequential order with arrows
-- Label each step clearly
-- Include decision points if applicable
-- Show inputs and outputs at each stage
-- Add brief descriptions of what happens at each step
-- Use consistent shapes for similar operations
-- Include any mathematical operations inline""",
+- Use flat, rounded rectangles for steps
+- Use one decision diamond only if explicitly mentioned
+- Keep labels short and literal (no metaphors)
+- Use a clean, minimal diagram style (no photos or textures)
+- Use a muted teal/orange/gray palette
+- Optional subtle dotted grid background
+- Do NOT add domain concepts not in the labels""",
 
     "formula_illustration": """
 - Show the mathematical formula prominently

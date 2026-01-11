@@ -1,858 +1,316 @@
-# Building an Intelligent Document Generator: From Raw Content to Professional PDFs
+# Building a Document Generator: From Raw Inputs to Polished PDF and PPTX
 
-*How we built a production-ready document automation system that transforms messy content into polished presentations*
-
----
-
-## The Problem We're Solving
-
-Picture this: You have dozens of PDFs, Word documents, web articles, and markdown files scattered across folders. You need to transform them into professional, presentation-ready documents—complete with custom graphics, consistent formatting, and a cohesive narrative. Doing this manually would take hours or days.
-
-This is exactly the problem we set out to solve with our Document Generator. What started as a simple PDF converter evolved into a sophisticated AI-powered pipeline that can take any combination of content sources and produce publication-quality PDFs and PowerPoint presentations in minutes.
-
-## What We Built
-
-The Document Generator is an intelligent content transformation system that:
-
-- **Accepts multiple input formats**: PDF, Word documents, PowerPoint files, Markdown, text files, images, and even URLs to web articles
-- **Generates professional outputs**: Beautiful PDFs with custom typography and PowerPoint presentations with consistent themes
-- **Creates custom visuals automatically**: AI-generated infographics tailored to each section's content
-- **Merges multiple sources intelligently**: Combines disparate files into cohesive, well-structured documents
-- **Learns and caches**: Remembers previously generated content to avoid redundant work and API costs
-
-But what makes this interesting isn't just *what* it does—it's *how* it's built.
+*How a LangGraph workflow turns messy inputs into publish-ready documents with visuals that match the content*
 
 ---
 
-## The Technology Stack: Modern Python Done Right
+## Why This Exists
 
-### Core Framework: LangGraph + Python 3.11
+Teams accumulate content everywhere: PDFs, slide decks, docs, markdown, and web pages. Turning that sprawl into a consistent, professional document usually means hours of manual cleaning, rewriting, and layout work.
 
-At the heart of our system is **LangGraph** (v0.2.55), a state machine orchestration framework built on LangChain. Think of it as a sophisticated workflow engine that manages the entire document generation pipeline.
-
-Why LangGraph? Traditional pipeline approaches struggle with complex workflows that need:
-- **State persistence** across multiple processing steps
-- **Conditional branching** based on content type
-- **Retry logic** when external APIs fail
-- **Parallel processing** where possible
-
-LangGraph handles all of this elegantly with a graph-based state machine that flows data through interconnected nodes.
-
-We use **Python 3.11+** as our runtime with **uv** as our package manager—uv is blazingly fast compared to pip and handles dependency resolution much better.
-
-### AI/LLM Services: Multi-Provider Architecture
-
-Instead of locking ourselves into a single AI provider, we built a provider-agnostic system:
-
-- **Gemini 3 Pro Preview**: Our primary content generation engine for structuring, merging, and transforming text
-- **OpenAI GPT-4o**: Alternative provider (swap via configuration)
-- **Gemini Image API**: Generates section-specific infographics (the real magic here)
-- **Claude Sonnet 4**: Optional SVG diagram generation (currently disabled but ready to enable)
-
-This flexibility means we can:
-1. Choose the best model for each task
-2. Switch providers if one has an outage
-3. Optimize costs by using cheaper models for simpler tasks
-4. Experiment with new models as they're released
-
-### Document Processing: Industrial-Grade Parsers
-
-Raw PDFs are notoriously difficult to parse. Text might be in images, tables might be poorly formatted, layouts can be complex. We use:
-
-**Docling (v2.66.0)**: The heavy lifter for PDF/DOCX/PPTX parsing
-- Performs OCR to extract text from images
-- Preserves table structures
-- Analyzes document layout intelligently
-- Handles multi-column layouts and headers
-
-**MarkItDown (v0.0.1a2)**: Converts web articles to clean Markdown
-- Strips ads and navigation
-- Preserves semantic structure
-- Handles various HTML quirks
-
-**ReportLab (v4.2.5)**: Professional-grade PDF generation
-- Complete control over typography and layout
-- Custom styling and themes
-- Figure numbering and captions
-- Table of contents generation
-
-**python-pptx (v1.0.2)**: Native PowerPoint generation
-- No Microsoft Office required
-- Programmatic slide creation
-- Consistent theming
-- Image embedding
-
-### Infrastructure: Production-Ready Tooling
-
-- **Pydantic (v2.10.5)**: Type-safe configuration with validation
-- **Loguru (v0.7.3)**: Beautiful, structured logging (no more `print()` debugging)
-- **Docker**: Multi-stage builds for efficient deployment
-- **Ruff**: Modern linting that replaces Black, isort, and flake8
-- **MyPy**: Static type checking for reliability
+This system automates that end-to-end flow. It ingests mixed sources, structures them into a coherent narrative, generates supporting visuals, and renders a final PDF or PPTX with consistent formatting. The goal is not just conversion; it is **editorial-quality synthesis with visual support**.
 
 ---
 
-## Architecture: Clean Layers That Scale
+## What the Pipeline Produces
 
-We adopted **Clean Architecture** principles with three distinct layers:
+For every run, the generator creates:
 
-### 1. Domain Layer: Pure Business Logic
+- **A clean, well-structured blog-style document** with sections, subsections, and clear flow.
+- **Section-aligned visuals** tailored to each section (architecture blocks, comparisons, flowcharts, study notes).
+- **A final output** in either PDF or PPTX with consistent themes, typography, and layout.
 
-The domain layer contains zero external dependencies—just pure Python types and business rules:
-
-```
-Domain/
-├── models.py          # WorkflowState, DocumentMetadata
-├── content_types.py   # OutputFormat, ContentType, ImageType enums
-└── exceptions.py      # Custom error types
-```
-
-**Why this matters**: These models can be tested instantly without mocking APIs, databases, or external services. They represent the "what" of our system.
-
-### 2. Application Layer: Orchestration
-
-This is where the workflow lives. Each processing step is a node in our LangGraph state machine:
-
-```
-Application/
-├── nodes/
-│   ├── detect_format.py      # Determine input type
-│   ├── parse_content.py       # Extract text/structure
-│   ├── transform_content.py   # LLM-powered transformation
-│   ├── generate_images.py     # Create visuals
-│   ├── generate_output.py     # Build PDF/PPTX
-│   └── validate_output.py     # Verify quality
-├── parsers/                   # Content extraction
-└── generators/                # PDF/PPTX creation
-```
-
-Each node has a single responsibility and can be tested independently.
-
-### 3. Infrastructure Layer: External Services
-
-This layer handles all the "dirty" work of talking to external systems:
-
-```
-Infrastructure/
-├── llm_content_generator.py     # Multi-provider LLM client
-├── gemini_image_generator.py    # Image generation API
-├── docling_adapter.py           # PDF parsing
-├── markitdown_adapter.py        # Web scraping
-└── logging_config.py            # Structured logging
-```
-
-**The benefit**: We can swap out any infrastructure component without touching business logic. Want to use a different PDF parser? Just write a new adapter.
+The outputs are usable as:
+- Internal documentation
+- Presentations for stakeholders
+- Executive summaries
+- Training materials
 
 ---
 
-## The Workflow: From Chaos to Structure
+## System Overview
 
-Let's walk through what happens when you feed our system a messy pile of documents:
+At a high level, the workflow looks like this:
 
-### Step 1: Format Detection
+```
+Detect format → Parse content → Transform content → Generate images → Generate output → Validate
+```
 
-The system examines each input:
-- File extension (`.pdf`, `.docx`, `.md`)
-- URL detection for web articles
-- Content type inference
+Each step is a **LangGraph node** with a single responsibility. The workflow carries a shared state forward, allowing retries and flexible branching without losing context.
 
-This determines which parser to use next.
+### Architecture Diagram (Node Names)
 
-### Step 2: Content Parsing
+```
+detect_format
+        ↓
+parse_content
+        ↓
+transform_content
+        ↓
+generate_images
+        ↓
+generate_output
+        ↓
+validate_output
+```
 
-Different parsers handle different formats:
+These are the exact node names in the workflow graph, mapped one-to-one to the document lifecycle.
 
-**For PDFs/Word docs**: Docling does heavy lifting with OCR and layout analysis
-**For web pages**: MarkItDown strips HTML and extracts clean text
-**For Markdown**: Direct extraction with frontmatter handling
+[VISUAL:architecture:Workflow Graph:Show detect_format → parse_content → transform_content → generate_images → generate_output → validate_output]
 
-Output: Raw markdown with preserved structure
+---
 
-### Step 3: Intelligent Transformation (The AI Magic)
+## Step 1: Detect the Input Format
 
-This is where LLMs shine. The system:
+The pipeline determines how to handle each source based on its format:
 
-1. **Analyzes the content** to understand topics and structure
-2. **Generates a meaningful title** (not just "Document1.pdf")
-3. **Creates logical sections** with proper hierarchy
-4. **Merges multiple files** into a cohesive narrative (for folder processing)
-5. **Generates an executive summary** 
-6. **Creates a content hash** for caching
+- File extensions (`.pdf`, `.pptx`, `.docx`, `.md`, `.txt`)
+- URLs for web content
+- Inline text
 
-If you're processing a folder with 10 different files, the LLM doesn't just concatenate them—it understands relationships, eliminates redundancy, and builds a unified story.
+This classification ensures the right parser is used and prevents content loss early in the process.
 
-### Step 4: Custom Image Generation
+---
 
-Here's where things get visually interesting:
+## Step 2: Parse and Normalize Content
 
-1. **Section Analysis**: The system reads each section and determines if it needs:
-   - An **infographic** (for lists, comparisons, technical concepts)
-   - A **decorative header** (for introductions, conclusions)
+Parsing is where raw data becomes usable text. The system uses dedicated tools per format:
 
-2. **Content Synchronization**: Section IDs are synced with title numbers
-   - "1. Introduction" → `section_1_infographic.png`
-   - Keeps images aligned with content
+- **Docling** for PDF, DOCX, PPTX, and images (OCR, layouts, tables)
+- **MarkItDown** for HTML and web pages
+- **Markdown parser** for `.md` and `.txt` (frontmatter-aware)
 
-3. **Smart Caching**: Before generating, it checks:
-   ```
-   Does manifest.json exist?
-     └─> Does content_hash match?
-         ├─> Yes: Reuse existing images (saves time & money)
-         └─> No: Regenerate all images
-   ```
+The parser also attaches metadata (title, URL, source file) and computes a `content_hash` for caching. The output of this stage is normalized markdown-like text with as much structure preserved as possible.
 
-4. **Rate-Limited Generation**: Gemini API creates custom visuals
-   - 20 images per minute maximum
-   - 3-second delay between requests
-   - Automatic throttling
+[VISUAL:architecture:Parsing Stack:Show inputs (PDF/DOCX/PPTX, URL, Markdown/Text) feeding Docling and MarkItDown into normalized markdown]
 
-5. **Persistent Storage**:
-   ```
-   output/my-topic/
-   ├── images/
-   │   ├── section_1_infographic.png
-   │   ├── section_2_infographic.png
-   │   └── manifest.json (with content hash)
-   ```
+---
 
-This caching mechanism is crucial—regenerating 50 images costs time and API tokens. If the content hasn't changed, why regenerate?
+## Step 3: Transform Content Into a Blog-Style Narrative
 
-### Step 5: Professional Output Generation
+This is the heart of the system. The LLM reorganizes and rewrites the raw content into a clean, readable blog with:
 
-**PDF Mode** (via ReportLab):
-- Elegant cover page with metadata
-- Automatically generated table of contents
-- Section images embedded inline
-- Custom typography and spacing
-- Figure numbering with captions
-- Code blocks, tables, and quotes
+- A generated title
+- A short introduction
+- Numbered sections with logical flow
+- Subsections where needed
+- A final key takeaways section
 
-**PowerPoint Mode** (via python-pptx):
-- Title slide with branding
+**Important rule**: the transformed content must use **only information present in the source**. No invented facts, no external knowledge, no inferred details. The transformation improves readability, structure, and flow without changing meaning.
+
+This step also inserts **visual markers** in places where an inline diagram would help a reader understand the content (these markers are preserved in the markdown and can be rendered into SVGs if the visualization node is enabled).
+
+Example:
+```
+[VISUAL:architecture:System Overview:Show ingestion, transformation, and rendering stages]
+```
+
+[VISUAL:flowchart:Content Structuring:Raw content → LLM structuring → numbered sections → visual markers]
+
+Under the hood:
+- **LLMContentGenerator** handles the main rewrite, with chunked processing for long inputs.
+- The content model is provider-driven (Gemini by default, configurable to OpenAI/Claude).
+- **LLMService** optionally generates an executive summary, slide structure, and chart suggestions from the transformed markdown.
+
+---
+
+## Step 4: Generate Section Images That Match the Content
+
+The system scans each `##` section and decides whether a visual would improve comprehension. If yes, it generates a prompt grounded in the **actual section content** and chooses a style.
+
+Supported styles (mapped to infographic-style images):
+
+- **Architecture diagrams** (systems, components, data flow)
+- **Flowcharts** (processes, decision logic)
+- **Comparison visuals** (trade-offs, feature differences)
+- **Concept maps** (relationships between ideas)
+- **Handwritten notes** (study-guide style explanations)
+
+The prompts are **strictly content-bound**: no extra concepts beyond what appears in the section. Required labels are extracted from the section text (e.g., node names like `parse_content`, `generate_output`, and tools like Docling, ReportLab, python-pptx). This keeps visuals accurate and aligned with the narrative.
+
+Images are generated via the Gemini image API with rate limiting, stored per document under `output/<file_id>/images`, and reused when the `content_hash` matches.
+
+[VISUAL:flowchart:Image Generation Loop:Section text → concept extraction → prompt → Gemini image → cached output]
+
+---
+
+## How Images Stay Aligned With Content
+
+Alignment is deterministic:
+
+- Images are generated per `##` section from that section's text.
+- The renderers walk the markdown in order and insert the section image immediately after each `##` banner (PDF) or as a section image slide (PPTX).
+- Because the prompt is content-bound and the placement is order-bound, images stay anchored to the narrative instead of floating to unrelated pages.
+
+---
+
+## Step 5: Render the Final Output
+
+### PDF Output
+
+PDFs are rendered with ReportLab for full layout control:
+
+- Consistent typography and spacing
+- Section hierarchy and headings
+- Inline images and captions
+- Code blocks and tables
+- Clean margins and palettes
+
+Section images are inserted immediately after each `##` header banner, which keeps visuals in lockstep with the content sequence.
+
+### PPTX Output
+
+PPTX generation uses python-pptx:
+
+- Title slide
 - One slide per major section
-- Images embedded automatically
-- Consistent theme throughout
+- Visuals embedded on relevant slides
+- Consistent theme and layout
 
-### Step 6: Validation & Retry
+When LLM enhancements are present, the generator uses the LLM-proposed slide structure and attaches section images as dedicated image slides or as part of the section flow.
 
-The system validates that:
+Both formats are designed to be client-ready with minimal manual editing.
+
+[VISUAL:comparison:Output Rendering:ReportLab → PDF vs python-pptx → PPTX]
+
+---
+
+## Step 6: Validate and Retry When Needed
+
+The pipeline validates the output before finalizing:
+
 - Output file exists
-- File size is > 0
-- File is readable
-- Content matches expectations
+- File size is non-zero
+- Basic readability checks
 
-If validation fails, the system retries up to 3 times with exponential backoff.
+If validation fails, the system retries output generation up to three times. This prevents partial or corrupted documents from being returned.
+
+[VISUAL:flowchart:Validation Gate:Generate output → validate_output → pass/fail retry (max 3)]
 
 ---
 
-## The Real-World Impact: Folder Processing
+## Mini Example: From Raw Snippet to Visualized Output
 
-Let's say you have a research folder:
-
+**Input snippet (raw):**
 ```
-research/
-├── literature-review.pdf
-├── methodology.docx
-├── results.xlsx
-├── discussion.txt
-└── references.md
+We ingest PDFs and web pages, normalize them into markdown, then use an LLM to structure the content.
+After that we generate section images and render PDF/PPTX outputs.
 ```
 
-**Traditional approach**: 
-- Manually extract text from each file
-- Copy-paste into a Word doc
-- Spend hours formatting
-- Create diagrams manually
-- Export to PDF
-- Time: 4-6 hours
+**Transformed section (blog style):**
+```
+## 2. Content Normalization and Structuring
+The pipeline begins by ingesting PDFs and web pages and normalizing them into markdown. This
+standardized representation makes it possible to apply consistent transformations. An LLM then
+structures the content into logical sections with clear flow, preparing it for visuals and final
+rendering.
+```
 
-**Our system**:
-1. Parse all 5 files (30 seconds)
-2. LLM merges them intelligently (20 seconds)
-3. Generate 8 section images (40 seconds with caching)
-4. Create PDF with TOC and formatting (5 seconds)
-5. **Total time: ~90 seconds**
+**Visual marker injected by the transformer:**
+```
+[VISUAL:architecture:Generation Pipeline:Show ingest → normalize → transform → generate images → render output]
+```
 
-The LLM doesn't just concatenate—it:
-- Identifies the introduction from the literature review
-- Places methodology after the intro
-- Integrates results with proper context
-- Connects discussion to findings
-- Formats references consistently
+**Final output (screenshot placeholders):**
+
+- PDF screenshot: _replace with a real PDF export image_
+- PPTX screenshot: _replace with a real slide export image_
 
 ---
 
-## Business Value: Why This Matters
+## Performance & Cost Notes
 
-### 1. Time Savings at Scale
-
-**Individual users**: Convert hours of manual formatting into seconds
-**Teams**: Standardize documentation across departments
-**Enterprises**: Process thousands of documents programmatically
-
-### 2. Cost Efficiency
-
-**Without caching**: 
-- 50 sections × $0.02/image = $1.00 per document
-- Process 1000 documents = $1000
-
-**With intelligent caching**:
-- First generation: $1.00
-- Subsequent runs with same content: $0.00
-- 1000 documents (80% cache hit rate) = $200
-
-### 3. Consistency & Quality
-
-Manual document creation is inconsistent:
-- Different formatting styles
-- Varying quality of visuals
-- Inconsistent structure
-
-Our system enforces:
-- Uniform typography and spacing
-- Consistent visual style
-- Predictable document structure
-- Professional appearance every time
-
-### 4. Knowledge Aggregation
-
-Organizations have content scattered everywhere:
-- SharePoint documents
-- Confluence wikis
-- Slack conversations
-- Email threads
-- Local files
-
-Our system can:
-- Aggregate all sources
-- Build unified knowledge bases
-- Generate department handbooks
-- Create onboarding materials
-- Produce quarterly reports
+- **Typical runtimes**: 60–120 seconds for multi-source inputs, depending on document length and image count.
+- **Cache savings**: When content is unchanged, image generation is skipped, reducing runtime and API cost.
+- **Image generation limits**: Gemini image generation is rate-limited (default 20 images/min with request delay).
+- **Best practice**: Keep sections focused to reduce image count and keep slides concise.
 
 ---
 
-## How Users Can Leverage This System
+## Why This Workflow Works
 
-### Use Case 1: Technical Documentation
+**1) Clean separation of responsibilities**
+Each node does one job, making the pipeline easier to test, debug, and evolve.
 
-**Scenario**: Software team has markdown docs in a Git repo
+**2) Content fidelity**
+The LLM improves structure and readability without inventing content. This preserves trust and accuracy.
 
-**Solution**:
+**3) Visuals that explain, not decorate**
+Images are generated to support understanding. They are always derived from the exact section content.
+
+**4) Multi-format output without duplication**
+A single workflow produces both PDF and PPTX without maintaining separate pipelines.
+
+**5) Image alignment is deterministic**
+Images are keyed to section order and embedded immediately after each `##` header, so visuals stay anchored to the narrative.
+
+---
+
+## A Quick Example
+
+Input sources:
+
+- A PDF research paper
+- A markdown design doc
+- A web article
+
+Output:
+
+- A single blog-style PDF with a clean narrative
+- Five section images (architecture, comparison, flowchart, concept map, handwritten notes)
+- A PPTX deck using the same structured content
+
+Total time: minutes, not hours.
+
+---
+
+## Closing Thoughts
+
+This generator is more than a file converter. It is a **content transformation workflow** designed to turn messy inputs into structured, visual, presentation-ready documents. By combining parsing, LLM-based organization, and tightly scoped image generation, it produces outputs that feel authored rather than assembled.
+
+If your team produces or collects large volumes of content, this pipeline turns that sprawl into a consistent, professional narrative in a repeatable way.
+
+---
+
+## How to Call the FastAPI Service
+
+### 1) Upload a source file
 ```bash
-# Point to docs folder
-doc-generator --input /path/to/docs --output-format pdf
-
-# Result: Professional PDF with:
-# - Syntax-highlighted code blocks
-# - Architecture diagrams (auto-generated)
-# - Consistent formatting
-# - Searchable content
+curl -sS -X POST http://localhost:8000/api/upload \
+  -F "file=@/path/to/input.pdf"
+```
+Response:
+```json
+{"file_id":"f_abc123","filename":"input.pdf","size":12345,"mime_type":"application/pdf","expires_in":3600}
 ```
 
-### Use Case 2: Research Paper Synthesis
-
-**Scenario**: Academic has 20 PDFs of related papers
-
-**Solution**:
+### 2) Generate PDF or PPTX (SSE stream)
 ```bash
-# Process folder of papers
-doc-generator --input /research/papers --merge
+curl -N -X POST http://localhost:8000/api/generate \
+  -H "Content-Type: application/json" \
+  -H "X-Google-Key: $GEMINI_API_KEY" \
+  -d '{
+    "output_format": "pdf",
+    "provider": "gemini",
+    "model": "gemini-3-pro-preview",
+    "image_model": "gemini-3-pro-image-preview",
+    "sources": [
+      {"type": "file", "file_id": "f_abc123"},
+      {"type": "url", "url": "https://example.com/article"},
+      {"type": "text", "content": "Raw text to include"}
+    ],
+    "cache": {"reuse": true}
+  }'
+```
+For PPTX, set `"output_format": "pptx"`.
 
-# Result: Single document with:
-# - Synthesized literature review
-# - Common themes identified
-# - Visual concept maps
-# - Unified bibliography
+The stream ends with a `complete` (or `cache_hit`) event that includes:
+```json
+{"download_url":"/api/download/f_abc123/pdf/your-file.pdf?token=...","file_path":"f_abc123/pdf/your-file.pdf"}
 ```
 
-### Use Case 3: Marketing Collateral
-
-**Scenario**: Marketing team needs to create product presentations
-
-**Solution**:
+### 3) Download the generated file
 ```bash
-# Convert product specs to slides
-doc-generator --input product-specs.md --output-format pptx
-
-# Result: PowerPoint with:
-# - Branded slides
-# - Feature infographics
-# - Consistent messaging
-# - Ready to present
+curl -L -o output.pdf "http://localhost:8000/api/download/f_abc123/pdf/your-file.pdf"
 ```
-
-### Use Case 4: Report Automation
-
-**Scenario**: Finance team generates monthly reports
-
-**Solution**:
-```bash
-# Schedule automated generation
-cron: doc-generator --input /data/monthly --output-format pdf
-
-# Result: Consistent monthly PDFs
-# - Same structure every time
-# - Data-driven visualizations
-# - No manual formatting
-```
-
-### Use Case 5: Content Aggregation
-
-**Scenario**: Support team wants to create a knowledge base
-
-**Solution**:
-```bash
-# Aggregate tickets, docs, and wikis
-doc-generator --input support-content/ --merge
-
-# Result: Comprehensive KB with:
-# - Common issues consolidated
-# - Visual troubleshooting guides
-# - Searchable reference
-```
-
----
-
-## Deployment Options
-
-### Local Development
-
-```bash
-# Clone and setup
-git clone <repo>
-make setup  # Creates venv, installs deps
-
-# Configure
-cp .env.example .env
-# Add your API keys
-
-# Run
-make run --input data/sample.md
-```
-
-### Docker Deployment
-
-```bash
-# Build
-docker build -t doc-generator .
-
-# Run
-docker run -v $(pwd)/data:/app/data \
-           -v $(pwd)/output:/app/output \
-           -e GEMINI_API_KEY=$GEMINI_API_KEY \
-           doc-generator
-```
-
-### Cloud Deployment
-
-**AWS Lambda**: Process documents on-demand
-**Cloud Run**: Serverless container deployment
-**EC2/ECS**: Long-running batch processing
-**Kubernetes**: Enterprise-scale processing
-
-The system is stateless, so it scales horizontally perfectly.
-
----
-
-## Future Improvements: Where We're Headed
-
-### 1. Interactive Configuration UI
-
-**Current**: YAML configuration files
-**Future**: Web-based configuration dashboard
-- Visual theme editor
-- Provider selection with cost comparison
-- Template management
-- Processing history
-
-### 2. Advanced Template System
-
-**Current**: Fixed PDF/PPTX layouts
-**Future**: User-defined templates
-- Custom brand guidelines
-- Industry-specific formats (IEEE, APA, MLA)
-- Interactive template marketplace
-- A/B testing different layouts
-
-### 3. Multi-Modal Intelligence
-
-**Current**: Text and static images
-**Future**: Rich media support
-- Extract and preserve animations from source PPTX
-- Generate video explainers from content
-- Interactive charts and graphs
-- Audio narration generation
-
-### 4. Real-Time Collaboration
-
-**Future**: Google Docs-style collaboration
-- Multiple users editing simultaneously
-- Comment threads on sections
-- Approval workflows
-- Version history with diff views
-
-### 5. Advanced Analytics
-
-**Future**: Processing insights
-- Content complexity scoring
-- Readability analysis
-- SEO optimization suggestions
-- Audience-level targeting (technical vs. executive)
-
-### 6. Integration Ecosystem
-
-**Current**: File-based input
-**Future**: Direct integrations
-- Google Drive / Dropbox connectors
-- Confluence / Notion exporters
-- GitHub Actions for doc generation
-- Slack bot for on-demand processing
-- API endpoints for programmatic access
-
-### 7. Specialized Domain Adapters
-
-**Future**: Industry-specific processing
-- Legal document formatting (case citations, clause numbering)
-- Medical report templates (SOAP notes, clinical summaries)
-- Financial statements (SEC compliance, GAAP formatting)
-- Academic papers (automatic citation management)
-
-### 8. Quality Assurance Layer
-
-**Future**: AI-powered validation
-- Fact-checking against source material
-- Plagiarism detection
-- Style guide enforcement
-- Accessibility compliance (WCAG, Section 508)
-
-### 9. Cost Optimization
-
-**Future**: Intelligent provider routing
-- Automatic model selection based on task complexity
-- Cost prediction before processing
-- Budget limits and alerts
-- Usage analytics and optimization recommendations
-
-### 10. Multi-Language Support
-
-**Current**: English-centric processing
-**Future**: Polyglot capabilities
-- Automatic language detection
-- Translation integration
-- Multi-language document generation
-- Right-to-left text support
-
----
-
-## Technical Deep Dives: The Interesting Bits
-
-### How Image Caching Actually Works
-
-The caching mechanism is surprisingly sophisticated:
-
-```python
-# 1. Generate content hash
-content_hash = hashlib.sha256(
-    merged_markdown.encode('utf-8')
-).hexdigest()
-
-# 2. Check existing manifest
-if os.path.exists('manifest.json'):
-    with open('manifest.json') as f:
-        manifest = json.load(f)
-    
-    # 3. Compare hashes
-    if manifest['content_hash'] == content_hash:
-        # Reuse all images!
-        return load_cached_images()
-
-# 4. Content changed, regenerate
-new_images = generate_all_images()
-
-# 5. Save new manifest
-save_manifest({
-    'content_hash': content_hash,
-    'created_at': datetime.now(),
-    'section_titles': section_titles,
-    'image_count': len(new_images)
-})
-```
-
-This means even a single word change triggers regeneration—which is correct! If content changed, visuals might need updating.
-
-### Why Clean Architecture Matters
-
-Let's say we want to add a new LLM provider (Anthropic's Claude):
-
-**Without clean architecture**: 
-- Modify workflow nodes
-- Update parsers
-- Change generators
-- Refactor tests
-- Hope nothing breaks
-
-**With clean architecture**:
-```python
-# 1. Add one new file: infrastructure/claude_provider.py
-class ClaudeProvider:
-    def generate_content(self, prompt: str) -> str:
-        # Implementation here
-        pass
-
-# 2. Register it in settings.yaml
-llm:
-  content_provider: "claude"  # That's it!
-
-# 3. Zero changes to domain or application layers
-```
-
-The system automatically routes to the new provider.
-
-### How Retry Logic Prevents Failures
-
-LangGraph's conditional edges enable smart retry logic:
-
-```python
-def should_retry(state: WorkflowState) -> str:
-    retry_count = state.get("_retry_count", 0)
-    errors = state.get("errors", [])
-    
-    # Don't retry forever
-    if retry_count >= 3:
-        logger.error("Max retries reached")
-        return "end"
-    
-    # Only retry transient errors
-    last_error = errors[-1] if errors else ""
-    
-    if "timeout" in last_error.lower():
-        state["_retry_count"] = retry_count + 1
-        logger.warning(f"Retry attempt {retry_count + 1}")
-        return "retry_generation"
-    
-    if "rate limit" in last_error.lower():
-        time.sleep(60)  # Wait for rate limit reset
-        state["_retry_count"] = retry_count + 1
-        return "retry_generation"
-    
-    # Don't retry parse errors (bad input)
-    return "end"
-```
-
-This prevents wasted API calls while ensuring transient failures don't kill the pipeline.
-
----
-
-## Lessons Learned: What We'd Do Differently
-
-### 1. Start with Rate Limiting
-
-Initially, we didn't implement rate limiting for image generation. Result: Gemini API throttling and failed batches. Now we:
-- Track requests per minute
-- Add mandatory delays
-- Queue requests intelligently
-
-### 2. Hash Everything for Caching
-
-Our first caching attempt used file modification times—terrible idea:
-- Git operations change mtime
-- False cache misses
-- Wasted regeneration
-
-Content hashing is the only reliable approach.
-
-### 3. Structured Logging from Day One
-
-Early versions used `print()` statements. Debugging production issues was a nightmare. Loguru changed everything:
-```python
-logger.info("Processing document", 
-           doc_id=doc_id, 
-           page_count=pages, 
-           provider="gemini")
-```
-
-Now we can filter, search, and analyze logs properly.
-
-### 4. Type Hints Everywhere
-
-Python's dynamic typing is convenient until it isn't. Adding MyPy caught dozens of bugs:
-- Wrong parameter types
-- Missing return values
-- Invalid dictionary keys
-
-The upfront cost pays dividends in reliability.
-
----
-
-## Performance Benchmarks
-
-### Single Document Processing
-
-| Input Type | Size | Parse Time | Transform Time | Image Gen | Total Time |
-|------------|------|------------|----------------|-----------|------------|
-| Markdown   | 50KB | 0.2s       | 5s             | 30s       | **35s**    |
-| PDF        | 5MB  | 8s         | 6s             | 30s       | **44s**    |
-| Web URL    | N/A  | 3s         | 5s             | 30s       | **38s**    |
-
-### Folder Processing (10 Files)
-
-| Scenario | Cache | Parse | Transform | Images | Total |
-|----------|-------|-------|-----------|--------|-------|
-| First run | Cold  | 25s   | 20s       | 150s   | **195s** |
-| Content changed | Warm | 25s | 20s | 150s | **195s** |
-| No changes | Hot | 0.5s | 0s | 0s | **0.5s** |
-
-The caching impact is dramatic—200x speedup for unchanged content.
-
----
-
-## Cost Analysis
-
-### API Costs Per Document
-
-**Gemini 3 Pro (Content)**:
-- ~1000 tokens/document
-- $0.0001 per 1K tokens
-- **Cost: ~$0.0001 per doc**
-
-**Gemini Image (Visuals)**:
-- ~10 images/document
-- $0.02 per image
-- **Cost: ~$0.20 per doc**
-
-**Total per document**: **~$0.20** (images dominate cost)
-
-### Scaling Costs
-
-| Documents | Without Caching | With 80% Cache Hit | Savings |
-|-----------|----------------|-------------------|---------|
-| 100       | $20.00         | $4.00             | 80%     |
-| 1,000     | $200.00        | $40.00            | 80%     |
-| 10,000    | $2,000.00      | $400.00           | 80%     |
-
-For high-volume users, caching is essential.
-
----
-
-## Security & Privacy Considerations
-
-### API Key Management
-
-- **Never commit keys to Git** (`.env` in `.gitignore`)
-- **Use environment variables** in production
-- **Rotate keys regularly**
-- **Separate dev/prod keys**
-
-### Content Privacy
-
-All processing happens server-side:
-- Content sent to LLM providers (check their privacy policies)
-- Consider self-hosted LLMs for sensitive data
-- Local caching stores processed content unencrypted
-
-**For sensitive documents**:
-1. Use on-premises deployment
-2. Implement encryption at rest
-3. Consider self-hosted LLMs (Ollama, LocalAI)
-
-### Input Validation
-
-The system validates:
-- File types (prevent code injection)
-- File sizes (prevent DoS)
-- URL schemes (prevent SSRF attacks)
-- Content structure (prevent parse exploits)
-
----
-
-## Getting Started: Quick Win
-
-Want to see it in action? Here's a 5-minute demo:
-
-```bash
-# 1. Clone and setup
-git clone <repo>
-cd document-generator
-make setup
-
-# 2. Add your Gemini API key
-echo "GEMINI_API_KEY=your-key-here" > .env
-
-# 3. Process a sample file
-make run
-
-# 4. Check output
-ls -la src/output/
-# You'll see:
-# - sample.pdf (professional PDF)
-# - sample/images/ (custom infographics)
-```
-
-That's it! You've just generated a professional document with custom visuals.
-
----
-
-## Open Source & Community
-
-This project is open source and welcomes contributions:
-
-**What we need help with**:
-- Additional LLM provider integrations
-- New document parsers (LaTeX, RST)
-- Output format generators (EPUB, HTML)
-- Template designs
-- Documentation improvements
-- Performance optimizations
-
-**How to contribute**:
-1. Fork the repo
-2. Create a feature branch
-3. Follow the code conventions
-4. Add tests (`make test`)
-5. Submit a PR
-
-We follow clean architecture principles—keep domain logic pure, infrastructure at the edges.
-
----
-
-## Conclusion: The Future of Document Automation
-
-We've built something powerful here—a system that transforms how people work with documents. But this is just the beginning.
-
-The real potential lies in:
-- **Democratizing content creation**: Anyone can produce professional documents
-- **Knowledge synthesis**: AI that understands and combines information
-- **Time reclamation**: Hours saved on formatting returned to creative work
-- **Consistency at scale**: Every document meets quality standards
-
-As LLMs improve, our system improves automatically. Better models = better structuring, better merging, better visuals.
-
-The document generator isn't just a tool—it's a glimpse into a future where content creation is collaborative, intelligent, and effortless.
-
-**Want to try it?** The code is open source. Clone it, run it, extend it.
-
-**Have questions?** Open an issue or start a discussion.
-
-**Want to contribute?** PRs are always welcome.
-
----
-
-## Technical References
-
-**Source Code**: [GitHub Repository]
-**Documentation**: `docs/` folder
-**Quick Start**: `Quickstart.md`
-**Architecture Details**: `PROCESS_FLOW.md`
-
-**Dependencies**:
-- LangGraph: https://github.com/langchain-ai/langgraph
-- Docling: https://github.com/DS4SD/docling
-- ReportLab: https://www.reportlab.com/
-- python-pptx: https://python-pptx.readthedocs.io/
-
----
-
-**Built with ❤️ using Python, LangGraph, and way too much caffeine.**
-
-*Last updated: January 2026*
+You can also use the `download_url` directly if you want the tokenized link.

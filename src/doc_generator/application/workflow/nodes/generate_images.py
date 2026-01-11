@@ -39,6 +39,64 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 
+def _extract_required_labels(section_title: str, content: str) -> list[str]:
+    """Extract required labels from the section text for grounded diagrams."""
+    candidates = [
+        "detect_format_node",
+        "parse_content_node",
+        "transform_content_node",
+        "generate_images_node",
+        "generate_output_node",
+        "validate_output_node",
+        "LangGraph",
+        "Docling",
+        "MarkItDown",
+        "ReportLab",
+        "python-pptx",
+        "Gemini",
+        "Gemini Image API",
+        "PDF",
+        "PPTX",
+        "LLM",
+    ]
+    content_lower = content.lower()
+    title_lower = section_title.lower()
+    labels = []
+
+    for label in candidates:
+        label_lower = label.lower()
+        if label_lower in content_lower or label_lower in title_lower:
+            labels.append(label)
+
+    node_matches = re.findall(r"\b[a-z_]+_node\b", content)
+    for match in node_matches:
+        if match not in labels:
+            labels.append(match)
+
+    if not labels:
+        labels.append(section_title)
+
+    return labels
+
+
+def _has_visual_trigger(content: str) -> bool:
+    """Heuristic to force visuals for short but diagram-worthy sections."""
+    content_lower = content.lower()
+    if "[visual:" in content_lower:
+        return True
+    triggers = [
+        "architecture",
+        "workflow",
+        "pipeline",
+        "flowchart",
+        "diagram",
+        "process",
+        "steps",
+        "node",
+    ]
+    return any(trigger in content_lower for trigger in triggers)
+
+
 class ConceptExtractor:
     """
     Extract visual concepts from section content using LLM.
@@ -235,6 +293,8 @@ class ConceptExtractor:
 
         details = primary.get("details", "")
         key_terms_str = ", ".join(key_terms) if key_terms else "key concepts"
+        required_labels = concepts.get("required_labels", [])
+        required_labels_str = "\n".join(f"- {label}" for label in required_labels)
 
         # Generate the prompt using the template
         prompt = CONTENT_AWARE_IMAGE_PROMPT.format(
@@ -244,6 +304,7 @@ class ConceptExtractor:
             relationships=relationships_str,
             details=details,
             key_terms=key_terms_str,
+            required_labels=required_labels_str or "- Use labels from the content",
             style_requirements=style_requirements
         )
 
@@ -284,8 +345,8 @@ class ImageTypeDetector:
         Returns:
             ImageDecision with type, content-specific prompt, and confidence
         """
-        # Skip very short sections
-        if len(content) < 200:
+        # Skip very short sections unless they clearly need a diagram
+        if len(content) < 200 and not _has_visual_trigger(content):
             logger.debug(f"Skipping short section: {section_title}")
             return ImageDecision(
                 image_type=ImageType.NONE,
@@ -297,6 +358,7 @@ class ImageTypeDetector:
         try:
             # Extract concepts from content
             concepts = self.concept_extractor.extract(section_title, content)
+            concepts["required_labels"] = _extract_required_labels(section_title, content)
             
             # Determine image type from extracted concepts
             style = concepts.get("recommended_style", "technical_infographic")

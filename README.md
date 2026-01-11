@@ -263,6 +263,56 @@ else:
     print(f"Generated: {result['output_path']}")
 ```
 
+### FastAPI API
+
+Run the API (see `src/doc_generator/infrastructure/api/main.py` for app wiring), then use:
+
+**1) Upload a file**
+```bash
+curl -sS -X POST http://localhost:8000/api/upload \
+  -F "file=@/path/to/input.pdf"
+```
+Response:
+```json
+{"file_id":"f_abc123","filename":"input.pdf","size":12345,"mime_type":"application/pdf","expires_in":3600}
+```
+
+**2) Generate PDF or PPTX (SSE stream)**
+```bash
+curl -N -X POST http://localhost:8000/api/generate \
+  -H "Content-Type: application/json" \
+  -H "X-Google-Key: $GEMINI_API_KEY" \
+  -d '{
+    "output_format": "pdf",
+    "provider": "gemini",
+    "model": "gemini-3-pro-preview",
+    "image_model": "gemini-3-pro-image-preview",
+    "sources": [
+      {"type": "file", "file_id": "f_abc123"},
+      {"type": "url", "url": "https://example.com/article"},
+      {"type": "text", "content": "Raw text to include"}
+    ],
+    "cache": {"reuse": true}
+  }'
+```
+For PPTX, set `"output_format": "pptx"`.
+
+The stream ends with a `complete` (or `cache_hit`) event that includes:
+```json
+{"download_url":"/api/download/f_abc123/pdf/your-file.pdf?token=...","file_path":"f_abc123/pdf/your-file.pdf"}
+```
+
+**3) Download the generated file**
+```bash
+curl -L -o output.pdf "http://localhost:8000/api/download/f_abc123/pdf/your-file.pdf"
+```
+You can also use the `download_url` directly if you want the tokenized link.
+
+**Headers by provider**
+- Gemini: `X-Google-Key`
+- OpenAI: `X-OpenAI-Key`
+- Anthropic: `X-Anthropic-Key`
+
 ## Docker Deployment
 
 ### Building for Production
