@@ -13,6 +13,7 @@ from loguru import logger
 
 from ....domain.exceptions import GenerationError
 from ...pdf_utils import parse_markdown_lines
+from ...settings import get_settings
 from .utils import (
     add_chart_slide,
     add_content_slide,
@@ -39,6 +40,7 @@ class PPTXGenerator:
         Initialize PPTX generator.
         Invoked by: (no references found)
         """
+        self.settings = get_settings()
         self._image_cache: Path | None = None
         self._max_bullets_per_slide = 4
 
@@ -192,7 +194,11 @@ class PPTXGenerator:
                     add_executive_summary_slide(prs, "Executive Summary", summary_points)
                     logger.debug("Added executive summary slide")
 
-            section_images = structured_content.get("section_images", {})
+            embed_images = metadata.get(
+                "embed_in_pptx",
+                self.settings.image_generation.embed_in_pptx,
+            )
+            section_images = structured_content.get("section_images", {}) if embed_images else {}
             slides, sections = self._generate_section_slides(markdown_content, section_images)
             if slides and sections:
                 self._add_llm_section_slides(prs, slides, sections, section_images)

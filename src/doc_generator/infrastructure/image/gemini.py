@@ -117,6 +117,7 @@ class GeminiImageGenerator:
             Enhanced prompt string
         Invoked by: src/doc_generator/infrastructure/image/gemini.py
         """
+        size_hint = f"- Target size: {self.settings.default_width}x{self.settings.default_height}px"
         if image_type == ImageType.INFOGRAPHIC:
             return f"""Create a vibrant, educational infographic that explains: {prompt}
 
@@ -130,7 +131,8 @@ Style requirements:
 - High contrast for readability when printed
 - Use ONLY the concepts in the prompt; do not add new information
 - Avoid metaphorical objects (pipes, ropes, factories) unless explicitly mentioned
-- For workflows/architectures, use flat rounded rectangles + arrows in a clean grid"""
+- For workflows/architectures, use flat rounded rectangles + arrows in a clean grid
+{size_hint}"""
 
         elif image_type == ImageType.DECORATIVE:
             return f"""Create a professional, thematic header image for: {prompt}
@@ -143,7 +145,8 @@ Style requirements:
 - Suitable as a section header in a document
 - Wide aspect ratio (16:9 or similar)
 - No text in the image
-- Use ONLY the concepts in the prompt; do not add new information"""
+- Use ONLY the concepts in the prompt; do not add new information
+{size_hint}"""
 
         elif image_type == ImageType.MERMAID:
             return f"""Create a professional, clean flowchart/diagram image that represents: {prompt}
@@ -157,7 +160,8 @@ Style requirements:
 - High contrast for readability when printed
 - No watermarks or decorative elements
 - Focus on clarity and visual hierarchy
-- Use ONLY the concepts in the prompt; do not add new information"""
+- Use ONLY the concepts in the prompt; do not add new information
+{size_hint}"""
 
         else:
             return prompt

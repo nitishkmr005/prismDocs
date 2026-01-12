@@ -12,11 +12,12 @@ from typing import Optional
 
 from loguru import logger
 
+from ..infrastructure.settings import get_settings
 
 def save_structured_content(
     structured_content: dict,
     input_path: str,
-    cache_dir: Path = Path("src/output/cache")
+    cache_dir: Path | None = None
 ) -> Path:
     """
     Save structured content to JSON cache.
@@ -30,6 +31,8 @@ def save_structured_content(
         Path to saved cache file
     Invoked by: src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_output.py
     """
+    if cache_dir is None:
+        cache_dir = get_settings().generator.output_dir / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     
     # Create cache filename from input path
@@ -51,7 +54,7 @@ def save_structured_content(
 
 def load_structured_content(
     input_path: str,
-    cache_dir: Path = Path("src/output/cache")
+    cache_dir: Path | None = None
 ) -> Optional[dict]:
     """
     Load structured content from JSON cache.
@@ -64,6 +67,8 @@ def load_structured_content(
         Structured content dict or None if not cached
     Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py
     """
+    if cache_dir is None:
+        cache_dir = get_settings().generator.output_dir / "cache"
     input_name = Path(input_path).stem
     cache_file = cache_dir / f"{input_name}_content_cache.json"
     
@@ -126,7 +131,7 @@ def save_image_manifest(
 
 
 def load_existing_images(
-    images_dir: Path = Path("src/output/images"),
+    images_dir: Path | None = None,
     expected_hash: Optional[str] = None,
 ) -> dict:
     """
@@ -142,6 +147,8 @@ def load_existing_images(
         Dict mapping section_id -> image info
     Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
     """
+    if images_dir is None:
+        images_dir = Path(get_settings().image_generation.images_dir)
     section_images = {}
     
     if not images_dir.exists():

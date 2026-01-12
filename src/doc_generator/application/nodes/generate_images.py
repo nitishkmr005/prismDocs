@@ -849,7 +849,12 @@ def generate_images_node(state: WorkflowState) -> WorkflowState:
 
         # Initialize components
         detector = ImageTypeDetector()
-        gemini_gen = GeminiImageGenerator(model=metadata.get("image_model"))
+        provider = metadata.get("image_provider") or settings.image_generation.default_provider
+        gemini_gen = None
+        if provider == "gemini":
+            gemini_gen = GeminiImageGenerator(model=metadata.get("image_model"))
+        else:
+            logger.info(f"Image provider '{provider}' not supported for raster generation")
         alignment_validator = GeminiImageAlignmentValidator()
         describer = GeminiImageDescriber()
 
@@ -883,6 +888,15 @@ def generate_images_node(state: WorkflowState) -> WorkflowState:
             if decision.image_type == ImageType.NONE:
                 skipped_count += 1
                 continue
+            if decision.image_type == ImageType.INFOGRAPHIC and not settings.image_generation.enable_infographics:
+                skipped_count += 1
+                continue
+            if decision.image_type == ImageType.DECORATIVE and not settings.image_generation.enable_decorative_headers:
+                skipped_count += 1
+                continue
+            if decision.image_type == ImageType.MERMAID and not settings.image_generation.enable_diagrams:
+                skipped_count += 1
+                continue
 
             # Generate image based on type
             image_path: Optional[Path] = None
@@ -892,7 +906,7 @@ def generate_images_node(state: WorkflowState) -> WorkflowState:
             max_attempts = max(1, int(metadata.get("image_alignment_retries", 2)))
 
             if decision.image_type in (ImageType.INFOGRAPHIC, ImageType.DECORATIVE):
-                if not gemini_gen.is_available() and not alignment_validator.is_available():
+                if (not gemini_gen or not gemini_gen.is_available()) and not alignment_validator.is_available():
                     logger.debug(f"Gemini not available, skipping {decision.image_type.value}")
                     continue
 
@@ -908,7 +922,7 @@ def generate_images_node(state: WorkflowState) -> WorkflowState:
                         logger.info(f"Reusing existing image for section {section_id}: {section_title}")
                         image_path = output_path
                         reused_count += 1
-                    elif gemini_gen.is_available():
+                    elif gemini_gen and gemini_gen.is_available():
                         image_path = gemini_gen.generate_image(
                             prompt=prompt_used,
                             image_type=decision.image_type,

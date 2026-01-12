@@ -5,6 +5,7 @@ Provides wrapper around Docling library for PDF, DOCX, PPTX, and image parsing
 with OCR support.
 """
 
+import inspect
 from pathlib import Path
 from typing import Tuple
 
@@ -18,6 +19,7 @@ except ImportError:
     logger.warning("Docling not available - advanced document parsing disabled")
 
 from ...domain.exceptions import ParseError
+from ..settings import get_settings
 
 
 def convert_document_to_markdown(file_path: Path) -> Tuple[str, dict]:
@@ -49,7 +51,27 @@ def convert_document_to_markdown(file_path: Path) -> Tuple[str, dict]:
     try:
         logger.info(f"Converting document with Docling: {file_path.name}")
 
-        converter = DocumentConverter()
+        docling_settings = get_settings().parsers.docling
+        converter_kwargs = {}
+        try:
+            signature = inspect.signature(DocumentConverter)
+            params = signature.parameters
+            if "ocr" in params:
+                converter_kwargs["ocr"] = docling_settings.ocr_enabled
+            if "ocr_enabled" in params:
+                converter_kwargs["ocr_enabled"] = docling_settings.ocr_enabled
+            if "enable_ocr" in params:
+                converter_kwargs["enable_ocr"] = docling_settings.ocr_enabled
+            if "table_structure_extraction" in params:
+                converter_kwargs["table_structure_extraction"] = docling_settings.table_structure_extraction
+            if "table_structure" in params:
+                converter_kwargs["table_structure"] = docling_settings.table_structure_extraction
+            if "extract_tables" in params:
+                converter_kwargs["extract_tables"] = docling_settings.table_structure_extraction
+        except (TypeError, ValueError):
+            converter_kwargs = {}
+
+        converter = DocumentConverter(**converter_kwargs)
         result = converter.convert(str(file_path))
 
         # Export to markdown

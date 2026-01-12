@@ -12,8 +12,10 @@ from typing import Optional
 
 from loguru import logger
 
+from ..settings import get_settings
+
 # Corporate color palette
-CHART_COLORS = [
+_BASE_CHART_COLORS = [
     "#1E5D5A",  # Teal (primary)
     "#D76B38",  # Orange (accent)
     "#2E86AB",  # Blue
@@ -25,7 +27,7 @@ CHART_COLORS = [
 ]
 
 # Layer colors for architecture diagrams
-LAYER_COLORS = {
+_BASE_LAYER_COLORS = {
     "frontend": "#2E86AB",
     "backend": "#1E5D5A",
     "database": "#A23B72",
@@ -41,12 +43,27 @@ GRID_COLOR = "#E0E0E0"
 CONNECTION_COLOR = "#555555"
 
 
+def _load_svg_palette() -> tuple[list[str], dict[str, str]]:
+    """
+    Load SVG palette settings with safe defaults.
+    Invoked by: src/doc_generator/infrastructure/image/svg.py
+    """
+    svg_settings = get_settings().svg
+    chart_colors = svg_settings.chart_colors or _BASE_CHART_COLORS
+    layer_colors = dict(_BASE_LAYER_COLORS)
+    layer_colors.update(svg_settings.layer_colors or {})
+    return chart_colors, layer_colors
+
+
+CHART_COLORS, LAYER_COLORS = _load_svg_palette()
+
+
 class SVGGenerator:
     """
     Generate professional SVG charts for presentations.
     """
 
-    def __init__(self, width: int = 800, height: int = 500):
+    def __init__(self, width: int | None = None, height: int | None = None):
         """
         Initialize SVG generator.
 
@@ -55,8 +72,9 @@ class SVGGenerator:
             height: Chart height in pixels
         Invoked by: (no references found)
         """
-        self.width = width
-        self.height = height
+        svg_settings = get_settings().svg
+        self.width = width if width is not None else svg_settings.default_width
+        self.height = height if height is not None else svg_settings.default_height
         self.padding = 60
         self.font_family = "Arial, Helvetica, sans-serif"
 

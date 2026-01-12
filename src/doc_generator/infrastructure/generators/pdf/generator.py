@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 
 from loguru import logger
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4, legal, letter
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer
 
 from ....domain.exceptions import GenerationError
@@ -229,14 +229,23 @@ class PDFGenerator:
         section_images = section_images or {}
         display_title = self._resolve_display_title(title, markdown_content)
 
-        # Create document with blog-like margins
+        margin = self.settings.pdf.margin
+        page_size_key = str(self.settings.pdf.page_size or "letter").lower()
+        page_sizes = {
+            "letter": letter,
+            "a4": A4,
+            "legal": legal,
+        }
+        pagesize = page_sizes.get(page_size_key, letter)
+
+        # Create document with configured margins
         doc = SimpleDocTemplate(
             str(output_path),
-            pagesize=letter,
-            rightMargin=60,
-            leftMargin=60,
-            topMargin=60,
-            bottomMargin=48,
+            pagesize=pagesize,
+            rightMargin=margin.right,
+            leftMargin=margin.left,
+            topMargin=margin.top,
+            bottomMargin=margin.bottom,
             title=display_title,
             author=metadata.get("author", ""),
         )

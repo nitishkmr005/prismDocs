@@ -42,6 +42,7 @@ class ClaudeSVGGenerator:
         self.client = None
         self.settings = get_settings()
         self.llm_settings = self.settings.llm
+        self.svg_max_tokens = self.llm_settings.svg_max_tokens or self.llm_settings.claude_max_tokens
 
         if self.api_key:
             self.client = Anthropic(api_key=self.api_key)
@@ -108,7 +109,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
             start_time = time.perf_counter()
             response = self.client.messages.create(
                 model=self.llm_settings.claude_model,
-                max_tokens=self.llm_settings.claude_max_tokens,
+                max_tokens=self.svg_max_tokens,
                 temperature=self.llm_settings.claude_temperature,
                 messages=[
                     {
@@ -199,7 +200,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
             start_time = time.perf_counter()
             response = self.client.messages.create(
                 model=self.llm_settings.claude_model,
-                max_tokens=self.llm_settings.claude_max_tokens,
+                max_tokens=self.svg_max_tokens,
                 temperature=self.llm_settings.claude_temperature,
                 messages=[
                     {
@@ -290,7 +291,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
             start_time = time.perf_counter()
             response = self.client.messages.create(
                 model=self.llm_settings.claude_model,
-                max_tokens=self.llm_settings.claude_max_tokens,
+                max_tokens=self.svg_max_tokens,
                 temperature=self.llm_settings.claude_temperature,
                 messages=[
                     {
@@ -382,7 +383,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
             start_time = time.perf_counter()
             response = self.client.messages.create(
                 model=self.llm_settings.claude_model,
-                max_tokens=self.llm_settings.claude_max_tokens,
+                max_tokens=self.svg_max_tokens,
                 temperature=self.llm_settings.claude_temperature,
                 messages=[
                     {
@@ -474,7 +475,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
             start_time = time.perf_counter()
             response = self.client.messages.create(
                 model=self.llm_settings.claude_model,
-                max_tokens=self.llm_settings.claude_max_tokens,
+                max_tokens=self.svg_max_tokens,
                 temperature=self.llm_settings.claude_temperature,
                 messages=[
                     {

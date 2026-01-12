@@ -11,6 +11,7 @@ from loguru import logger
 
 from ...domain.exceptions import ParseError
 from ...infrastructure.parsers.markitdown import convert_url_to_markdown, is_markitdown_available
+from ...infrastructure.settings import get_settings
 
 
 class WebParser:
@@ -44,11 +45,16 @@ class WebParser:
         Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py, .claude/skills/pptx/ooxml/scripts/validation/redlining.py, scripts/generate_from_folder.py, src/doc_generator/application/nodes/parse_content.py, src/doc_generator/application/workflow/nodes/parse_content.py, src/doc_generator/infrastructure/api/services/generation.py
         """
         url = str(input_path)
+        settings = get_settings().parsers.web
 
         logger.info(f"Fetching web article: {url}")
 
         try:
-            content = convert_url_to_markdown(url)
+            content = convert_url_to_markdown(
+                url,
+                timeout=settings.timeout,
+                user_agent=settings.user_agent,
+            )
 
             # Extract title from content (first heading)
             title = self._extract_title_from_markdown(content)

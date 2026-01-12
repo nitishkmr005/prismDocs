@@ -14,6 +14,7 @@ from typing import Optional
 
 from loguru import logger
 
+from ..settings import get_settings
 
 # ANSI color codes for terminal
 class Colors:
@@ -93,13 +94,15 @@ def setup_logging(verbose: bool = False, log_file: str | None = None) -> None:
     # Remove default logger
     logger.remove()
 
+    settings = get_settings().logging
+
     # Determine log level
-    level = "DEBUG" if verbose else "INFO"
+    level = "DEBUG" if verbose else settings.level
 
     # Custom format with better visual hierarchy
     # - Compact module names for cleaner output
     # - Different colors for different components
-    console_format = (
+    console_format = settings.format or (
         "<dim>{time:HH:mm:ss}</dim> │ "
         "<level>{level: <8}</level> │ "
         "<cyan>{name: <25}</cyan> │ "
@@ -116,16 +119,15 @@ def setup_logging(verbose: bool = False, log_file: str | None = None) -> None:
 
     # File logging if requested
     if log_file:
-        file_format = (
-            "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
-            "{level: <8} | "
-            "{name}:{function}:{line} | "
-            "{message}"
-        )
         logger.add(
             log_file,
             level=level,
-            format=file_format,
+            format=settings.format or (
+                "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
+                "{level: <8} | "
+                "{name}:{function}:{line} | "
+                "{message}"
+            ),
             rotation="10 MB",
             retention="7 days",
         )
@@ -277,4 +279,3 @@ def log_table(headers: list[str], rows: list[list[str]], title: str = "") -> Non
         logger.opt(colors=True).info(f"{data_row}")
     
     logger.opt(colors=True).info(f"<dim>{sep}</dim>")
-

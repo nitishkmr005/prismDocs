@@ -13,8 +13,10 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches, Pt
 
+from ...settings import get_settings
+
 # Sage & Terracotta palette for warm, editorial presentations
-THEME_COLORS = {
+_BASE_THEME_COLORS = {
     "ink": RGBColor(44, 44, 44),          # Charcoal
     "muted": RGBColor(107, 112, 107),     # Soft gray
     "accent": RGBColor(224, 122, 95),     # Terracotta
@@ -33,17 +35,71 @@ TITLE_FONT_NAME = "Georgia"
 BODY_FONT_NAME = "Verdana"
 
 
+def _hex_to_rgb(value: str) -> RGBColor:
+    """
+    Convert #RRGGBB to an RGBColor.
+    Invoked by: src/doc_generator/infrastructure/generators/pptx/utils.py
+    """
+    hex_value = value.lstrip("#")
+    if len(hex_value) != 6:
+        return RGBColor(0, 0, 0)
+    return RGBColor(int(hex_value[0:2], 16), int(hex_value[2:4], 16), int(hex_value[4:6], 16))
+
+
+def _load_theme_colors() -> dict:
+    """
+    Load PPTX theme colors from settings with safe defaults.
+    Invoked by: src/doc_generator/infrastructure/generators/pptx/utils.py
+    """
+    theme = get_settings().pptx.theme
+    overrides = {
+        "background": _hex_to_rgb(theme.background),
+        "light_bg": _hex_to_rgb(theme.background),
+        "ink": _hex_to_rgb(theme.text),
+        "muted": _hex_to_rgb(theme.text),
+        "accent": _hex_to_rgb(theme.accent),
+        "accent_dark": _hex_to_rgb(theme.accent),
+        "gradient_start": _hex_to_rgb(theme.accent),
+        "gradient_end": _hex_to_rgb(theme.secondary),
+        "teal": _hex_to_rgb(theme.secondary),
+        "success": _hex_to_rgb(theme.secondary),
+    }
+    merged = dict(_BASE_THEME_COLORS)
+    merged.update(overrides)
+    return merged
+
+
+THEME_COLORS = _load_theme_colors()
+
+
+def _resolve_slide_dimensions() -> tuple[float, float]:
+    """
+    Resolve slide dimensions in inches from settings.
+    Invoked by: src/doc_generator/infrastructure/generators/pptx/utils.py
+    """
+    pptx_settings = get_settings().pptx
+    width_px = int(pptx_settings.slide_width or 960)
+    height_px = int(pptx_settings.slide_height or 540)
+    layout = str(pptx_settings.layout or "").upper()
+
+    if layout in {"LAYOUT_4X3", "4X3"} and (width_px, height_px) == (960, 540):
+        height_px = 720
+
+    return width_px / 96.0, height_px / 96.0
+
+
 def create_presentation() -> Presentation:
     """
-    Create a new PowerPoint presentation with 16:9 layout.
+    Create a new PowerPoint presentation with configured layout.
 
     Returns:
         Presentation object
     Invoked by: (no references found)
     """
     prs = Presentation()
-    prs.slide_width = Inches(10)
-    prs.slide_height = Inches(5.625)  # 16:9 aspect ratio
+    width_in, height_in = _resolve_slide_dimensions()
+    prs.slide_width = Inches(width_in)
+    prs.slide_height = Inches(height_in)
 
     logger.debug("Created new PowerPoint presentation (16:9)")
     return prs

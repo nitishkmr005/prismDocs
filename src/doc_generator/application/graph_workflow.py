@@ -4,12 +4,15 @@ LangGraph workflow for document generation.
 Defines the state machine workflow for converting documents.
 """
 
+from pathlib import Path
+
 from langgraph.graph import END, StateGraph
 from loguru import logger
 
 from ..domain.models import WorkflowState
 from ..infrastructure.image import GeminiImageGenerator
 from ..infrastructure.llm import LLMContentGenerator, LLMService
+from ..infrastructure.settings import get_settings
 from .nodes import (
     detect_format_node,
     generate_images_node,
@@ -38,9 +41,10 @@ def should_retry(state: WorkflowState) -> str:
     if not errors:
         return "end"
 
-    # Don't retry more than 3 times
+    max_retries = get_settings().generator.max_retries
+    # Don't retry more than configured attempts
     retry_count = state.get("_retry_count", 0)
-    if retry_count >= 3:
+    if retry_count >= max_retries:
         logger.warning(f"Max retries reached ({retry_count}), ending workflow")
         return "end"
 
@@ -48,7 +52,7 @@ def should_retry(state: WorkflowState) -> str:
     last_error = errors[-1] if errors else ""
     if "Generation failed" in last_error or "Validation failed" in last_error:
         state["_retry_count"] = retry_count + 1
-        logger.warning(f"Retrying generation (attempt {retry_count + 1}/3)")
+        logger.warning(f"Retrying generation (attempt {retry_count + 1}/{max_retries})")
         return "retry"
 
     return "end"
@@ -109,7 +113,7 @@ def build_workflow() -> StateGraph:
 
 def run_workflow(
     input_path: str,
-    output_format: str = "pdf",
+    output_format: str | None = None,
     output_path: str = "",
     llm_service = None,
     metadata: dict = None
@@ -129,6 +133,16 @@ def run_workflow(
 
     Invoked by: scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/quick_pdf_with_images.py, scripts/run_generator.py, src/doc_generator/infrastructure/api/services/generation.py
     """
+    settings = get_settings()
+    output_format = output_format or settings.generator.default_output_format
+    metadata = metadata or {}
+    metadata.setdefault("audience", settings.generator.audience)
+    input_path_obj = Path(input_path)
+    if not input_path_obj.is_absolute() and not input_path_obj.exists():
+        candidate = settings.generator.input_dir / input_path
+        if candidate.exists():
+            input_path = str(candidate)
+
     # Build workflow
     workflow = build_workflow()
 
@@ -141,7 +155,7 @@ def run_workflow(
         "structured_content": {},
         "output_path": output_path,
         "errors": [],
-        "metadata": metadata or {},
+        "metadata": metadata,
         "llm_service": llm_service,
     }
 

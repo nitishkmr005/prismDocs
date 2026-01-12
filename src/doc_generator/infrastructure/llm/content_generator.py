@@ -143,18 +143,23 @@ class LLMContentGenerator:
         else:
             logger.warning("Unsupported content provider requested - content generation disabled")
         
-        # Setup visual data client (OpenAI only - Claude disabled)
-        if self.openai_api_key and OPENAI_AVAILABLE:
+        # Setup visual data client (OpenAI default, Claude optional)
+        svg_provider = self.settings.llm.svg_provider or "claude"
+        if self.settings.llm.use_claude_for_visuals and svg_provider == "claude":
+            if self.claude_api_key and ANTHROPIC_AVAILABLE:
+                self.visual_client = Anthropic(api_key=self.claude_api_key)
+                self.visual_provider = "claude"
+                self.visual_model = self.settings.llm.svg_model
+                logger.debug(f"Visual data client using Claude: {self.visual_model}")
+            else:
+                logger.warning("Claude requested for visuals but not available")
+        elif self.openai_api_key and OPENAI_AVAILABLE:
             self.visual_client = OpenAI(api_key=self.openai_api_key)
             self.visual_provider = "openai"
             self.visual_model = self.settings.llm.content_model
             logger.debug(f"Visual data client using OpenAI: {self.visual_model}")
-        elif False and self.claude_api_key and ANTHROPIC_AVAILABLE:
-            # Claude support disabled
-            self.visual_client = Anthropic(api_key=self.claude_api_key)
-            self.visual_provider = "claude"
-            self.visual_model = self.settings.llm.svg_model
-            logger.debug(f"Visual data client using Claude: {self.visual_model}")
+        else:
+            logger.warning("No visual data client available for diagram generation")
         
         # Legacy compatibility
         self.client = self.content_client

@@ -31,23 +31,48 @@ from reportlab.platypus import (
 )
 
 from ....utils.markdown_utils import strip_frontmatter  # noqa: F401
+from ...settings import get_settings
 
 # Corporate-ready color palette - Modern, professional styling
-PALETTE = {
-    "ink": colors.HexColor("#1a1a2e"),         # Deep navy for text
-    "muted": colors.HexColor("#4a5568"),       # Sophisticated gray
-    "paper": colors.HexColor("#fafafa"),       # Clean white background
-    "panel": colors.HexColor("#f7fafc"),       # Light panel
-    "accent": colors.HexColor("#2563eb"),      # Professional blue
-    "accent_light": colors.HexColor("#3b82f6"), # Lighter blue for highlights
-    "teal": colors.HexColor("#0d9488"),        # Modern teal
-    "line": colors.HexColor("#e2e8f0"),        # Subtle dividers
-    "code": colors.HexColor("#f1f5f9"),        # Code background
-    "table": colors.HexColor("#f8fafc"),       # Table background
-    "success": colors.HexColor("#10b981"),     # Green for positive
-    "warning": colors.HexColor("#f59e0b"),     # Amber for warnings
-    "mermaid_bg": colors.HexColor("#eef2ff"),  # Light blue for diagrams
+_BASE_PALETTE = {
+    "ink": "#1a1a2e",         # Deep navy for text
+    "muted": "#4a5568",       # Sophisticated gray
+    "paper": "#fafafa",       # Clean white background
+    "panel": "#f7fafc",       # Light panel
+    "accent": "#2563eb",      # Professional blue
+    "accent_light": "#3b82f6", # Lighter blue for highlights
+    "teal": "#0d9488",        # Modern teal
+    "line": "#e2e8f0",        # Subtle dividers
+    "code": "#f1f5f9",        # Code background
+    "table": "#f8fafc",       # Table background
+    "success": "#10b981",     # Green for positive
+    "warning": "#f59e0b",     # Amber for warnings
+    "mermaid_bg": "#eef2ff",  # Light blue for diagrams
 }
+
+
+def _load_palette() -> dict:
+    """
+    Load the PDF palette from settings with safe defaults.
+    Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py
+    """
+    pdf_palette = get_settings().pdf.palette
+    overrides = {
+        "ink": pdf_palette.ink,
+        "muted": pdf_palette.muted,
+        "paper": pdf_palette.paper,
+        "panel": pdf_palette.panel,
+        "accent": pdf_palette.accent,
+        "teal": pdf_palette.teal,
+        "line": pdf_palette.line,
+        "code": pdf_palette.code,
+        "table": pdf_palette.table,
+    }
+    merged = {**_BASE_PALETTE, **overrides}
+    return {key: colors.HexColor(value) for key, value in merged.items()}
+
+
+PALETTE = _load_palette()
 
 
 def inline_md(text: str) -> str:
