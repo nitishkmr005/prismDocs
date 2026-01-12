@@ -30,6 +30,7 @@ class StorageService:
         Args:
             base_output_dir: Base directory for all outputs
             base_url: Base URL for download links
+        Invoked by: (no references found)
         """
         self.base_output_dir = Path(base_output_dir)
         self.cache_dir = self.base_output_dir / "cache"
@@ -43,7 +44,10 @@ class StorageService:
         self._uploads: dict[str, dict] = {}
 
     def _get_file_dir(self, file_id: str) -> Path:
-        """Get the directory for a specific file_id."""
+        """
+        Get the directory for a specific file_id.
+        Invoked by: src/doc_generator/infrastructure/api/services/storage.py, src/doc_generator/infrastructure/storage/file_storage.py
+        """
         return self.base_output_dir / file_id
 
     def _ensure_file_dirs(self, file_id: str) -> dict[str, Path]:
@@ -51,6 +55,7 @@ class StorageService:
         
         Returns:
             Dict with paths for source, images, pdf, pptx
+        Invoked by: src/doc_generator/infrastructure/api/services/storage.py, src/doc_generator/infrastructure/storage/file_storage.py
         """
         file_dir = self._get_file_dir(file_id)
         dirs = {
@@ -82,6 +87,7 @@ class StorageService:
 
         Returns:
             Unique file ID (f_...)
+        Invoked by: src/doc_generator/infrastructure/api/routes/upload.py, tests/api/test_storage_service.py
         """
         file_id = f"f_{secrets.token_hex(12)}"
         dirs = self._ensure_file_dirs(file_id)
@@ -114,6 +120,7 @@ class StorageService:
 
         Raises:
             FileNotFoundError: If file_id not found
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py, src/doc_generator/infrastructure/storage/file_storage.py, tests/api/test_storage_service.py
         """
         if file_id in self._uploads:
             return self._uploads[file_id]["path"]
@@ -136,6 +143,7 @@ class StorageService:
             
         Returns:
             Dict with paths for root, source, images, pdf, pptx
+        Invoked by: src/doc_generator/infrastructure/storage/file_storage.py
         """
         if file_id in self._uploads:
             return self._uploads[file_id]["dirs"]
@@ -152,12 +160,16 @@ class StorageService:
             
         Returns:
             Path to output directory
+        Invoked by: (no references found)
         """
         dirs = self.get_file_dirs(file_id)
         return dirs.get(output_format, dirs["root"])
 
     def get_images_dir(self, file_id: str) -> Path:
-        """Get the images directory for a file_id."""
+        """
+        Get the images directory for a file_id.
+        Invoked by: (no references found)
+        """
         dirs = self.get_file_dirs(file_id)
         return dirs["images"]
 
@@ -172,6 +184,7 @@ class StorageService:
 
         Raises:
             FileNotFoundError: If file_id not found
+        Invoked by: tests/api/test_storage_service.py
         """
         path = self.get_upload_path(file_id)
         return path.read_bytes()
@@ -187,6 +200,7 @@ class StorageService:
 
         Raises:
             FileNotFoundError: If file_id not found
+        Invoked by: (no references found)
         """
         if file_id not in self._uploads:
             # Try to reconstruct from disk
@@ -209,6 +223,7 @@ class StorageService:
 
         Returns:
             Download URL with token
+        Invoked by: src/doc_generator/infrastructure/api/routes/generate.py, src/doc_generator/infrastructure/api/services/generation.py, tests/api/test_storage_service.py
         """
         # Generate a simple token (in production, use signed URLs)
         token = secrets.token_urlsafe(16)
@@ -230,6 +245,7 @@ class StorageService:
 
         Args:
             file_id: File ID to remove
+        Invoked by: src/doc_generator/infrastructure/storage/file_storage.py, tests/api/test_storage_service.py
         """
         import shutil
         
@@ -249,6 +265,7 @@ class StorageService:
 
         Returns:
             Number of files cleaned up
+        Invoked by: (no references found)
         """
         now = time.time()
         expired = []
@@ -265,11 +282,17 @@ class StorageService:
     # Legacy compatibility properties
     @property
     def upload_dir(self) -> Path:
-        """Legacy: returns base output dir for backwards compatibility."""
+        """
+        Legacy: returns base output dir for backwards compatibility.
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+        """
         return self.base_output_dir
 
     @property
     def output_dir(self) -> Path:
-        """Legacy: returns base output dir for backwards compatibility."""
+        """
+        Legacy: returns base output dir for backwards compatibility.
+        Invoked by: .claude/skills/pdf/scripts/convert_pdf_to_images.py, .claude/skills/pptx/ooxml/scripts/unpack.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/utils/content_merger.py
+        """
         return self.base_output_dir
 

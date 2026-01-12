@@ -26,7 +26,10 @@ class PPTXSchemaValidator(BaseSchemaValidator):
     }
 
     def validate(self):
-        """Run all validation checks and return True if all pass."""
+        """
+        Run all validation checks and return True if all pass.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/validator.py
+        """
         # Test 0: XML well-formedness
         if not self.validate_xml():
             return False
@@ -75,7 +78,10 @@ class PPTXSchemaValidator(BaseSchemaValidator):
         return all_valid
 
     def validate_uuid_ids(self):
-        """Validate that ID attributes that look like UUIDs contain only hex values."""
+        """
+        Validate that ID attributes that look like UUIDs contain only hex values.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         import lxml.etree
 
         errors = []
@@ -119,14 +125,20 @@ class PPTXSchemaValidator(BaseSchemaValidator):
             return True
 
     def _looks_like_uuid(self, value):
-        """Check if a value has the general structure of a UUID."""
+        """
+        Check if a value has the general structure of a UUID.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         # Remove common UUID delimiters
         clean_value = value.strip("{}()").replace("-", "")
         # Check if it's 32 hex-like characters (could include invalid hex chars)
         return len(clean_value) == 32 and all(c.isalnum() for c in clean_value)
 
     def validate_slide_layout_ids(self):
-        """Validate that sldLayoutId elements in slide masters reference valid slide layouts."""
+        """
+        Validate that sldLayoutId elements in slide masters reference valid slide layouts.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         import lxml.etree
 
         errors = []
@@ -201,7 +213,10 @@ class PPTXSchemaValidator(BaseSchemaValidator):
             return True
 
     def validate_no_duplicate_slide_layouts(self):
-        """Validate that each slide has exactly one slideLayout reference."""
+        """
+        Validate that each slide has exactly one slideLayout reference.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         import lxml.etree
 
         errors = []
@@ -241,7 +256,10 @@ class PPTXSchemaValidator(BaseSchemaValidator):
             return True
 
     def validate_notes_slide_references(self):
-        """Validate that each notesSlide file is referenced by only one slide."""
+        """
+        Validate that each notesSlide file is referenced by only one slide.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         import lxml.etree
 
         errors = []

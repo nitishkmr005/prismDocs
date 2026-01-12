@@ -29,6 +29,7 @@ def quick_pdf_with_existing_images(input_path: str) -> Path:
         
     Returns:
         Path to generated PDF
+    Invoked by: scripts/quick_pdf_with_images.py
     """
     logger.info("=" * 80)
     logger.info(f"Quick PDF generation with existing images")

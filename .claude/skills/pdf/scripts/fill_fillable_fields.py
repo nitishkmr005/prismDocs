@@ -10,6 +10,9 @@ from extract_form_field_info import get_field_info
 
 
 def fill_pdf_fields(input_pdf_path: str, fields_json_path: str, output_pdf_path: str):
+    """
+    Invoked by: .claude/skills/pdf/scripts/fill_fillable_fields.py
+    """
     with open(fields_json_path) as f:
         fields = json.load(f)
     # Group by page number.
@@ -57,6 +60,9 @@ def fill_pdf_fields(input_pdf_path: str, fields_json_path: str, output_pdf_path:
 
 
 def validation_error_for_field_value(field_info, field_value):
+    """
+    Invoked by: .claude/skills/pdf/scripts/fill_fillable_fields.py
+    """
     field_type = field_info["type"]
     field_id = field_info["field_id"]
     if field_type == "checkbox":
@@ -88,12 +94,18 @@ def validation_error_for_field_value(field_info, field_value):
 # We call the original method and adjust the return value only if the argument to `get_inherited`
 # is `FA.Opt` and if the return value is a list of two-element lists.
 def monkeypatch_pydpf_method():
+    """
+    Invoked by: .claude/skills/pdf/scripts/fill_fillable_fields.py
+    """
     from pypdf.generic import DictionaryObject
     from pypdf.constants import FieldDictionaryAttributes
 
     original_get_inherited = DictionaryObject.get_inherited
 
     def patched_get_inherited(self, key: str, default = None):
+        """
+        Invoked by: .claude/skills/pdf/scripts/fill_fillable_fields.py
+        """
         result = original_get_inherited(self, key, default)
         if key == FieldDictionaryAttributes.Opt:
             if isinstance(result, list) and all(isinstance(v, list) and len(v) == 2 for v in result):

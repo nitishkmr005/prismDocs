@@ -31,6 +31,7 @@ def resolve_image_path(
 
     Returns:
         Path to resolved local image or None if not found
+    Invoked by: (no references found)
     """
     # Remote URLs are not supported for local document generation
     if url.startswith("http://") or url.startswith("https://"):

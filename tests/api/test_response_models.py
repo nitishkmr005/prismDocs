@@ -14,6 +14,9 @@ from doc_generator.infrastructure.api.models.responses import (
 
 class TestProgressEvent:
     def test_basic_progress(self):
+        """
+        Invoked by: (no references found)
+        """
         event = ProgressEvent(
             status=GenerationStatus.PARSING,
             progress=25,
@@ -24,6 +27,9 @@ class TestProgressEvent:
         assert event.message == "Parsing sources..."
 
     def test_progress_defaults(self):
+        """
+        Invoked by: (no references found)
+        """
         event = ProgressEvent(
             status=GenerationStatus.TRANSFORMING,
             progress=50,
@@ -33,6 +39,9 @@ class TestProgressEvent:
 
 class TestCompleteEvent:
     def test_complete_event(self):
+        """
+        Invoked by: (no references found)
+        """
         event = CompleteEvent(
             download_url="https://storage.example.com/doc.pdf",
             expires_in=3600,
@@ -49,6 +58,9 @@ class TestCompleteEvent:
 
 class TestCacheHitEvent:
     def test_cache_hit_event(self):
+        """
+        Invoked by: (no references found)
+        """
         event = CacheHitEvent(
             download_url="https://storage.example.com/cached.pdf",
             cached_at="2024-01-15T10:30:00Z",
@@ -61,6 +73,9 @@ class TestCacheHitEvent:
 
 class TestErrorEvent:
     def test_error_event(self):
+        """
+        Invoked by: (no references found)
+        """
         event = ErrorEvent(
             error="Invalid API key",
             code="AUTH_ERROR",
@@ -71,6 +86,9 @@ class TestErrorEvent:
 
 class TestUploadResponse:
     def test_upload_response(self):
+        """
+        Invoked by: (no references found)
+        """
         response = UploadResponse(
             file_id="f_abc123",
             filename="report.pdf",
@@ -83,6 +101,9 @@ class TestUploadResponse:
 
 class TestHealthResponse:
     def test_health_response(self):
+        """
+        Invoked by: (no references found)
+        """
         response = HealthResponse(version="0.1.0")
         assert response.status == "healthy"
         assert response.version == "0.1.0"

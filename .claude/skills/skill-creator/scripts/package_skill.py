@@ -26,6 +26,7 @@ def package_skill(skill_path, output_dir=None):
 
     Returns:
         Path to the created .skill file, or None if error
+    Invoked by: .claude/skills/skill-creator/scripts/package_skill.py
     """
     skill_path = Path(skill_path).resolve()
 
@@ -83,6 +84,9 @@ def package_skill(skill_path, output_dir=None):
 
 
 def main():
+    """
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     if len(sys.argv) < 2:
         print("Usage: python utils/package_skill.py <path/to/skill-folder> [output-directory]")
         print("\nExample:")

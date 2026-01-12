@@ -64,6 +64,7 @@ class LLMService:
         Args:
             api_key: API key. If not provided, checks env vars (ANTHROPIC_API_KEY, CLAUDE_API_KEY, OPENAI_API_KEY)
             model: Model to use (default: gpt-4o-mini)
+        Invoked by: (no references found)
         """
         # Try to determine which API to use
         self.claude_api_key = api_key or os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
@@ -108,7 +109,10 @@ class LLMService:
     _call_details: list[dict] = []
 
     def is_available(self) -> bool:
-        """Check if LLM service is available."""
+        """
+        Check if LLM service is available.
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None
 
     def _call_llm(
@@ -132,6 +136,7 @@ class LLMService:
             
         Returns:
             Response text
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py
         """
         if not self.is_available():
             return ""
@@ -270,6 +275,9 @@ class LLMService:
             return ""
 
     def _safe_json_load(self, text: str) -> Optional[object]:
+        """
+        Invoked by: src/doc_generator/infrastructure/llm/service.py
+        """
         if not text:
             return None
         try:
@@ -304,6 +312,9 @@ class LLMService:
 
     @classmethod
     def usage_summary(cls) -> dict:
+        """
+        Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+        """
         return {
             "total_calls": cls._total_calls,
             "models": sorted(cls._models_used),
@@ -312,6 +323,9 @@ class LLMService:
 
     @classmethod
     def usage_details(cls) -> list[dict]:
+        """
+        Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+        """
         return list(cls._call_details)
 
     def generate_executive_summary(self, content: str, max_points: Optional[int] = None) -> str:
@@ -324,6 +338,7 @@ class LLMService:
 
         Returns:
             Executive summary as markdown bullet points
+        Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/utils/content_merger.py
         """
         if not self.is_available():
             return ""
@@ -369,6 +384,7 @@ Respond with ONLY the bullet points, no introduction or conclusion."""
 
         Returns:
             List of slide dictionaries with title, bullets, and speaker_notes
+        Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py
         """
         if not self.is_available():
             return []
@@ -468,6 +484,7 @@ Respond in JSON format:
 
         Returns:
             List of slide dictionaries with title, bullets, speaker_notes, section_title
+        Invoked by: (no references found)
         """
         if not self.is_available() or not sections:
             return []
@@ -567,6 +584,7 @@ Respond in JSON format:
 
         Returns:
             Enhanced bullet points
+        Invoked by: (no references found)
         """
         if not self.is_available() or not bullets:
             return bullets
@@ -603,6 +621,7 @@ Respond with ONLY the enhanced bullet points, one per line, starting with "-".""
 
         Returns:
             Speaker notes text
+        Invoked by: (no references found)
         """
         if not self.is_available():
             return ""
@@ -644,6 +663,7 @@ Respond with ONLY the speaker notes text."""
 
         Returns:
             List of visualization suggestions with type, title, and structured data
+        Invoked by: (no references found)
         """
         if not self.is_available():
             return []
@@ -784,6 +804,7 @@ def get_llm_service(api_key: Optional[str] = None) -> LLMService:
 
     Returns:
         LLMService instance
+    Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py
     """
     global _llm_service
     if _llm_service is None:

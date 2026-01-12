@@ -25,6 +25,7 @@ class CacheService:
         Args:
             cache_dir: Directory for cache metadata
             ttl_seconds: Time-to-live for cache entries
+        Invoked by: (no references found)
         """
         self.cache_dir = Path(cache_dir)
         self.ttl_seconds = ttl_seconds
@@ -40,6 +41,7 @@ class CacheService:
 
         Returns:
             64-character hex string cache key
+        Invoked by: src/doc_generator/infrastructure/api/services/cache.py, tests/api/test_cache_service.py
         """
         # Build canonical representation
         canonical = {
@@ -64,11 +66,17 @@ class CacheService:
         return hashlib.sha256(canonical_json.encode()).hexdigest()
 
     def _normalize_sources(self, sources: list) -> list:
-        """Normalize sources for hashing."""
+        """
+        Normalize sources for hashing.
+        Invoked by: src/doc_generator/infrastructure/api/services/cache.py
+        """
         return [self._normalize_source(s) for s in sources]
 
     def _normalize_source(self, source) -> dict:
-        """Normalize a single source for hashing."""
+        """
+        Normalize a single source for hashing.
+        Invoked by: src/doc_generator/infrastructure/api/services/cache.py
+        """
         if source.type == "text":
             return {"type": "text", "content": source.content}
         elif source.type == "url":
@@ -85,6 +93,7 @@ class CacheService:
 
         Returns:
             Cache entry dict or None if not found/expired
+        Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes.py, .claude/skills/pdf/scripts/extract_form_field_info.py, .claude/skills/pdf/scripts/fill_fillable_fields.py, .claude/skills/pdf/scripts/fill_pdf_form_with_annotations.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py, .claude/skills/pptx/ooxml/scripts/validation/redlining.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/quick_validate.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/quick_pdf_with_images.py, scripts/run_generator.py, src/doc_generator/application/graph_workflow.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/nodes/parse_content.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/nodes/validate_output.py, src/doc_generator/application/parsers/markdown_parser.py, src/doc_generator/application/parsers/unified_parser.py, src/doc_generator/application/workflow/graph.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/parse_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/validate_output.py, src/doc_generator/infrastructure/api/routes/cache.py, src/doc_generator/infrastructure/api/routes/download.py, src/doc_generator/infrastructure/api/routes/generate.py, src/doc_generator/infrastructure/api/routes/health.py, src/doc_generator/infrastructure/api/services/generation.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py, src/doc_generator/infrastructure/image/validator.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/parsers/docling.py, src/doc_generator/infrastructure/storage/file_storage.py, src/doc_generator/utils/content_merger.py, tests/api/test_cache_service.py, tests/api/test_generate_route.py, tests/api/test_health_route.py
         """
         key = self.generate_cache_key(request)
         cache_file = self.cache_dir / f"{key}.json"
@@ -120,6 +129,7 @@ class CacheService:
 
         Returns:
             Cache key
+        Invoked by: .claude/skills/pdf/scripts/extract_form_field_info.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/skill-creator/scripts/quick_validate.py, src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py, src/doc_generator/infrastructure/api/routes/generate.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/image/svg.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/utils/content_merger.py, tests/api/test_cache_service.py
         """
         key = self.generate_cache_key(request)
         cache_file = self.cache_dir / f"{key}.json"
@@ -146,6 +156,7 @@ class CacheService:
 
         Returns:
             True if entry was removed, False if not found
+        Invoked by: (no references found)
         """
         key = self.generate_cache_key(request)
         cache_file = self.cache_dir / f"{key}.json"
@@ -160,6 +171,7 @@ class CacheService:
 
         Returns:
             Dict with count of cleared items
+        Invoked by: (no references found)
         """
         cache_files = list(self.cache_dir.glob("*.json"))
         count = len(cache_files)
@@ -178,6 +190,7 @@ class CacheService:
 
         Returns:
             Dict with cache stats
+        Invoked by: (no references found)
         """
         cache_files = list(self.cache_dir.glob("*.json"))
         total_size = sum(f.stat().st_size for f in cache_files if f.exists())

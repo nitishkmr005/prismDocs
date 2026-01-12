@@ -17,12 +17,18 @@ class TestGenerationService:
 
     @pytest.fixture
     def service(self, tmp_path):
-        """Create generation service."""
+        """
+        Create generation service.
+        Invoked by: tests/api/test_generation_service.py
+        """
         return GenerationService(output_dir=tmp_path)
 
     @pytest.mark.asyncio
     async def test_progress_callback(self, service):
-        """Test that progress events are yielded."""
+        """
+        Test that progress events are yielded.
+        Invoked by: (no references found)
+        """
         events = []
 
         request = GenerateRequest(

@@ -9,6 +9,9 @@ from PIL import Image, ImageDraw
 
 
 def create_validation_image(page_number, fields_json_path, input_path, output_path):
+    """
+    Invoked by: .claude/skills/pdf/scripts/create_validation_image.py
+    """
     # Input file should be in the `fields.json` format described in forms.md.
     with open(fields_json_path, 'r') as f:
         data = json.load(f)

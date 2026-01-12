@@ -29,6 +29,8 @@ def should_retry(state: WorkflowState) -> str:
 
     Returns:
         "retry" or "end"
+
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     errors = state.get("errors", [])
 
@@ -69,6 +71,8 @@ def build_workflow() -> StateGraph:
 
     Returns:
         Compiled StateGraph ready for execution
+
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     workflow = StateGraph(WorkflowState)
 
@@ -122,6 +126,8 @@ def run_workflow(
 
     Returns:
         Final workflow state with output_path or errors
+
+    Invoked by: scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/quick_pdf_with_images.py, scripts/run_generator.py, src/doc_generator/infrastructure/api/services/generation.py
     """
     # Build workflow
     workflow = build_workflow()
@@ -181,6 +187,11 @@ def run_workflow(
 
 
 def _format_call_table(rows: list[dict]) -> str:
+    """
+    Format usage rows into a readable table.
+
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+    """
     headers = ["type", "step", "provider", "model", "sec", "in_tokens", "out_tokens"]
     table_rows = [headers]
 

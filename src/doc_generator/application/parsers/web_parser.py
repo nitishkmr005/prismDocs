@@ -21,6 +21,9 @@ class WebParser:
     """
 
     def __init__(self):
+        """
+        Invoked by: (no references found)
+        """
         if not is_markitdown_available():
             logger.warning(
                 "MarkItDown not available - web parsing will have limited functionality"
@@ -38,6 +41,7 @@ class WebParser:
 
         Raises:
             ParseError: If fetching or parsing fails
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py, .claude/skills/pptx/ooxml/scripts/validation/redlining.py, scripts/generate_from_folder.py, src/doc_generator/application/nodes/parse_content.py, src/doc_generator/application/workflow/nodes/parse_content.py, src/doc_generator/infrastructure/api/services/generation.py
         """
         url = str(input_path)
 
@@ -75,6 +79,7 @@ class WebParser:
 
         Returns:
             Extracted title or default
+        Invoked by: src/doc_generator/application/parsers/web_parser.py
         """
         import re
 

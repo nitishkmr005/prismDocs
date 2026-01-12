@@ -24,6 +24,7 @@ def find_file(file_path: str) -> Path | None:
 
     Returns:
         Path to the file if found, None otherwise
+    Invoked by: src/doc_generator/infrastructure/api/routes/download.py
     """
     # Try as a nested path first
     full_path = OUTPUT_BASE / file_path
@@ -67,6 +68,7 @@ async def download_file(file_path: str, token: str | None = None) -> FileRespons
 
     Raises:
         HTTPException: If file not found
+    Invoked by: (no references found)
     """
     logger.info(f"Download requested: {file_path}")
 

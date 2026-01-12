@@ -36,6 +36,9 @@ class ProgressLogger:
     }
 
     def __init__(self, topic_name: str, total_steps: int = 5):
+        """
+        Invoked by: (no references found)
+        """
         self.topic_name = topic_name
         self.total_steps = total_steps
         self.current_step = 0
@@ -43,17 +46,26 @@ class ProgressLogger:
         self.step_start_time = time.time()
 
     def _elapsed(self) -> str:
-        """Get elapsed time string."""
+        """
+        Get elapsed time string.
+        Invoked by: scripts/generate_from_folder.py
+        """
         elapsed = time.time() - self.start_time
         return f"{elapsed:.1f}s"
 
     def _step_elapsed(self) -> str:
-        """Get step elapsed time string."""
+        """
+        Get step elapsed time string.
+        Invoked by: scripts/generate_from_folder.py
+        """
         elapsed = time.time() - self.step_start_time
         return f"{elapsed:.1f}s"
 
     def header(self):
-        """Print workflow header."""
+        """
+        Print workflow header.
+        Invoked by: scripts/generate_from_folder.py, src/doc_generator/infrastructure/api/services/generation.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
+        """
         print("\n" + "=" * 70)
         print(f"🚀 DOCUMENT GENERATOR - Processing: {self.topic_name}")
         print("=" * 70)
@@ -61,7 +73,10 @@ class ProgressLogger:
         print("-" * 70)
 
     def stage(self, stage_key: str, message: str = ""):
-        """Start a new stage."""
+        """
+        Start a new stage.
+        Invoked by: scripts/generate_from_folder.py
+        """
         self.current_step += 1
         self.step_start_time = time.time()
         emoji, stage_name = self.STAGES.get(stage_key, ("▶️", stage_key))
@@ -71,7 +86,10 @@ class ProgressLogger:
             print(f"   └── {message}")
 
     def substep(self, message: str, status: str = "info"):
-        """Log a substep within a stage."""
+        """
+        Log a substep within a stage.
+        Invoked by: scripts/generate_from_folder.py
+        """
         icons = {
             "info": "   ├──",
             "success": "   ├── ✓",
@@ -83,11 +101,17 @@ class ProgressLogger:
         print(f"{icon} {message}")
 
     def substep_done(self, message: str):
-        """Log final substep (uses └── instead of ├──)."""
+        """
+        Log final substep (uses └── instead of ├──).
+        Invoked by: (no references found)
+        """
         print(f"   └── ✓ {message}")
 
     def stage_complete(self, message: str = ""):
-        """Mark stage as complete."""
+        """
+        Mark stage as complete.
+        Invoked by: scripts/generate_from_folder.py
+        """
         elapsed = self._step_elapsed()
         if message:
             print(f"   └── ✅ {message} ({elapsed})")
@@ -95,7 +119,10 @@ class ProgressLogger:
             print(f"   └── ✅ Done ({elapsed})")
 
     def summary(self, pdf_path: Optional[Path], pptx_path: Optional[Path]):
-        """Print final summary."""
+        """
+        Print final summary.
+        Invoked by: scripts/generate_from_folder.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/utils/content_merger.py
+        """
         total_time = time.time() - self.start_time
         print("\n" + "=" * 70)
         print("✨ GENERATION COMPLETE")
@@ -112,7 +139,10 @@ class ProgressLogger:
         print("=" * 70 + "\n")
 
     def error(self, message: str):
-        """Print error message."""
+        """
+        Print error message.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py, .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py, .claude/skills/pptx/scripts/replace.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/quick_pdf_with_images.py, scripts/run_generator.py, src/doc_generator/application/graph_workflow.py, src/doc_generator/application/nodes/detect_format.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/nodes/parse_content.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/nodes/validate_output.py, src/doc_generator/application/parsers/markdown_parser.py, src/doc_generator/application/parsers/unified_parser.py, src/doc_generator/application/parsers/web_parser.py, src/doc_generator/application/workflow/graph.py, src/doc_generator/application/workflow/nodes/detect_format.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/parse_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/validate_output.py, src/doc_generator/infrastructure/api/services/generation.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/generators/pptx/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/image/svg.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/logging/config.py, src/doc_generator/infrastructure/logging_config.py, src/doc_generator/infrastructure/parsers/docling.py, src/doc_generator/infrastructure/parsers/file_system.py, src/doc_generator/infrastructure/parsers/markitdown.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/infrastructure/pptx_utils.py, src/doc_generator/infrastructure/settings.py, tests/api/test_response_models.py
+        """
         print(f"\n❌ ERROR: {message}")
         print(f"⏱️  Failed after {self._elapsed()}\n")
 
@@ -148,6 +178,7 @@ def parse_file_only(file_path: Path) -> dict | None:
 
     Returns:
         Dict with filename, raw_content, metadata or None on failure
+    Invoked by: scripts/generate_from_folder.py
     """
     try:
         # Detect format from extension
@@ -184,6 +215,7 @@ def discover_files(folder_path: Path) -> list[Path]:
 
     Returns:
         List of file paths with supported extensions
+    Invoked by: scripts/generate_from_folder.py
     """
     files = []
     for ext in SUPPORTED_EXTENSIONS.keys():
@@ -212,6 +244,7 @@ def process_folder(
 
     Returns:
         Tuple of (pdf_path, pptx_path) or (None, None) on failure
+    Invoked by: scripts/batch_process_topics.py, scripts/generate_from_folder.py
     """
     topic_name = folder_path.name
     progress = ProgressLogger(topic_name, total_steps=5)
@@ -356,7 +389,10 @@ def process_folder(
 
 
 def main():
-    """Main entry point for the folder-based document generator."""
+    """
+    Main entry point for the folder-based document generator.
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(
         description="Generate PDF and PPTX from all files in a data subfolder",
         formatter_class=argparse.RawDescriptionHelpFormatter,

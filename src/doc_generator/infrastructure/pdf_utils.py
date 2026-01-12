@@ -64,6 +64,7 @@ def inline_md(text: str) -> str:
 
     Returns:
         Text with HTML formatting for ReportLab
+    Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
     """
     safe = html.escape(text)
     safe = re.sub(r"`([^`]+)`", r"<font face='Courier'>\1</font>", safe)
@@ -81,6 +82,7 @@ def parse_table(table_lines: list[str]) -> list[list[str]]:
 
     Returns:
         2D list of table cells (skips separator rows)
+    Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
     """
     rows = []
     for line in table_lines:
@@ -114,6 +116,7 @@ def parse_markdown_lines(text: str) -> Iterator[tuple[str, any]]:
 
     Yields:
         Tuples of (element_type, content)
+    Invoked by: (no references found)
     """
     lines = text.splitlines()
     in_code = False
@@ -123,12 +126,18 @@ def parse_markdown_lines(text: str) -> Iterator[tuple[str, any]]:
     bullets = []
 
     def flush_table():
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
+        """
         nonlocal table_lines
         if table_lines:
             yield ("table", parse_table(table_lines))
             table_lines = []
 
     def flush_bullets():
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
+        """
         nonlocal bullets
         if bullets:
             yield ("bullets", bullets)
@@ -228,6 +237,7 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
 
     Returns:
         List of (level, heading_text) tuples
+    Invoked by: (no references found)
     """
     headings = []
     for line in text.splitlines():
@@ -248,6 +258,7 @@ def make_table_of_contents(headings: list[tuple[int, str]], styles: dict) -> lis
 
     Returns:
         List of flowables for the TOC
+    Invoked by: (no references found)
     """
     if not headings:
         return []
@@ -280,6 +291,7 @@ def make_section_divider(styles: dict) -> list:
 
     Returns:
         List of flowables for the section divider
+    Invoked by: (no references found)
     """
     divider = Table(
         [[""]],
@@ -303,6 +315,7 @@ def make_banner(text: str, styles: dict) -> Table:
 
     Returns:
         Table flowable with banner styling
+    Invoked by: (no references found)
     """
     banner = Table(
         [[Paragraph(inline_md(text), styles["SectionBanner"])]],
@@ -329,6 +342,7 @@ def rasterize_svg(svg_path: Path, image_cache: Path) -> Path | None:
 
     Returns:
         Path to generated PNG file, or None if conversion failed
+    Invoked by: (no references found)
     """
     try:
         image_cache.mkdir(parents=True, exist_ok=True)
@@ -364,7 +378,10 @@ _figure_counter = 0
 
 
 def reset_figure_counter():
-    """Reset the global figure counter for a new document."""
+    """
+    Reset the global figure counter for a new document.
+    Invoked by: (no references found)
+    """
     global _figure_counter
     _figure_counter = 0
 
@@ -390,6 +407,7 @@ def make_image_flowable(
 
     Returns:
         List of flowables (Image + caption + spacer)
+    Invoked by: (no references found)
     """
     global _figure_counter
 
@@ -429,6 +447,7 @@ def make_code_block(code: str, styles: dict) -> Table:
 
     Returns:
         Table flowable with code block styling
+    Invoked by: (no references found)
     """
     block = Preformatted(code, styles["CodeBlock"])
     table = Table([[block]], colWidths=[6.9 * inch])
@@ -458,6 +477,7 @@ def render_mermaid(
 
     Returns:
         Path to generated PNG or None if rendering failed
+    Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
     """
     if mmdc_path is None:
         mmdc_path = Path("node_modules/.bin/mmdc")
@@ -510,6 +530,7 @@ def render_mermaid_with_gemini(
 
     Returns:
         Path to generated PNG or None if generation failed
+    Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
     """
     try:
         from .gemini_image_generator import get_gemini_generator
@@ -552,6 +573,7 @@ def make_mermaid_flowable(
 
     Returns:
         List of flowables (Image + spacer or styled code block)
+    Invoked by: (no references found)
     """
     logger.info("Mermaid rendering disabled, skipping diagram flowable")
     return []
@@ -627,6 +649,7 @@ def make_quote(text: str, styles: dict) -> Table:
 
     Returns:
         Table flowable with quote styling
+    Invoked by: (no references found)
     """
     box = Table(
         [[Paragraph(inline_md(text), styles["Quote"])]],
@@ -653,6 +676,7 @@ def make_table(table_data: list[list[str]], styles: dict) -> Table:
 
     Returns:
         Table flowable with styling
+    Invoked by: (no references found)
     """
     if not table_data:
         return Table([[]])
@@ -685,6 +709,7 @@ def create_custom_styles() -> dict:
 
     Returns:
         Dictionary of custom ParagraphStyle objects
+    Invoked by: (no references found)
     """
     styles = getSampleStyleSheet()
 

@@ -25,6 +25,7 @@ def clean_markdown_content(content: str) -> str:
 
     Returns:
         Cleaned markdown content
+    Invoked by: src/doc_generator/utils/content_cleaner.py
     """
     logger.debug(f"Cleaning markdown content ({len(content)} chars)...")
 
@@ -110,6 +111,7 @@ def _post_process_content(content: str) -> str:
 
     Returns:
         Post-processed content
+    Invoked by: src/doc_generator/utils/content_cleaner.py
     """
     # Remove more than 2 consecutive newlines
     content = re.sub(r'\n{3,}', '\n\n', content)
@@ -136,6 +138,7 @@ def remove_warning_lines(content: str) -> str:
 
     Returns:
         Content without warning lines
+    Invoked by: src/doc_generator/utils/content_cleaner.py
     """
     lines = content.split('\n')
     cleaned = [
@@ -154,6 +157,7 @@ def clean_content_for_output(content: str) -> str:
 
     Returns:
         Cleaned markdown content ready for document generation
+    Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/utils/content_merger.py
     """
     logger.info("Cleaning content for document generation...")
 

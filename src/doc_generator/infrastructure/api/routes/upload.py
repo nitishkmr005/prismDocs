@@ -12,7 +12,10 @@ _storage_service: StorageService | None = None
 
 
 def get_storage_service() -> StorageService:
-    """Get or create storage service."""
+    """
+    Get or create storage service.
+    Invoked by: src/doc_generator/infrastructure/api/routes/upload.py
+    """
     global _storage_service
     if _storage_service is None:
         _storage_service = StorageService()
@@ -38,10 +41,12 @@ async def upload_file(file: UploadFile = File(...)) -> UploadResponse:
 
     Returns:
         Upload response with file_id
+    Invoked by: (no references found)
     """
     storage = get_storage_service()
 
     content = await file.read()
+    # StorageService.save_upload: persist uploaded source and return file_id.
     file_id = storage.save_upload(
         content=content,
         filename=file.filename or "unknown",

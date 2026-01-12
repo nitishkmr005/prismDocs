@@ -24,7 +24,10 @@ from pptx.util import Pt
 
 
 def clear_paragraph_bullets(paragraph):
-    """Clear bullet formatting from a paragraph."""
+    """
+    Clear bullet formatting from a paragraph.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
+    """
     pPr = paragraph._element.get_or_add_pPr()
 
     # Remove existing bullet elements
@@ -41,7 +44,10 @@ def clear_paragraph_bullets(paragraph):
 
 
 def apply_paragraph_properties(paragraph, para_data: Dict[str, Any]):
-    """Apply formatting properties to a paragraph."""
+    """
+    Apply formatting properties to a paragraph.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
+    """
     # Get the text but don't set it on paragraph directly yet
     text = para_data.get("text", "")
 
@@ -111,7 +117,10 @@ def apply_paragraph_properties(paragraph, para_data: Dict[str, Any]):
 
 
 def apply_font_properties(run, para_data: Dict[str, Any]):
-    """Apply font properties to a text run."""
+    """
+    Apply font properties to a text run.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
+    """
     if "bold" in para_data:
         run.font.bold = para_data["bold"]
     if "italic" in para_data:
@@ -145,6 +154,7 @@ def detect_frame_overflow(inventory: InventoryData) -> Dict[str, Dict[str, float
 
     Returns dict of slide_key -> shape_key -> overflow_inches.
     Only includes shapes that have text overflow.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
     """
     overflow_map = {}
 
@@ -163,6 +173,7 @@ def validate_replacements(inventory: InventoryData, replacements: Dict) -> List[
     """Validate that all shapes in replacements exist in inventory.
 
     Returns list of error messages.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
     """
     errors = []
 
@@ -202,7 +213,10 @@ def validate_replacements(inventory: InventoryData, replacements: Dict) -> List[
 
 
 def check_duplicate_keys(pairs):
-    """Check for duplicate keys when loading JSON."""
+    """
+    Check for duplicate keys when loading JSON.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
+    """
     result = {}
     for key, value in pairs:
         if key in result:
@@ -212,7 +226,10 @@ def check_duplicate_keys(pairs):
 
 
 def apply_replacements(pptx_file: str, json_file: str, output_file: str):
-    """Apply text replacements from JSON to PowerPoint presentation."""
+    """
+    Apply text replacements from JSON to PowerPoint presentation.
+    Invoked by: .claude/skills/pptx/scripts/replace.py
+    """
 
     # Load presentation
     prs = Presentation(pptx_file)
@@ -354,7 +371,10 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
 
 
 def main():
-    """Main entry point for command-line usage."""
+    """
+    Main entry point for command-line usage.
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     if len(sys.argv) != 4:
         print(__doc__)
         sys.exit(1)

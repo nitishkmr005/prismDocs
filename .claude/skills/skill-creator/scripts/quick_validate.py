@@ -10,7 +10,10 @@ import yaml
 from pathlib import Path
 
 def validate_skill(skill_path):
-    """Basic validation of a skill"""
+    """
+    Basic validation of a skill
+    Invoked by: .claude/skills/skill-creator/scripts/package_skill.py, .claude/skills/skill-creator/scripts/quick_validate.py
+    """
     skill_path = Path(skill_path)
 
     # Check SKILL.md exists

@@ -50,6 +50,7 @@ class PDFGenerator:
 
         Args:
             image_cache: Directory for cached images (optional)
+        Invoked by: (no references found)
         """
         self.settings = get_settings()
         # Use provided cache or default to output/temp for rasterized images
@@ -71,6 +72,7 @@ class PDFGenerator:
 
         Raises:
             GenerationError: If PDF generation fails
+        Invoked by: scripts/generate_from_folder.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/infrastructure/api/routes/generate.py, tests/api/test_generation_service.py
         """
         try:
             # Ensure output directory exists
@@ -136,6 +138,7 @@ class PDFGenerator:
             
         Returns:
             Dictionary mapping (type, title) -> visualization dict
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py
         """
         lookup = {}
         for vis in visualizations:
@@ -169,6 +172,7 @@ class PDFGenerator:
             
         Returns:
             Visualization dict or None
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py
         """
         # Try exact match on type + title
         key = (marker_type, marker_title.lower())
@@ -220,6 +224,7 @@ class PDFGenerator:
             marker_to_path: Mapping of marker IDs to file paths
             visual_lookup: Lookup dict for finding visualizations
             section_images: Dict mapping section_id -> image info (from Gemini)
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py
         """
         section_images = section_images or {}
         display_title = self._resolve_display_title(title, markdown_content)
@@ -463,7 +468,10 @@ class PDFGenerator:
         doc.build(story)
 
     def _resolve_section_id(self, title: str, next_id: int) -> tuple[int, int]:
-        """Resolve section ID from numbered headings, falling back to sequential IDs."""
+        """
+        Resolve section ID from numbered headings, falling back to sequential IDs.
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         match = re.match(r"^(\\d+)[\\.:\\)\\s]+\\s*(.+)$", title)
         if match:
             section_id = int(match.group(1))
@@ -482,6 +490,7 @@ class PDFGenerator:
 
         Returns:
             Path to local image or None
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         return resolve_image_path(
             url,
@@ -490,6 +499,9 @@ class PDFGenerator:
         )
 
     def _resolve_display_title(self, metadata_title: str, markdown_content: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         raw_title = (metadata_title or "").strip()
         markdown_title = self._extract_markdown_title(markdown_content)
         cleaned_meta = self._clean_title(raw_title)
@@ -500,10 +512,16 @@ class PDFGenerator:
         return cleaned_meta or markdown_title or "Document"
 
     def _extract_markdown_title(self, markdown_content: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         match = re.search(r"^#\s+(.+)$", markdown_content, re.MULTILINE)
         return match.group(1).strip() if match else ""
 
     def _looks_like_placeholder(self, title: str) -> bool:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         if "/" in title or "\\" in title:
             return True
         if re.search(r"\.(pdf|docx|pptx|md|txt)$", title, re.IGNORECASE):
@@ -513,6 +531,9 @@ class PDFGenerator:
         return False
 
     def _clean_title(self, title: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         if not title:
             return ""
         cleaned = title.strip()
@@ -525,6 +546,9 @@ class PDFGenerator:
         return re.sub(r"\s+", " ", cleaned)
 
     def _build_cover_metadata(self, metadata: dict) -> list[str]:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py
+        """
         lines = []
         author = metadata.get("author")
         authors = metadata.get("authors")
@@ -553,6 +577,9 @@ class PDFGenerator:
         return lines
 
     def _format_date(self, value: str | datetime | None) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py
+        """
         if not value:
             return ""
         if isinstance(value, datetime):
@@ -565,9 +592,15 @@ class PDFGenerator:
         return str(value)
 
     def _normalize_title(self, title: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         return re.sub(r"\s+", " ", title or "").strip().lower()
 
     def _filter_cover_heading(
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py
+        """
         self,
         headings: list[tuple[int, str]],
         cover_title: str

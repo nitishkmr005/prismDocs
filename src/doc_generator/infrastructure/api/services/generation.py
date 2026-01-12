@@ -41,6 +41,7 @@ class GenerationService:
 
         Args:
             storage_service: Storage service for file operations
+        Invoked by: (no references found)
         """
         self.storage = storage_service or StorageService()
         self._executor = ThreadPoolExecutor(max_workers=2)
@@ -58,6 +59,7 @@ class GenerationService:
 
         Yields:
             Progress events, then completion or error event
+        Invoked by: scripts/generate_from_folder.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/infrastructure/api/routes/generate.py, tests/api/test_generation_service.py
         """
         import time
         start_time = time.time()
@@ -187,6 +189,7 @@ class GenerationService:
             )
 
             if output_path and Path(output_path).exists():
+                # StorageService.get_download_url: build a download link for the output.
                 download_url = self.storage.get_download_url(Path(output_path))
             else:
                 logger.warning(f"Output path not found: {output_path}")
@@ -256,6 +259,7 @@ class GenerationService:
         Args:
             provider: Provider name (google, openai, anthropic)
             api_key: API key value
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
         """
         key_map = {
             "google": "GOOGLE_API_KEY",
@@ -278,6 +282,7 @@ class GenerationService:
 
         Returns:
             Path to input file for workflow
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
         """
         all_sources = request.sources
         parsed_blocks = []
@@ -316,19 +321,25 @@ class GenerationService:
             raise ValueError("No valid sources provided")
 
         combined = self._merge_markdown_sources(parsed_blocks)
+        # StorageService.upload_dir: base directory for temporary input file.
         temp_path = self.storage.upload_dir / f"temp_input_{uuid.uuid4().hex}.md"
         temp_path.write_text(combined, encoding="utf-8")
         logger.info(f"Created temp input file: {temp_path}")
         return temp_path, file_id
 
     def _resolve_upload_path(self, file_id: str) -> Path:
-        """Resolve file_id to a path in storage."""
+        """
+        Resolve file_id to a path in storage.
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+        """
         try:
+            # StorageService.get_upload_path: resolve file_id to a stored source path.
             file_path = self.storage.get_upload_path(file_id)
             logger.info(f"Using uploaded file: {file_path}")
             return file_path
         except FileNotFoundError:
             pattern = f"{file_id}*"
+            # StorageService.upload_dir: scan for matching files in storage root.
             matches = list(self.storage.upload_dir.glob(pattern))
             if matches:
                 logger.info(f"Found file by pattern: {matches[0]}")
@@ -337,7 +348,10 @@ class GenerationService:
             raise
 
     def _detect_format(self, file_path: Path) -> str:
-        """Detect content format from file extension."""
+        """
+        Detect content format from file extension.
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+        """
         suffix = file_path.suffix.lower()
         format_map = {
             ".pdf": ContentFormat.PDF.value,
@@ -351,7 +365,10 @@ class GenerationService:
         return format_map.get(suffix, ContentFormat.TEXT.value)
 
     def _merge_markdown_sources(self, parsed_blocks: list[dict]) -> str:
-        """Merge parsed markdown sources into a single document."""
+        """
+        Merge parsed markdown sources into a single document.
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+        """
         sections = []
         for block in parsed_blocks:
             title = block.get("title", "Source")

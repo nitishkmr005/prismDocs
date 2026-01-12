@@ -31,6 +31,7 @@ def extract_api_keys(
 
     Returns:
         APIKeys container with extracted keys
+    Invoked by: src/doc_generator/infrastructure/api/routes/generate.py, tests/api/test_dependencies.py
     """
     return APIKeys(
         google=x_google_key,
@@ -51,6 +52,7 @@ def get_api_key_for_provider(provider: Provider, keys: APIKeys) -> str:
 
     Raises:
         HTTPException: If the required API key is missing
+    Invoked by: src/doc_generator/infrastructure/api/routes/generate.py, tests/api/test_dependencies.py
     """
     key_map = {
         Provider.GEMINI: (keys.google, "X-Google-Key"),

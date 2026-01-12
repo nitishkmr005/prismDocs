@@ -43,6 +43,7 @@ class GeminiImageGenerator:
 
         Args:
             api_key: Google API key. If not provided, uses GEMINI_API_KEY env var.
+        Invoked by: (no references found)
         """
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         self.client = None
@@ -65,7 +66,10 @@ class GeminiImageGenerator:
                 logger.warning("google-genai package not available")
 
     def is_available(self) -> bool:
-        """Check if Gemini image generator is available."""
+        """
+        Check if Gemini image generator is available.
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None and GENAI_AVAILABLE
 
     def _wait_for_rate_limit(self) -> None:
@@ -75,6 +79,7 @@ class GeminiImageGenerator:
         Implements:
         - 20 requests per minute limit
         - Minimum delay between requests (3 seconds default)
+        Invoked by: src/doc_generator/infrastructure/image/gemini.py
         """
         now = time.time()
 
@@ -110,6 +115,7 @@ class GeminiImageGenerator:
 
         Returns:
             Enhanced prompt string
+        Invoked by: src/doc_generator/infrastructure/image/gemini.py
         """
         if image_type == ImageType.INFOGRAPHIC:
             return f"""Create a vibrant, educational infographic that explains: {prompt}
@@ -174,6 +180,7 @@ Style requirements:
 
         Returns:
             Path to saved image or None if generation failed
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/gemini.py
         """
         if not self.is_available():
             logger.warning("Gemini not available, skipping image generation")
@@ -261,6 +268,9 @@ Style requirements:
 
     @classmethod
     def usage_summary(cls) -> dict:
+        """
+        Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+        """
         return {
             "total_calls": cls._total_calls,
             "models": sorted(cls._models_used),
@@ -268,6 +278,9 @@ Style requirements:
 
     @classmethod
     def usage_details(cls) -> list[dict]:
+        """
+        Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+        """
         return list(cls._call_details)
 
     def generate_infographic(
@@ -288,6 +301,7 @@ Style requirements:
 
         Returns:
             Path to saved image or None if failed
+        Invoked by: (no references found)
         """
         prompt = f"{concept}. {details}" if details else concept
         return self.generate_image(
@@ -313,6 +327,7 @@ Style requirements:
 
         Returns:
             Path to saved image or None if failed
+        Invoked by: (no references found)
         """
         return self.generate_image(
             prompt=theme,
@@ -338,6 +353,7 @@ Style requirements:
 
         Returns:
             Path to saved image or None if generation failed
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
         """
         # Parse mermaid code to create a description
         description = self._describe_mermaid(mermaid_code)
@@ -358,6 +374,7 @@ Style requirements:
 
         Returns:
             Natural language description of the diagram
+        Invoked by: src/doc_generator/infrastructure/image/gemini.py
         """
         lines = mermaid_code.strip().split('\n')
 
@@ -412,6 +429,7 @@ def encode_image_base64(image_path: Path) -> str:
 
     Returns:
         Base64 encoded string
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
     """
     if not image_path.exists():
         return ""
@@ -429,5 +447,6 @@ def get_gemini_generator(api_key: Optional[str] = None) -> GeminiImageGenerator:
 
     Returns:
         GeminiImageGenerator instance
+    Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
     """
     return GeminiImageGenerator(api_key=api_key)

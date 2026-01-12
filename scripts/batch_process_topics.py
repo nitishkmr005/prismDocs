@@ -36,6 +36,7 @@ def discover_topic_folders(data_dir: Path) -> list[Path]:
         
     Returns:
         List of subdirectory paths (topic folders)
+    Invoked by: scripts/batch_process_topics.py
     """
     if not data_dir.exists():
         logger.error(f"Data directory not found: {data_dir}")
@@ -69,6 +70,7 @@ def batch_process_topics(
         
     Returns:
         Dict with processing results
+    Invoked by: scripts/batch_process_topics.py
     """
     logger.info("=" * 80)
     logger.info("BATCH PROCESSING ALL TOPICS")
@@ -184,7 +186,10 @@ def batch_process_topics(
 
 
 def main():
-    """Main entry point for batch topic processor."""
+    """
+    Main entry point for batch topic processor.
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(
         description="Batch process all topic folders in data directory",
         formatter_class=argparse.RawDescriptionHelpFormatter,

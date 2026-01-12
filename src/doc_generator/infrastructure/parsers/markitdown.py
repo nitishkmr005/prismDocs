@@ -34,6 +34,7 @@ def convert_to_markdown(file_path: Path) -> str:
     Raises:
         ParseError: If conversion fails
         ImportError: If MarkItDown is not installed
+    Invoked by: (no references found)
     """
     if not MARKITDOWN_AVAILABLE:
         raise ImportError(
@@ -73,6 +74,7 @@ def convert_url_to_markdown(url: str) -> str:
     Raises:
         ParseError: If conversion fails
         ImportError: If MarkItDown is not installed
+    Invoked by: src/doc_generator/application/parsers/web_parser.py
     """
     if not MARKITDOWN_AVAILABLE:
         raise ImportError(
@@ -102,5 +104,6 @@ def is_markitdown_available() -> bool:
 
     Returns:
         True if MarkItDown is installed, False otherwise
+    Invoked by: src/doc_generator/application/parsers/web_parser.py
     """
     return MARKITDOWN_AVAILABLE

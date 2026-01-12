@@ -25,6 +25,7 @@ def _detect_content_type(input_format: str, raw_content: str) -> str:
         
     Returns:
         Content type: "transcript", "slides", or "document"
+    Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py
     """
     # Check for transcript indicators (timestamps)
     import re
@@ -63,6 +64,7 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         - visual_markers: List of visual marker specifications
         - executive_summary: Brief summary (optional)
         - slides: Slide structures for PPTX (optional)
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     try:
         content = state.get("raw_content", "")

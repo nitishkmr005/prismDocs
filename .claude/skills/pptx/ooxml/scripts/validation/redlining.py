@@ -12,6 +12,9 @@ class RedliningValidator:
     """Validator for tracked changes in Word documents."""
 
     def __init__(self, unpacked_dir, original_docx, verbose=False):
+        """
+        Invoked by: (no references found)
+        """
         self.unpacked_dir = Path(unpacked_dir)
         self.original_docx = Path(original_docx)
         self.verbose = verbose
@@ -20,7 +23,10 @@ class RedliningValidator:
         }
 
     def validate(self):
-        """Main validation method that returns True if valid, False otherwise."""
+        """
+        Main validation method that returns True if valid, False otherwise.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/validator.py
+        """
         # Verify unpacked directory exists and has correct structure
         modified_file = self.unpacked_dir / "word" / "document.xml"
         if not modified_file.exists():
@@ -112,7 +118,10 @@ class RedliningValidator:
             return True
 
     def _generate_detailed_diff(self, original_text, modified_text):
-        """Generate detailed word-level differences using git word diff."""
+        """
+        Generate detailed word-level differences using git word diff.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/redlining.py
+        """
         error_parts = [
             "FAILED - Document text doesn't match after removing Claude's tracked changes",
             "",
@@ -137,7 +146,10 @@ class RedliningValidator:
         return "\n".join(error_parts)
 
     def _get_git_word_diff(self, original_text, modified_text):
-        """Generate word diff using git with character-level precision."""
+        """
+        Generate word diff using git with character-level precision.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/redlining.py
+        """
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
@@ -215,7 +227,10 @@ class RedliningValidator:
         return None
 
     def _remove_claude_tracked_changes(self, root):
-        """Remove tracked changes authored by Claude from the XML root."""
+        """
+        Remove tracked changes authored by Claude from the XML root.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/redlining.py
+        """
         ins_tag = f"{{{self.namespaces['w']}}}ins"
         del_tag = f"{{{self.namespaces['w']}}}del"
         author_attr = f"{{{self.namespaces['w']}}}author"
@@ -256,6 +271,7 @@ class RedliningValidator:
 
         Empty paragraphs are skipped to avoid false positives when tracked
         insertions add only structural elements without text content.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/redlining.py
         """
         p_tag = f"{{{self.namespaces['w']}}}p"
         t_tag = f"{{{self.namespaces['w']}}}t"

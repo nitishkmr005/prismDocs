@@ -18,6 +18,7 @@ def get_generator(output_format: str):
 
     Raises:
         UnsupportedFormatError: If format is not supported
+    Invoked by: scripts/generate_from_folder.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_output.py
     """
     format_lower = output_format.lower()
 

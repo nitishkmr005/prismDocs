@@ -14,7 +14,10 @@ from doc_generator.infrastructure.api.models.requests import (
 
 @pytest.fixture
 def cache_service(tmp_path):
-    """Create cache service with temp directory."""
+    """
+    Create cache service with temp directory.
+    Invoked by: src/doc_generator/infrastructure/api/routes/generate.py, tests/api/test_cache_service.py
+    """
     return CacheService(cache_dir=tmp_path / "cache")
 
 
@@ -22,6 +25,9 @@ class TestCacheService:
     """Test cache service."""
 
     def test_generate_cache_key(self, cache_service):
+        """
+        Invoked by: (no references found)
+        """
         request = GenerateRequest(
             output_format=OutputFormat.PDF,
             sources=SourceCategories(
@@ -32,6 +38,9 @@ class TestCacheService:
         assert len(key) == 64  # SHA256 hex digest
 
     def test_same_request_same_key(self, cache_service):
+        """
+        Invoked by: (no references found)
+        """
         request1 = GenerateRequest(
             output_format=OutputFormat.PDF,
             sources=SourceCategories(
@@ -47,6 +56,9 @@ class TestCacheService:
         assert cache_service.generate_cache_key(request1) == cache_service.generate_cache_key(request2)
 
     def test_different_content_different_key(self, cache_service):
+        """
+        Invoked by: (no references found)
+        """
         request1 = GenerateRequest(
             output_format=OutputFormat.PDF,
             sources=SourceCategories(
@@ -62,6 +74,9 @@ class TestCacheService:
         assert cache_service.generate_cache_key(request1) != cache_service.generate_cache_key(request2)
 
     def test_cache_miss(self, cache_service):
+        """
+        Invoked by: (no references found)
+        """
         request = GenerateRequest(
             output_format=OutputFormat.PDF,
             sources=SourceCategories(
@@ -72,6 +87,9 @@ class TestCacheService:
         assert result is None
 
     def test_cache_hit(self, cache_service):
+        """
+        Invoked by: (no references found)
+        """
         request = GenerateRequest(
             output_format=OutputFormat.PDF,
             sources=SourceCategories(

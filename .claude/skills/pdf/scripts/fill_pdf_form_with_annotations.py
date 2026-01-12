@@ -9,7 +9,10 @@ from pypdf.annotations import FreeText
 
 
 def transform_coordinates(bbox, image_width, image_height, pdf_width, pdf_height):
-    """Transform bounding box from image coordinates to PDF coordinates"""
+    """
+    Transform bounding box from image coordinates to PDF coordinates
+    Invoked by: .claude/skills/pdf/scripts/fill_pdf_form_with_annotations.py
+    """
     # Image coordinates: origin at top-left, y increases downward
     # PDF coordinates: origin at bottom-left, y increases upward
     x_scale = pdf_width / image_width
@@ -26,7 +29,10 @@ def transform_coordinates(bbox, image_width, image_height, pdf_width, pdf_height
 
 
 def fill_pdf_form(input_pdf_path, fields_json_path, output_pdf_path):
-    """Fill the PDF form with data from fields.json"""
+    """
+    Fill the PDF form with data from fields.json
+    Invoked by: .claude/skills/pdf/scripts/fill_pdf_form_with_annotations.py
+    """
     
     # `fields.json` format described in forms.md.
     with open(fields_json_path, "r") as f:

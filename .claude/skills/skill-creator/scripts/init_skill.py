@@ -187,7 +187,10 @@ Note: This is a text placeholder. Actual assets can be any file type.
 
 
 def title_case_skill_name(skill_name):
-    """Convert hyphenated skill name to Title Case for display."""
+    """
+    Convert hyphenated skill name to Title Case for display.
+    Invoked by: .claude/skills/skill-creator/scripts/init_skill.py
+    """
     return ' '.join(word.capitalize() for word in skill_name.split('-'))
 
 
@@ -201,6 +204,7 @@ def init_skill(skill_name, path):
 
     Returns:
         Path to created skill directory, or None if error
+    Invoked by: .claude/skills/skill-creator/scripts/init_skill.py
     """
     # Determine skill directory path
     skill_dir = Path(path).resolve() / skill_name
@@ -271,6 +275,9 @@ def init_skill(skill_name, path):
 
 
 def main():
+    """
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     if len(sys.argv) < 4 or sys.argv[2] != '--path':
         print("Usage: init_skill.py <skill-name> --path <path>")
         print("\nSkill name requirements:")

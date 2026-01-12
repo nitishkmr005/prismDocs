@@ -20,6 +20,7 @@ def ensure_directory(directory: Path) -> None:
 
     Raises:
         PermissionError: If directory cannot be created
+    Invoked by: src/doc_generator/infrastructure/parsers/file_system.py
     """
     try:
         directory.mkdir(parents=True, exist_ok=True)
@@ -38,6 +39,7 @@ def validate_file_exists(file_path: Path) -> None:
 
     Raises:
         DocGenFileNotFoundError: If file does not exist
+    Invoked by: src/doc_generator/application/parsers/markdown_parser.py, src/doc_generator/infrastructure/parsers/file_system.py
     """
     if not file_path.exists():
         raise DocGenFileNotFoundError(f"File not found: {file_path}")
@@ -55,6 +57,7 @@ def get_file_extension(file_path: Path) -> str:
 
     Returns:
         File extension (e.g., "pdf", "md")
+    Invoked by: (no references found)
     """
     return file_path.suffix.lstrip(".").lower()
 
@@ -69,6 +72,7 @@ def resolve_path(path: str | Path, base_dir: Path | None = None) -> Path:
 
     Returns:
         Absolute Path object
+    Invoked by: (no references found)
     """
     p = Path(path)
 
@@ -95,6 +99,7 @@ def read_text_file(file_path: Path, encoding: str = "utf-8") -> str:
     Raises:
         DocGenFileNotFoundError: If file not found
         UnicodeDecodeError: If encoding is incorrect
+    Invoked by: src/doc_generator/application/parsers/markdown_parser.py
     """
     validate_file_exists(file_path)
 
@@ -118,6 +123,7 @@ def write_text_file(file_path: Path, content: str, encoding: str = "utf-8") -> N
 
     Raises:
         PermissionError: If file cannot be written
+    Invoked by: (no references found)
     """
     try:
         # Ensure parent directory exists

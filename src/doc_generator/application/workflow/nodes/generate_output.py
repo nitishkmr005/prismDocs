@@ -23,6 +23,7 @@ def generate_output_node(state: WorkflowState) -> WorkflowState:
 
     Returns:
         Updated state with output_path
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     try:
         # Get appropriate generator

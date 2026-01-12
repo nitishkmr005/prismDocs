@@ -18,6 +18,7 @@ def strip_frontmatter(text: str) -> str:
 
     Returns:
         Text with frontmatter removed
+    Invoked by: src/doc_generator/application/parsers/markdown_parser.py
     """
     if text.startswith("---"):
         parts = text.split("---", 2)
@@ -35,6 +36,7 @@ def extract_frontmatter(text: str) -> dict:
 
     Returns:
         Dictionary of metadata from frontmatter
+    Invoked by: src/doc_generator/application/parsers/markdown_parser.py
     """
     metadata = {}
 

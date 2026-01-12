@@ -17,6 +17,9 @@ _enabled: bool | None = None
 
 
 def _truncate(text: str | None, limit: int = 4000) -> str:
+    """
+    Invoked by: src/doc_generator/infrastructure/observability/opik.py
+    """
     if not text:
         return ""
     text = str(text)
@@ -26,6 +29,9 @@ def _truncate(text: str | None, limit: int = 4000) -> str:
 
 
 def _get_client() -> Any | None:
+    """
+    Invoked by: src/doc_generator/infrastructure/observability/opik.py
+    """
     global _client, _enabled
     if _enabled is False:
         return None
@@ -69,7 +75,10 @@ def log_llm_call(
     duration_ms: int | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> None:
-    """Log a single LLM call to Opik, if configured."""
+    """
+    Log a single LLM call to Opik, if configured.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/observability/opik.py
+    """
     client = _get_client()
     if client is None:
         return

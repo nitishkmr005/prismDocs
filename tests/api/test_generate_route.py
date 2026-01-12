@@ -8,7 +8,10 @@ from doc_generator.infrastructure.api.main import app
 
 @pytest.fixture
 def client():
-    """Create test client."""
+    """
+    Create test client.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/observability/opik.py, tests/api/test_generate_route.py, tests/api/test_health_route.py, tests/api/test_upload_route.py
+    """
     return TestClient(app)
 
 
@@ -16,7 +19,10 @@ class TestGenerateRoute:
     """Test document generation endpoint."""
 
     def test_generate_requires_api_key(self, client):
-        """Test that generate endpoint requires API key."""
+        """
+        Test that generate endpoint requires API key.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             json={
@@ -30,7 +36,10 @@ class TestGenerateRoute:
         assert response.status_code == 401
 
     def test_generate_with_google_key(self, client):
-        """Test generate with Google API key returns SSE stream."""
+        """
+        Test generate with Google API key returns SSE stream.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             headers={"X-Google-Key": "test-google-key"},
@@ -45,7 +54,10 @@ class TestGenerateRoute:
         assert "text/event-stream" in response.headers.get("content-type", "")
 
     def test_generate_pptx_format(self, client):
-        """Test generate with PPTX format."""
+        """
+        Test generate with PPTX format.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             headers={"X-Google-Key": "test-google-key"},
@@ -62,7 +74,10 @@ class TestGenerateRoute:
         assert response.status_code == 200
 
     def test_generate_with_openai_provider(self, client):
-        """Test generate with OpenAI provider."""
+        """
+        Test generate with OpenAI provider.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             headers={"X-OpenAI-Key": "test-openai-key"},
@@ -77,7 +92,10 @@ class TestGenerateRoute:
         assert response.status_code == 200
 
     def test_generate_missing_provider_key(self, client):
-        """Test generate fails when provider key is missing."""
+        """
+        Test generate fails when provider key is missing.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             headers={"X-Google-Key": "test-google-key"},
@@ -92,7 +110,10 @@ class TestGenerateRoute:
         assert response.status_code == 401
 
     def test_generate_with_cache_reuse(self, client):
-        """Test generate with cache reuse enabled."""
+        """
+        Test generate with cache reuse enabled.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             headers={"X-Google-Key": "test-google-key"},
@@ -109,7 +130,10 @@ class TestGenerateRoute:
         assert response.status_code == 200
 
     def test_generate_with_multiple_sources(self, client):
-        """Test generate with multiple source types."""
+        """
+        Test generate with multiple source types.
+        Invoked by: (no references found)
+        """
         response = client.post(
             "/api/generate",
             headers={"X-Google-Key": "test-google-key"},

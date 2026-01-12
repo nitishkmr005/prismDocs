@@ -8,6 +8,9 @@ from pdf2image import convert_from_path
 
 
 def convert(pdf_path, output_dir, max_dim=1000):
+    """
+    Invoked by: .claude/skills/pdf/scripts/convert_pdf_to_images.py, .claude/skills/pptx/scripts/thumbnail.py, src/doc_generator/infrastructure/parsers/docling.py, src/doc_generator/infrastructure/parsers/markitdown.py
+    """
     images = convert_from_path(pdf_path, dpi=200)
 
     for i, image in enumerate(images):

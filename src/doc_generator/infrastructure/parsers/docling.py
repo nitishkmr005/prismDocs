@@ -36,6 +36,7 @@ def convert_document_to_markdown(file_path: Path) -> Tuple[str, dict]:
     Raises:
         ParseError: If conversion fails
         ImportError: If Docling is not installed
+    Invoked by: src/doc_generator/application/parsers/unified_parser.py
     """
     if not DOCLING_AVAILABLE:
         raise ImportError(
@@ -84,5 +85,6 @@ def is_docling_available() -> bool:
 
     Returns:
         True if Docling is installed, False otherwise
+    Invoked by: src/doc_generator/application/parsers/unified_parser.py
     """
     return DOCLING_AVAILABLE

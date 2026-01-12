@@ -104,6 +104,9 @@ class BaseSchemaValidator:
     }
 
     def __init__(self, unpacked_dir, original_file, verbose=False):
+        """
+        Invoked by: (no references found)
+        """
         self.unpacked_dir = Path(unpacked_dir).resolve()
         self.original_file = Path(original_file)
         self.verbose = verbose
@@ -121,11 +124,17 @@ class BaseSchemaValidator:
             print(f"Warning: No XML files found in {self.unpacked_dir}")
 
     def validate(self):
-        """Run all validation checks and return True if all pass."""
+        """
+        Run all validation checks and return True if all pass.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/validator.py
+        """
         raise NotImplementedError("Subclasses must implement the validate method")
 
     def validate_xml(self):
-        """Validate that all XML files are well-formed."""
+        """
+        Validate that all XML files are well-formed.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         errors = []
 
         for xml_file in self.xml_files:
@@ -154,7 +163,10 @@ class BaseSchemaValidator:
             return True
 
     def validate_namespaces(self):
-        """Validate that namespace prefixes in Ignorable attributes are declared."""
+        """
+        Validate that namespace prefixes in Ignorable attributes are declared.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         errors = []
 
         for xml_file in self.xml_files:
@@ -184,7 +196,10 @@ class BaseSchemaValidator:
         return True
 
     def validate_unique_ids(self):
-        """Validate that specific IDs are unique according to OOXML requirements."""
+        """
+        Validate that specific IDs are unique according to OOXML requirements.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         errors = []
         global_ids = {}  # Track globally unique IDs across all files
 
@@ -277,6 +292,7 @@ class BaseSchemaValidator:
     def validate_file_references(self):
         """
         Validate that all .rels files properly reference files and that all files are referenced.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
         """
         errors = []
 
@@ -389,6 +405,7 @@ class BaseSchemaValidator:
         """
         Validate that all r:id attributes in XML files reference existing IDs
         in their corresponding .rels files, and optionally validate relationship types.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
         """
         import lxml.etree
 
@@ -487,6 +504,7 @@ class BaseSchemaValidator:
         """
         Get the expected relationship type for an element.
         First checks the explicit mapping, then tries pattern detection.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
         """
         # Normalize element name to lowercase
         elem_lower = element_name.lower()
@@ -520,7 +538,10 @@ class BaseSchemaValidator:
         return None
 
     def validate_content_types(self):
-        """Validate that all content files are properly declared in [Content_Types].xml."""
+        """
+        Validate that all content files are properly declared in [Content_Types].xml.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         errors = []
 
         # Find [Content_Types].xml file
@@ -647,6 +668,7 @@ class BaseSchemaValidator:
 
         Returns:
             tuple: (is_valid, new_errors_set) where is_valid is True/False/None (skipped)
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
         """
         # Resolve both paths to handle symlinks
         xml_file = Path(xml_file).resolve()
@@ -686,7 +708,10 @@ class BaseSchemaValidator:
             return True, set()
 
     def validate_against_xsd(self):
-        """Validate XML files against XSD schemas, showing only new errors compared to original."""
+        """
+        Validate XML files against XSD schemas, showing only new errors compared to original.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py
+        """
         new_errors = []
         original_error_count = 0
         valid_count = 0
@@ -739,7 +764,10 @@ class BaseSchemaValidator:
             return True
 
     def _get_schema_path(self, xml_file):
-        """Determine the appropriate schema path for an XML file."""
+        """
+        Determine the appropriate schema path for an XML file.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
+        """
         # Check exact filename match
         if xml_file.name in self.SCHEMA_MAPPINGS:
             return self.schemas_dir / self.SCHEMA_MAPPINGS[xml_file.name]
@@ -763,7 +791,10 @@ class BaseSchemaValidator:
         return None
 
     def _clean_ignorable_namespaces(self, xml_doc):
-        """Remove attributes and elements not in allowed namespaces."""
+        """
+        Remove attributes and elements not in allowed namespaces.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
+        """
         # Create a clean copy
         xml_string = lxml.etree.tostring(xml_doc, encoding="unicode")
         xml_copy = lxml.etree.fromstring(xml_string)
@@ -789,7 +820,10 @@ class BaseSchemaValidator:
         return lxml.etree.ElementTree(xml_copy)
 
     def _remove_ignorable_elements(self, root):
-        """Recursively remove all elements not in allowed namespaces."""
+        """
+        Recursively remove all elements not in allowed namespaces.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
+        """
         elements_to_remove = []
 
         # Find elements to remove
@@ -813,7 +847,10 @@ class BaseSchemaValidator:
             root.remove(elem)
 
     def _preprocess_for_mc_ignorable(self, xml_doc):
-        """Preprocess XML to handle mc:Ignorable attribute properly."""
+        """
+        Preprocess XML to handle mc:Ignorable attribute properly.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
+        """
         # Remove mc:Ignorable attributes before validation
         root = xml_doc.getroot()
 
@@ -824,7 +861,10 @@ class BaseSchemaValidator:
         return xml_doc
 
     def _validate_single_file_xsd(self, xml_file, base_path):
-        """Validate a single XML file against XSD schema. Returns (is_valid, errors_set)."""
+        """
+        Validate a single XML file against XSD schema. Returns (is_valid, errors_set).
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
+        """
         schema_path = self._get_schema_path(xml_file)
         if not schema_path:
             return None, None  # Skip file
@@ -874,6 +914,7 @@ class BaseSchemaValidator:
 
         Returns:
             set: Set of error messages from the original file
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
         """
         import tempfile
         import zipfile
@@ -912,6 +953,7 @@ class BaseSchemaValidator:
 
         Returns:
             tuple: (cleaned_xml_doc, warnings_list)
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
         """
         warnings = []
         template_pattern = re.compile(r"\{\{[^}]*\}\}")
@@ -921,6 +963,9 @@ class BaseSchemaValidator:
         xml_copy = lxml.etree.fromstring(xml_string)
 
         def process_text_content(text, content_type):
+            """
+            Invoked by: .claude/skills/pptx/ooxml/scripts/validation/base.py
+            """
             if not text:
                 return text
             matches = list(template_pattern.finditer(text))

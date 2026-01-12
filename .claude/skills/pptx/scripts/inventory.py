@@ -48,7 +48,10 @@ InventoryDict = Dict[str, Dict[str, ShapeDict]]  # JSON-serializable inventory
 
 
 def main():
-    """Main entry point for command-line usage."""
+    """
+    Main entry point for command-line usage.
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(
         description="Extract text inventory from PowerPoint with proper GroupShape support.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -142,6 +145,7 @@ class ParagraphData:
 
         Args:
             paragraph: The PowerPoint paragraph object
+        Invoked by: (no references found)
         """
         self.text: str = paragraph.text.strip()
         self.bullet: bool = False
@@ -229,7 +233,10 @@ class ParagraphData:
                 self.line_spacing = round(paragraph.line_spacing * font_size, 2)
 
     def to_dict(self) -> ParagraphDict:
-        """Convert to dictionary for JSON serialization, excluding None values."""
+        """
+        Convert to dictionary for JSON serialization, excluding None values.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         result: ParagraphDict = {"text": self.text}
 
         # Add optional fields only if they have values
@@ -268,12 +275,18 @@ class ShapeData:
 
     @staticmethod
     def emu_to_inches(emu: int) -> float:
-        """Convert EMUs (English Metric Units) to inches."""
+        """
+        Convert EMUs (English Metric Units) to inches.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         return emu / 914400.0
 
     @staticmethod
     def inches_to_pixels(inches: float, dpi: int = 96) -> int:
-        """Convert inches to pixels at given DPI."""
+        """
+        Convert inches to pixels at given DPI.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         return int(inches * dpi)
 
     @staticmethod
@@ -285,6 +298,7 @@ class ShapeData:
 
         Returns:
             Path to the font file, or None if not found
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
         """
         system = platform.system()
 
@@ -351,6 +365,7 @@ class ShapeData:
 
         Returns:
             Tuple of (width_emu, height_emu) or (None, None) if not found
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
         """
         try:
             prs = slide.part.package.presentation_part.presentation
@@ -368,6 +383,7 @@ class ShapeData:
 
         Returns:
             Default font size in points, or None if not found
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
         """
         try:
             if not hasattr(shape, "placeholder_format"):
@@ -399,6 +415,7 @@ class ShapeData:
             absolute_left: Absolute left position in EMUs (for shapes in groups)
             absolute_top: Absolute top position in EMUs (for shapes in groups)
             slide: Optional slide object to get dimensions and layout information
+        Invoked by: (no references found)
         """
         self.shape = shape  # Store reference to original shape
         self.shape_id: str = ""  # Will be set after sorting
@@ -467,7 +484,10 @@ class ShapeData:
 
     @property
     def paragraphs(self) -> List[ParagraphData]:
-        """Calculate paragraphs from the shape's text frame."""
+        """
+        Calculate paragraphs from the shape's text frame.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/redlining.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/replace.py, src/doc_generator/infrastructure/generators/pptx/utils.py, src/doc_generator/infrastructure/pptx_utils.py
+        """
         if not self.shape or not hasattr(self.shape, "text_frame"):
             return []
 
@@ -478,7 +498,10 @@ class ShapeData:
         return paragraphs
 
     def _get_default_font_size(self) -> int:
-        """Get default font size from theme text styles or use conservative default."""
+        """
+        Get default font size from theme text styles or use conservative default.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         try:
             if not (
                 hasattr(self.shape, "part") and hasattr(self.shape.part, "slide_layout")
@@ -507,7 +530,10 @@ class ShapeData:
         return 14  # Conservative default for body text
 
     def _get_usable_dimensions(self, text_frame) -> Tuple[int, int]:
-        """Get usable width and height in pixels after accounting for margins."""
+        """
+        Get usable width and height in pixels after accounting for margins.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         # Default PowerPoint margins in inches
         margins = {"top": 0.05, "bottom": 0.05, "left": 0.1, "right": 0.1}
 
@@ -532,7 +558,10 @@ class ShapeData:
         )
 
     def _wrap_text_line(self, line: str, max_width_px: int, draw, font) -> List[str]:
-        """Wrap a single line of text to fit within max_width_px."""
+        """
+        Wrap a single line of text to fit within max_width_px.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         if not line:
             return [""]
 
@@ -560,7 +589,10 @@ class ShapeData:
         return wrapped
 
     def _estimate_frame_overflow(self) -> None:
-        """Estimate if text overflows the shape bounds using PIL text measurement."""
+        """
+        Estimate if text overflows the shape bounds using PIL text measurement.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         if not self.shape or not hasattr(self.shape, "text_frame"):
             return
 
@@ -637,7 +669,10 @@ class ShapeData:
                 self.frame_overflow_bottom = overflow_inches
 
     def _calculate_slide_overflow(self) -> None:
-        """Calculate if shape overflows the slide boundaries."""
+        """
+        Calculate if shape overflows the slide boundaries.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         if self.slide_width_emu is None or self.slide_height_emu is None:
             return
 
@@ -658,7 +693,10 @@ class ShapeData:
                 self.slide_overflow_bottom = overflow_inches
 
     def _detect_bullet_issues(self) -> None:
-        """Detect bullet point formatting issues in paragraphs."""
+        """
+        Detect bullet point formatting issues in paragraphs.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         if not self.shape or not hasattr(self.shape, "text_frame"):
             return
 
@@ -680,7 +718,10 @@ class ShapeData:
 
     @property
     def has_any_issues(self) -> bool:
-        """Check if shape has any issues (overflow, overlap, or warnings)."""
+        """
+        Check if shape has any issues (overflow, overlap, or warnings).
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         return (
             self.frame_overflow_bottom is not None
             or self.slide_overflow_right is not None
@@ -690,7 +731,10 @@ class ShapeData:
         )
 
     def to_dict(self) -> ShapeDict:
-        """Convert to dictionary for JSON serialization."""
+        """
+        Convert to dictionary for JSON serialization.
+        Invoked by: .claude/skills/pptx/scripts/inventory.py
+        """
         result: ShapeDict = {
             "left": self.left,
             "top": self.top,
@@ -740,7 +784,10 @@ class ShapeData:
 
 
 def is_valid_shape(shape: BaseShape) -> bool:
-    """Check if a shape contains meaningful text content."""
+    """
+    Check if a shape contains meaningful text content.
+    Invoked by: .claude/skills/pptx/scripts/inventory.py
+    """
     # Must have a text frame with content
     if not hasattr(shape, "text_frame") or not shape.text_frame:  # type: ignore
         return False
@@ -779,6 +826,7 @@ def collect_shapes_with_absolute_positions(
 
     Returns:
         List of ShapeWithPosition objects with absolute positions
+    Invoked by: .claude/skills/pptx/scripts/inventory.py
     """
     if hasattr(shape, "shapes"):  # GroupShape
         result = []
@@ -820,6 +868,7 @@ def sort_shapes_by_position(shapes: List[ShapeData]) -> List[ShapeData]:
     """Sort shapes by visual position (top-to-bottom, left-to-right).
 
     Shapes within 0.5 inches vertically are considered on the same row.
+    Invoked by: .claude/skills/pptx/scripts/inventory.py
     """
     if not shapes:
         return shapes
@@ -862,6 +911,7 @@ def calculate_overlap(
         Tuple of (overlaps, overlap_area) where:
         - overlaps: True if rectangles overlap by more than tolerance
         - overlap_area: Area of overlap in square inches
+    Invoked by: .claude/skills/pptx/scripts/inventory.py
     """
     left1, top1, w1, h1 = rect1
     left2, top2, w2, h2 = rect2
@@ -887,6 +937,7 @@ def detect_overlaps(shapes: List[ShapeData]) -> None:
 
     Args:
         shapes: List of ShapeData objects with shape_id attributes set
+    Invoked by: .claude/skills/pptx/scripts/inventory.py
     """
     n = len(shapes)
 
@@ -925,6 +976,7 @@ def extract_text_inventory(
     Shapes are sorted by visual position (top-to-bottom, left-to-right).
     The ShapeData objects contain the full shape information and can be
     converted to dictionaries for JSON serialization using to_dict().
+    Invoked by: .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py
     """
     if prs is None:
         prs = Presentation(str(pptx_path))
@@ -987,6 +1039,7 @@ def get_inventory_as_dict(pptx_path: Path, issues_only: bool = False) -> Invento
 
     Returns:
         Nested dictionary with all data serialized for JSON
+    Invoked by: (no references found)
     """
     inventory = extract_text_inventory(pptx_path, issues_only=issues_only)
 
@@ -1004,6 +1057,7 @@ def save_inventory(inventory: InventoryData, output_path: Path) -> None:
     """Save inventory to JSON file with proper formatting.
 
     Converts ShapeData objects to dictionaries for JSON serialization.
+    Invoked by: .claude/skills/pptx/scripts/inventory.py
     """
     # Convert ShapeData objects to dictionaries
     json_inventory: InventoryDict = {}

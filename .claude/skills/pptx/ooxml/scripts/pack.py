@@ -17,6 +17,9 @@ from pathlib import Path
 
 
 def main():
+    """
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(description="Pack a directory into an Office file")
     parser.add_argument("input_directory", help="Unpacked Office document directory")
     parser.add_argument("output_file", help="Output Office file (.docx/.pptx/.xlsx)")
@@ -52,6 +55,7 @@ def pack_document(input_dir, output_file, validate=False):
 
     Returns:
         bool: True if successful, False if validation failed
+    Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py
     """
     input_dir = Path(input_dir)
     output_file = Path(output_file)
@@ -88,7 +92,10 @@ def pack_document(input_dir, output_file, validate=False):
 
 
 def validate_document(doc_path):
-    """Validate document by converting to HTML with soffice."""
+    """
+    Validate document by converting to HTML with soffice.
+    Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py
+    """
     # Determine the correct filter based on file extension
     match doc_path.suffix.lower():
         case ".docx":
@@ -131,7 +138,10 @@ def validate_document(doc_path):
 
 
 def condense_xml(xml_file):
-    """Strip unnecessary whitespace and remove comments."""
+    """
+    Strip unnecessary whitespace and remove comments.
+    Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py
+    """
     with open(xml_file, "r", encoding="utf-8") as f:
         dom = defusedxml.minidom.parse(f)
 

@@ -15,6 +15,9 @@ class TestExtractAPIKeys:
     """Test API key extraction from headers."""
 
     def test_extract_google_key(self):
+        """
+        Invoked by: (no references found)
+        """
         keys = extract_api_keys(
             x_google_key="AIza123",
             x_openai_key=None,
@@ -25,6 +28,9 @@ class TestExtractAPIKeys:
         assert keys.anthropic is None
 
     def test_extract_all_keys(self):
+        """
+        Invoked by: (no references found)
+        """
         keys = extract_api_keys(
             x_google_key="AIza123",
             x_openai_key="sk-abc",
@@ -35,6 +41,9 @@ class TestExtractAPIKeys:
         assert keys.anthropic == "sk-ant-xyz"
 
     def test_extract_no_keys(self):
+        """
+        Invoked by: (no references found)
+        """
         keys = extract_api_keys(
             x_google_key=None,
             x_openai_key=None,
@@ -47,11 +56,17 @@ class TestGetAPIKeyForProvider:
     """Test getting API key for specific provider."""
 
     def test_get_google_key(self):
+        """
+        Invoked by: (no references found)
+        """
         keys = APIKeys(google="AIza123", openai=None, anthropic=None)
         key = get_api_key_for_provider(Provider.GOOGLE, keys)
         assert key == "AIza123"
 
     def test_missing_key_raises(self):
+        """
+        Invoked by: (no references found)
+        """
         keys = APIKeys(google=None, openai="sk-abc", anthropic=None)
         with pytest.raises(HTTPException) as exc_info:
             get_api_key_for_provider(Provider.GOOGLE, keys)

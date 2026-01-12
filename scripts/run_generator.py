@@ -23,7 +23,10 @@ from doc_generator.infrastructure.llm_service import get_llm_service
 
 
 def main():
-    """Main entry point for CLI."""
+    """
+    Main entry point for CLI.
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(
         description="Generate PDF or PPTX from various document sources",
         formatter_class=argparse.RawDescriptionHelpFormatter,

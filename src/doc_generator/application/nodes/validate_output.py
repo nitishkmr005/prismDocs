@@ -26,6 +26,7 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
 
     Returns:
         Updated state with validation results
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     if not state.get("output_path"):
         error_msg = "No output path specified"

@@ -53,6 +53,7 @@ class SVGGenerator:
         Args:
             width: Chart width in pixels
             height: Chart height in pixels
+        Invoked by: (no references found)
         """
         self.width = width
         self.height = height
@@ -75,6 +76,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
         """
         if not data:
             return ""
@@ -146,6 +148,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
         """
         if not data:
             return ""
@@ -225,6 +228,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
         """
         if not data:
             return ""
@@ -310,6 +314,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
         """
         if not data or len(data) < 2:
             return ""
@@ -405,6 +410,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not components:
             return ""
@@ -564,6 +570,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not nodes:
             return ""
@@ -586,6 +593,9 @@ class SVGGenerator:
         levels = {}
 
         def assign_level(node_id, level):
+            """
+            Invoked by: src/doc_generator/infrastructure/image/svg.py
+            """
             if node_id in visited:
                 return
             visited.add(node_id)
@@ -734,6 +744,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not items or not categories:
             return ""
@@ -839,6 +850,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not concepts:
             return ""
@@ -969,6 +981,7 @@ class SVGGenerator:
 
         Returns:
             SVG string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not central:
             return ""
@@ -1109,6 +1122,7 @@ class SVGGenerator:
 
         Returns:
             List of text lines
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
         """
         if len(text) <= max_chars:
             return [text]
@@ -1131,7 +1145,10 @@ class SVGGenerator:
         return lines if lines else [text[:max_chars] + "..."]
 
     def _pie_slice_path(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float) -> str:
-        """Calculate SVG path for pie slice."""
+        """
+        Calculate SVG path for pie slice.
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
+        """
         import math
 
         start_rad = math.radians(start_angle)
@@ -1147,7 +1164,10 @@ class SVGGenerator:
         return f"M {cx} {cy} L {x1} {y1} A {r} {r} 0 {large_arc} 1 {x2} {y2} Z"
 
     def _escape(self, text: str) -> str:
-        """Escape text for SVG."""
+        """
+        Escape text for SVG.
+        Invoked by: src/doc_generator/infrastructure/image/svg.py
+        """
         return (text
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
@@ -1155,7 +1175,10 @@ class SVGGenerator:
                 .replace('"', "&quot;"))
 
     def _save_svg(self, svg: str, path: Path) -> None:
-        """Save SVG to file."""
+        """
+        Save SVG to file.
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
+        """
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(svg, encoding="utf-8")
         logger.debug(f"Saved SVG chart: {path}")
@@ -1182,6 +1205,7 @@ def generate_chart(
 
     Returns:
         SVG string
+    Invoked by: (no references found)
     """
     generator = SVGGenerator(width=width, height=height)
 
@@ -1217,6 +1241,7 @@ def generate_visualization(
 
     Returns:
         SVG string
+    Invoked by: (no references found)
     """
     generator = SVGGenerator(width=width, height=height)
 

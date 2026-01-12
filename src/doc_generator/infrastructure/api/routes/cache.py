@@ -33,21 +33,30 @@ class CacheStatsResponse(BaseModel):
 
 
 def get_project_dirs() -> list[Path]:
-    """Get all project directories (f_xxx folders)."""
+    """
+    Get all project directories (f_xxx folders).
+    Invoked by: src/doc_generator/infrastructure/api/routes/cache.py
+    """
     if not OUTPUT_BASE.exists():
         return []
     return [d for d in OUTPUT_BASE.iterdir() if d.is_dir() and d.name.startswith("f_")]
 
 
 def get_total_size(directory: Path) -> int:
-    """Get total size of all files in directory recursively."""
+    """
+    Get total size of all files in directory recursively.
+    Invoked by: src/doc_generator/infrastructure/api/routes/cache.py
+    """
     if not directory.exists():
         return 0
     return sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
 
 
 def count_files(directory: Path) -> int:
-    """Count all files in directory recursively."""
+    """
+    Count all files in directory recursively.
+    Invoked by: (no references found)
+    """
     if not directory.exists():
         return 0
     return sum(1 for f in directory.rglob("*") if f.is_file())
@@ -59,6 +68,7 @@ async def get_cache_stats() -> CacheStatsResponse:
     
     Returns:
         Statistics about projects and cache entries
+    Invoked by: (no references found)
     """
     project_dirs = get_project_dirs()
     projects_count = len(project_dirs)
@@ -82,6 +92,7 @@ async def clear_cache() -> ClearResponse:
     
     Returns:
         Count of cleared items
+    Invoked by: (no references found)
     """
     cache_cleared = 0
     if CACHE_DIR.exists():
@@ -109,6 +120,7 @@ async def clear_all() -> ClearResponse:
     
     Returns:
         Count of cleared items
+    Invoked by: (no references found)
     """
     # Clear project directories (f_xxx folders)
     projects_cleared = 0

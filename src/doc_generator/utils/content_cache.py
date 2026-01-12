@@ -28,6 +28,7 @@ def save_structured_content(
         
     Returns:
         Path to saved cache file
+    Invoked by: src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_output.py
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
     
@@ -61,6 +62,7 @@ def load_structured_content(
         
     Returns:
         Structured content dict or None if not cached
+    Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py
     """
     input_name = Path(input_path).stem
     cache_file = cache_dir / f"{input_name}_content_cache.json"
@@ -82,6 +84,9 @@ def load_structured_content(
 
 
 def load_image_manifest(images_dir: Path) -> Optional[dict]:
+    """
+    Invoked by: src/doc_generator/utils/content_cache.py
+    """
     manifest_path = images_dir / "manifest.json"
     if not manifest_path.exists():
         return None
@@ -94,6 +99,9 @@ def load_image_manifest(images_dir: Path) -> Optional[dict]:
 
 
 def save_image_manifest(
+    """
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+    """
     images_dir: Path,
     content_hash: str,
     section_titles: list[str],
@@ -132,6 +140,7 @@ def load_existing_images(
         
     Returns:
         Dict mapping section_id -> image info
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
     """
     section_images = {}
     
@@ -218,6 +227,7 @@ def clear_cache(cache_dir: Path = Path("src/output/cache")) -> None:
     
     Args:
         cache_dir: Directory containing cache files
+    Invoked by: (no references found)
     """
     if not cache_dir.exists():
         return

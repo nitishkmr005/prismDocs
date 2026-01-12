@@ -13,6 +13,7 @@ async def health_check() -> HealthResponse:
 
     Returns:
         Health status and version
+    Invoked by: (no references found)
     """
     return HealthResponse(
         status="healthy",

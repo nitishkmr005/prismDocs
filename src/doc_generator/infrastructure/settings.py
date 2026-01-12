@@ -236,6 +236,7 @@ def _find_config_file() -> Optional[Path]:
 
     Returns:
         Path to config file or None if not found
+    Invoked by: src/doc_generator/infrastructure/settings.py
     """
     search_paths = [
         Path("config/settings.yaml"),
@@ -256,6 +257,7 @@ def _load_yaml_config() -> dict:
 
     Returns:
         Configuration dictionary or empty dict if file not found
+    Invoked by: src/doc_generator/infrastructure/settings.py
     """
     config_path = _find_config_file()
 
@@ -282,6 +284,7 @@ def _merge_config(yaml_config: dict) -> dict:
 
     Returns:
         Merged configuration ready for Pydantic
+    Invoked by: src/doc_generator/infrastructure/settings.py
     """
     # Map YAML keys to settings structure
     merged = {}
@@ -323,6 +326,7 @@ def get_settings() -> Settings:
 
     Returns:
         Validated Settings instance
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/settings.py, src/doc_generator/utils/content_merger.py
     """
     yaml_config = _load_yaml_config()
     merged_config = _merge_config(yaml_config)

@@ -22,6 +22,7 @@ def parse_content_node(state: WorkflowState) -> WorkflowState:
 
     Returns:
         Updated state with raw_content and metadata
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     try:
         # Get appropriate parser

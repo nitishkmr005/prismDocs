@@ -65,6 +65,9 @@ LABEL_PADDING_RATIO = 0.4  # Label padding as fraction of font size
 
 
 def main():
+    """
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(
         description="Create thumbnail grids from PowerPoint slides."
     )
@@ -147,7 +150,10 @@ def main():
 
 
 def create_hidden_slide_placeholder(size):
-    """Create placeholder image for hidden slides."""
+    """
+    Create placeholder image for hidden slides.
+    Invoked by: .claude/skills/pptx/scripts/thumbnail.py
+    """
     img = Image.new("RGB", size, color="#F0F0F0")
     draw = ImageDraw.Draw(img)
     line_width = max(5, min(size) // 100)
@@ -163,6 +169,7 @@ def get_placeholder_regions(pptx_path):
     text_regions is a dict mapping slide indices to lists of text regions.
     Each region is a dict with 'left', 'top', 'width', 'height' in inches.
     slide_dimensions is a tuple of (width_inches, height_inches).
+    Invoked by: .claude/skills/pptx/scripts/thumbnail.py
     """
     prs = Presentation(str(pptx_path))
     inventory = extract_text_inventory(pptx_path, prs)
@@ -195,7 +202,10 @@ def get_placeholder_regions(pptx_path):
 
 
 def convert_to_images(pptx_path, temp_dir, dpi):
-    """Convert PowerPoint to images via PDF, handling hidden slides."""
+    """
+    Convert PowerPoint to images via PDF, handling hidden slides.
+    Invoked by: .claude/skills/pptx/scripts/thumbnail.py
+    """
     # Detect hidden slides
     print("Analyzing presentation...")
     prs = Presentation(str(pptx_path))
@@ -279,7 +289,10 @@ def create_grids(
     placeholder_regions=None,
     slide_dimensions=None,
 ):
-    """Create multiple thumbnail grids from slide images, max cols×(cols+1) images per grid."""
+    """
+    Create multiple thumbnail grids from slide images, max cols×(cols+1) images per grid.
+    Invoked by: .claude/skills/pptx/scripts/thumbnail.py
+    """
     # Maximum images per grid is cols × (cols + 1) for better proportions
     max_images_per_grid = cols * (cols + 1)
     grid_files = []
@@ -326,7 +339,10 @@ def create_grid(
     placeholder_regions=None,
     slide_dimensions=None,
 ):
-    """Create thumbnail grid from slide images with optional placeholder outlining."""
+    """
+    Create thumbnail grid from slide images with optional placeholder outlining.
+    Invoked by: .claude/skills/pptx/scripts/thumbnail.py
+    """
     font_size = int(width * FONT_SIZE_RATIO)
     label_padding = int(font_size * LABEL_PADDING_RATIO)
 

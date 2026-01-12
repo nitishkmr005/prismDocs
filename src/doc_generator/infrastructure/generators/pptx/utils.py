@@ -39,6 +39,7 @@ def create_presentation() -> Presentation:
 
     Returns:
         Presentation object
+    Invoked by: (no references found)
     """
     prs = Presentation()
     prs.slide_width = Inches(10)
@@ -58,6 +59,7 @@ def add_title_slide(prs: Presentation, title: str, subtitle: str = "") -> None:
         prs: Presentation object
         title: Title text
         subtitle: Subtitle text (optional)
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank layout for custom design
     slide = prs.slides.add_slide(slide_layout)
@@ -149,6 +151,7 @@ def add_content_slide(
         content: List of content items
         is_bullets: Whether to format as bullets (default True)
         speaker_notes: Optional speaker notes for the slide
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank for custom styling
     slide = prs.slides.add_slide(slide_layout)
@@ -241,6 +244,7 @@ def add_section_header_slide(prs: Presentation, section_title: str) -> None:
     Args:
         prs: Presentation object
         section_title: Section heading text
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
@@ -312,6 +316,7 @@ def add_image_slide(
         title: Slide title
         image_path: Path to image file
         caption: Image caption (optional)
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
@@ -382,6 +387,7 @@ def add_executive_summary_slide(
         prs: Presentation object
         title: Slide title (usually "Executive Summary")
         summary_points: List of key summary points
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
@@ -482,6 +488,7 @@ def add_chart_slide(
         title: Slide title
         svg_path: Path to SVG file
         caption: Optional caption
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
@@ -573,6 +580,7 @@ def add_two_column_slide(
         right_content: Right column bullet points
         left_title: Left column header
         right_title: Right column header
+    Invoked by: (no references found)
     """
     slide_layout = prs.slide_layouts[6]  # Blank layout
     slide = prs.slides.add_slide(slide_layout)
@@ -691,6 +699,7 @@ def save_presentation(prs: Presentation, output_path: Path) -> None:
 
     Raises:
         IOError: If save fails
+    Invoked by: (no references found)
     """
     try:
         # Ensure parent directory exists

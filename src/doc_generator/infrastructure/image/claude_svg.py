@@ -36,6 +36,7 @@ class ClaudeSVGGenerator:
 
         Args:
             api_key: Anthropic API key. If not provided, uses ANTHROPIC_API_KEY env var.
+        Invoked by: (no references found)
         """
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.client = None
@@ -49,7 +50,10 @@ class ClaudeSVGGenerator:
             logger.warning("No Anthropic API key provided - Claude SVG generation disabled")
 
     def is_available(self) -> bool:
-        """Check if Claude SVG generator is available."""
+        """
+        Check if Claude SVG generator is available.
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None and self.llm_settings.use_claude_for_visuals
 
     def generate_architecture_diagram(
@@ -68,6 +72,7 @@ class ClaudeSVGGenerator:
 
         Returns:
             SVG code as string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not self.is_available():
             return ""
@@ -159,6 +164,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
 
         Returns:
             SVG code as string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not self.is_available():
             return ""
@@ -249,6 +255,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
 
         Returns:
             SVG code as string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not self.is_available():
             return ""
@@ -339,6 +346,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
 
         Returns:
             SVG code as string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not self.is_available():
             return ""
@@ -430,6 +438,7 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
 
         Returns:
             SVG code as string
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
         """
         if not self.is_available():
             return ""
@@ -506,7 +515,10 @@ Return ONLY the SVG code, no explanations or markdown code blocks."""
             return ""
 
     def _save_svg(self, svg: str, path: Path) -> None:
-        """Save SVG to file."""
+        """
+        Save SVG to file.
+        Invoked by: src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/svg.py
+        """
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(svg, encoding="utf-8")
         logger.debug(f"Saved Claude-generated SVG: {path}")
@@ -545,6 +557,7 @@ def generate_visualization_with_claude(
 
     Returns:
         SVG code as string, or fallback SVG if generation fails
+    Invoked by: (no references found)
     """
     generator = ClaudeSVGGenerator()
 
@@ -598,6 +611,7 @@ def _create_fallback_svg(visual_type: str, title: str, data: dict) -> str:
         
     Returns:
         Basic SVG code
+    Invoked by: src/doc_generator/infrastructure/image/claude_svg.py
     """
     # Extract some labels from data for the fallback
     labels = []
@@ -634,7 +648,10 @@ def _create_fallback_svg(visual_type: str, title: str, data: dict) -> str:
 
 
 def _fallback_architecture_svg(title: str, labels: list[str], colors: list[str]) -> str:
-    """Generate fallback architecture diagram."""
+    """
+    Generate fallback architecture diagram.
+    Invoked by: src/doc_generator/infrastructure/image/claude_svg.py
+    """
     boxes = []
     y_offset = 80
     
@@ -654,7 +671,10 @@ def _fallback_architecture_svg(title: str, labels: list[str], colors: list[str])
 
 
 def _fallback_flowchart_svg(title: str, labels: list[str], colors: list[str]) -> str:
-    """Generate fallback flowchart."""
+    """
+    Generate fallback flowchart.
+    Invoked by: src/doc_generator/infrastructure/image/claude_svg.py
+    """
     nodes = []
     arrows = []
     
@@ -682,7 +702,10 @@ def _fallback_flowchart_svg(title: str, labels: list[str], colors: list[str]) ->
 
 
 def _fallback_comparison_svg(title: str, labels: list[str], colors: list[str]) -> str:
-    """Generate fallback comparison table."""
+    """
+    Generate fallback comparison table.
+    Invoked by: src/doc_generator/infrastructure/image/claude_svg.py
+    """
     rows = []
     
     for i, label in enumerate(labels):
@@ -705,7 +728,10 @@ def _fallback_comparison_svg(title: str, labels: list[str], colors: list[str]) -
 
 
 def _fallback_concept_map_svg(title: str, labels: list[str], colors: list[str]) -> str:
-    """Generate fallback concept map."""
+    """
+    Generate fallback concept map.
+    Invoked by: src/doc_generator/infrastructure/image/claude_svg.py
+    """
     nodes = []
     lines = []
     
@@ -734,7 +760,10 @@ def _fallback_concept_map_svg(title: str, labels: list[str], colors: list[str]) 
 
 
 def _fallback_mind_map_svg(title: str, labels: list[str], colors: list[str]) -> str:
-    """Generate fallback mind map."""
+    """
+    Generate fallback mind map.
+    Invoked by: src/doc_generator/infrastructure/image/claude_svg.py
+    """
     nodes = []
     lines = []
     

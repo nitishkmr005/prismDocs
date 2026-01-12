@@ -50,7 +50,10 @@ except ImportError:
 
 
 def _extract_required_labels(section_title: str, content: str) -> list[str]:
-    """Extract required labels from the section text for grounded diagrams."""
+    """
+    Extract required labels from the section text for grounded diagrams.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+    """
     candidates = [
         "detect_format_node",
         "parse_content_node",
@@ -90,7 +93,10 @@ def _extract_required_labels(section_title: str, content: str) -> list[str]:
 
 
 def _has_visual_trigger(content: str) -> bool:
-    """Heuristic to force visuals for short but diagram-worthy sections."""
+    """
+    Heuristic to force visuals for short but diagram-worthy sections.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+    """
     content_lower = content.lower()
     if "[visual:" in content_lower:
         return True
@@ -108,7 +114,10 @@ def _has_visual_trigger(content: str) -> bool:
 
 
 def _extract_visual_hint(content: str) -> dict | None:
-    """Extract a [VISUAL:type:title:description] hint if present."""
+    """
+    Extract a [VISUAL:type:title:description] hint if present.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+    """
     match = re.search(r"\[VISUAL:(\w+):([^:]+):([^\]]+)\]", content)
     if not match:
         return None
@@ -120,7 +129,10 @@ def _extract_visual_hint(content: str) -> dict | None:
 
 
 def _slugify(text: str, max_len: int = 80) -> str:
-    """Create a safe, ASCII-only filename slug."""
+    """
+    Create a safe, ASCII-only filename slug.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+    """
     slug = re.sub(r"[^a-zA-Z0-9]+", "-", text.lower()).strip("-")
     return slug[:max_len].strip("-")
 
@@ -131,7 +143,10 @@ def _resolve_image_path(
     section_id: int,
     attempt_index: int,
 ) -> Path:
-    """Resolve the output path for a section image using the section title."""
+    """
+    Resolve the output path for a section image using the section title.
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+    """
     title_slug = _slugify(section_title) or f"section-{section_id}"
     if attempt_index > 1:
         return images_dir / f"{title_slug}_{attempt_index}.png"
@@ -142,6 +157,9 @@ class GeminiPromptGenerator:
     """Generate image prompts using Gemini LLM based on section content."""
 
     def __init__(self) -> None:
+        """
+        Invoked by: (no references found)
+        """
         import os
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.settings = get_settings()
@@ -153,6 +171,9 @@ class GeminiPromptGenerator:
             logger.warning("google-genai not installed - image prompt generation disabled")
 
     def is_available(self) -> bool:
+        """
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None
 
     def generate_prompt(
@@ -163,7 +184,10 @@ class GeminiPromptGenerator:
         required_labels: list[str],
         visual_hint: dict | None,
     ) -> str:
-        """Generate an image prompt from content and strict style guidance."""
+        """
+        Generate an image prompt from content and strict style guidance.
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+        """
         content_preview = content[:2400]
         required_labels_str = ", ".join(required_labels) if required_labels else section_title
         visual_title = visual_hint.get("title") if visual_hint else section_title
@@ -213,6 +237,9 @@ class GeminiImageAlignmentValidator:
     """Validate image alignment against section content using Gemini."""
 
     def __init__(self) -> None:
+        """
+        Invoked by: (no references found)
+        """
         import os
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.settings = get_settings()
@@ -224,10 +251,16 @@ class GeminiImageAlignmentValidator:
             logger.warning("google-genai not installed - image alignment validation disabled")
 
     def is_available(self) -> bool:
+        """
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None and types is not None
 
     def validate(self, section_title: str, content: str, image_path: Path) -> dict:
-        """Ask Gemini if the image aligns with the section content."""
+        """
+        Ask Gemini if the image aligns with the section content.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/validator.py
+        """
         try:
             image_bytes = image_path.read_bytes()
         except Exception as exc:
@@ -273,7 +306,10 @@ class GeminiImageAlignmentValidator:
         original_prompt: str,
         alignment_notes: str,
     ) -> str:
-        """Improve the image prompt using alignment feedback."""
+        """
+        Improve the image prompt using alignment feedback.
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+        """
         if not self.is_available():
             return original_prompt
 
@@ -306,6 +342,9 @@ class GeminiImageDescriber:
     """Generate a blog-style description for an image using Gemini."""
 
     def __init__(self) -> None:
+        """
+        Invoked by: (no references found)
+        """
         import os
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.settings = get_settings()
@@ -317,10 +356,16 @@ class GeminiImageDescriber:
             logger.warning("google-genai not installed - image description disabled")
 
     def is_available(self) -> bool:
+        """
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None and types is not None
 
     def describe(self, section_title: str, content: str, image_path: Path) -> str:
-        """Describe the image in a short blog-style paragraph."""
+        """
+        Describe the image in a short blog-style paragraph.
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+        """
         try:
             image_bytes = image_path.read_bytes()
         except Exception as exc:
@@ -363,7 +408,10 @@ class ConceptExtractor:
     """
 
     def __init__(self):
-        """Initialize extractor with Gemini client (optional)."""
+        """
+        Initialize extractor with Gemini client (optional).
+        Invoked by: (no references found)
+        """
         import os
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.client = None
@@ -376,7 +424,10 @@ class ConceptExtractor:
             logger.warning("Gemini not available - concept extraction disabled")
 
     def is_available(self) -> bool:
-        """Check if extractor is available."""
+        """
+        Check if extractor is available.
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.client is not None
 
     def extract(self, section_title: str, content: str) -> dict:
@@ -389,6 +440,7 @@ class ConceptExtractor:
 
         Returns:
             Dict with primary_concept, secondary_concepts, recommended_style, key_terms
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
         """
         if not self.is_available():
             raise RuntimeError("Concept extractor not available")
@@ -439,6 +491,7 @@ class ConceptExtractor:
 
         Returns:
             Detailed image generation prompt
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
         """
         primary = concepts.get("primary_concept", {})
         style = concepts.get("recommended_style", "technical_infographic")
@@ -486,13 +539,19 @@ class ImageTypeDetector:
     """
 
     def __init__(self):
-        """Initialize detector with concept extractor."""
+        """
+        Initialize detector with concept extractor.
+        Invoked by: (no references found)
+        """
         self.settings = get_settings()
         self.concept_extractor = ConceptExtractor()
         logger.debug("Image type detector initialized with concept extractor")
 
     def is_available(self) -> bool:
-        """Check if detector is available."""
+        """
+        Check if detector is available.
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return True  # Always available, uses fallback if LLM unavailable
 
     def detect(self, section_title: str, content: str) -> ImageDecision:
@@ -510,6 +569,7 @@ class ImageTypeDetector:
 
         Returns:
             ImageDecision with type, content-specific prompt, and confidence
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
         """
         # Skip very short sections unless they clearly need a diagram
         if len(content) < 200 and not _has_visual_trigger(content):
@@ -578,7 +638,10 @@ class ImageTypeDetector:
             return self._fallback_detection(section_title, content)
 
     def _style_to_image_type(self, style: str) -> ImageType:
-        """Convert recommended style to ImageType enum."""
+        """
+        Convert recommended style to ImageType enum.
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+        """
         style_map = {
             "architecture_diagram": ImageType.INFOGRAPHIC,
             "comparison_chart": ImageType.INFOGRAPHIC,
@@ -590,7 +653,10 @@ class ImageTypeDetector:
         return style_map.get(style, ImageType.INFOGRAPHIC)
 
     def _fallback_detection(self, section_title: str, content: str) -> ImageDecision:
-        """Fallback detection using basic keyword analysis."""
+        """
+        Fallback detection using basic keyword analysis.
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
+        """
         prompt_generator = GeminiPromptGenerator()
         if prompt_generator.is_available():
             prompt = prompt_generator.generate_prompt(
@@ -629,6 +695,7 @@ def _extract_section_number(title: str) -> tuple[int | None, str]:
 
     Returns:
         Tuple of (section_number or None, clean_title)
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
     """
     # Match patterns like "1. Title", "1 Title", "1: Title", "1) Title"
     number_pattern = r'^(\d+)[\.\:\)\s]+\s*(.+)$'
@@ -650,6 +717,7 @@ def _extract_sections(markdown: str) -> list[dict]:
 
     Returns:
         List of section dicts with id, title, content, and position
+    Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
     """
     sections = []
 
@@ -712,6 +780,7 @@ def generate_images_node(state: WorkflowState) -> WorkflowState:
 
     Returns:
         Updated state with section_images in structured_content
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     try:
         structured_content = state.get("structured_content", {})

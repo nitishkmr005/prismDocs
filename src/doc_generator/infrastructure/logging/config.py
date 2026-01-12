@@ -50,11 +50,17 @@ class ProcessStats:
     warnings: int = 0
     
     def elapsed(self) -> float:
-        """Get elapsed time in seconds."""
+        """
+        Get elapsed time in seconds.
+        Invoked by: scripts/generate_from_folder.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/logging/config.py, src/doc_generator/infrastructure/logging_config.py
+        """
         return time.time() - self.start_time
     
     def format_elapsed(self) -> str:
-        """Format elapsed time as human-readable string."""
+        """
+        Format elapsed time as human-readable string.
+        Invoked by: src/doc_generator/infrastructure/logging/config.py, src/doc_generator/infrastructure/logging_config.py
+        """
         elapsed = self.elapsed()
         if elapsed < 60:
             return f"{elapsed:.1f}s"
@@ -68,7 +74,10 @@ _current_stats: Optional[ProcessStats] = None
 
 
 def get_current_stats() -> Optional[ProcessStats]:
-    """Get current process stats."""
+    """
+    Get current process stats.
+    Invoked by: (no references found)
+    """
     return _current_stats
 
 
@@ -79,6 +88,7 @@ def setup_logging(verbose: bool = False, log_file: str | None = None) -> None:
     Args:
         verbose: Enable debug logging if True
         log_file: Path to log file (optional)
+    Invoked by: scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/run_generator.py, src/doc_generator/infrastructure/api/main.py
     """
     # Remove default logger
     logger.remove()
@@ -129,7 +139,10 @@ def setup_logging(verbose: bool = False, log_file: str | None = None) -> None:
 
 
 def log_separator(title: str = "", char: str = "─", width: int = 60) -> None:
-    """Print a visual separator line to the log."""
+    """
+    Print a visual separator line to the log.
+    Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+    """
     if title:
         padding = (width - len(title) - 2) // 2
         line = f"{char * padding} {title} {char * padding}"
@@ -141,29 +154,44 @@ def log_separator(title: str = "", char: str = "─", width: int = 60) -> None:
 
 
 def log_phase(phase_num: int, total_phases: int, title: str) -> None:
-    """Log the start of a new phase with visual formatting."""
+    """
+    Log the start of a new phase with visual formatting.
+    Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+    """
     logger.opt(colors=True).info("")
     logger.opt(colors=True).info(f"<bold><blue>▶ Phase {phase_num}/{total_phases}: {title}</blue></bold>")
     logger.opt(colors=True).info(f"<dim>{'─' * 50}</dim>")
 
 
 def log_success(message: str) -> None:
-    """Log a success message with green checkmark."""
+    """
+    Log a success message with green checkmark.
+    Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+    """
     logger.opt(colors=True).success(f"<green>✓</green> {message}")
 
 
 def log_warning(message: str) -> None:
-    """Log a warning message with yellow icon."""
+    """
+    Log a warning message with yellow icon.
+    Invoked by: (no references found)
+    """
     logger.opt(colors=True).warning(f"<yellow>⚠</yellow> {message}")
 
 
 def log_error(message: str) -> None:
-    """Log an error message with red X."""
+    """
+    Log an error message with red X.
+    Invoked by: (no references found)
+    """
     logger.opt(colors=True).error(f"<red>✗</red> {message}")
 
 
 def log_stats(stats: dict, title: str = "Statistics") -> None:
-    """Log statistics in a formatted box."""
+    """
+    Log statistics in a formatted box.
+    Invoked by: src/doc_generator/infrastructure/api/services/generation.py, src/doc_generator/infrastructure/logging/config.py, src/doc_generator/infrastructure/logging_config.py
+    """
     logger.opt(colors=True).info("")
     logger.opt(colors=True).info(f"<bold><magenta>╔{'═' * 40}╗</magenta></bold>")
     logger.opt(colors=True).info(f"<bold><magenta>║  {title: <36}  ║</magenta></bold>")
@@ -181,7 +209,10 @@ def log_stats(stats: dict, title: str = "Statistics") -> None:
 
 @contextmanager
 def log_process(name: str):
-    """Context manager to track and log a process with timing."""
+    """
+    Context manager to track and log a process with timing.
+    Invoked by: (no references found)
+    """
     global _current_stats
     stats = ProcessStats()
     _current_stats = stats
@@ -213,7 +244,10 @@ def log_process(name: str):
 
 
 def log_table(headers: list[str], rows: list[list[str]], title: str = "") -> None:
-    """Log data in a formatted table."""
+    """
+    Log data in a formatted table.
+    Invoked by: (no references found)
+    """
     if not rows:
         return
     

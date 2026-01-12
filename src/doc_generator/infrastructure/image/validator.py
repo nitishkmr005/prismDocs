@@ -28,10 +28,16 @@ class BoundingBox:
 
     @property
     def x2(self) -> float:
+        """
+        Invoked by: src/doc_generator/infrastructure/image/svg.py, src/doc_generator/infrastructure/image/validator.py
+        """
         return self.x + self.width
 
     @property
     def y2(self) -> float:
+        """
+        Invoked by: src/doc_generator/infrastructure/image/svg.py, src/doc_generator/infrastructure/image/validator.py
+        """
         return self.y + self.height
 
     def overlaps(self, other: "BoundingBox", threshold: float = 0.5) -> bool:
@@ -44,6 +50,7 @@ class BoundingBox:
 
         Returns:
             True if overlap exceeds threshold
+        Invoked by: .claude/skills/pptx/scripts/inventory.py, src/doc_generator/infrastructure/image/validator.py
         """
         # Calculate intersection
         x_overlap = max(0, min(self.x2, other.x2) - max(self.x, other.x))
@@ -72,7 +79,10 @@ class ValidationResult:
 
     @property
     def has_critical_errors(self) -> bool:
-        """Check if there are critical errors that require regeneration."""
+        """
+        Check if there are critical errors that require regeneration.
+        Invoked by: (no references found)
+        """
         critical_keywords = ["malformed", "parse error", "invalid", "missing svg"]
         return any(
             any(kw in err.lower() for kw in critical_keywords)
@@ -112,6 +122,7 @@ class SVGValidator:
 
         Returns:
             ValidationResult with errors, warnings, and suggestions
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/validator.py
         """
         errors = []
         warnings = []
@@ -193,6 +204,7 @@ class SVGValidator:
 
         Returns:
             Tuple of (fixed_svg, validation_result)
+        Invoked by: (no references found)
         """
         # First validation
         result = self.validate(svg_content)
@@ -206,7 +218,10 @@ class SVGValidator:
         return svg_content, result
 
     def _clean_svg(self, svg_content: str) -> str:
-        """Clean up common SVG issues before parsing."""
+        """
+        Clean up common SVG issues before parsing.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         # Remove markdown code blocks if present
         if "```" in svg_content:
             match = re.search(r'<svg[\s\S]*?</svg>', svg_content, re.IGNORECASE)
@@ -229,7 +244,10 @@ class SVGValidator:
         return svg_content
 
     def _validate_structure(self, root: ET.Element) -> list[str]:
-        """Validate SVG structure."""
+        """
+        Validate SVG structure.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         errors = []
 
         # Check root element
@@ -244,7 +262,10 @@ class SVGValidator:
         return errors
 
     def _check_dimensions(self, root: ET.Element) -> list[str]:
-        """Check for proper viewBox and dimensions."""
+        """
+        Check for proper viewBox and dimensions.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         warnings = []
 
         # Check viewBox
@@ -276,7 +297,10 @@ class SVGValidator:
         return warnings
 
     def _check_text_overlaps(self, root: ET.Element) -> list[str]:
-        """Check for overlapping text elements."""
+        """
+        Check for overlapping text elements.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         warnings = []
         text_boxes = []
 
@@ -299,7 +323,10 @@ class SVGValidator:
         return warnings[:5]  # Limit to first 5 warnings
 
     def _check_element_overlaps(self, root: ET.Element) -> list[str]:
-        """Check for significantly overlapping shape elements."""
+        """
+        Check for significantly overlapping shape elements.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         warnings = []
         shape_boxes = []
 
@@ -325,7 +352,10 @@ class SVGValidator:
         return warnings
 
     def _check_font_sizes(self, root: ET.Element) -> list[str]:
-        """Check for too-small font sizes."""
+        """
+        Check for too-small font sizes.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         warnings = []
         small_fonts = 0
 
@@ -342,7 +372,10 @@ class SVGValidator:
         return warnings
 
     def _estimate_text_bbox(self, elem: ET.Element) -> Optional[BoundingBox]:
-        """Estimate bounding box for text element."""
+        """
+        Estimate bounding box for text element.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         try:
             x = float(elem.get("x", 0))
             y = float(elem.get("y", 0))
@@ -358,7 +391,10 @@ class SVGValidator:
             return None
 
     def _estimate_shape_bbox(self, elem: ET.Element, tag: str) -> Optional[BoundingBox]:
-        """Estimate bounding box for shape element."""
+        """
+        Estimate bounding box for shape element.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         try:
             if tag == "rect":
                 x = float(elem.get("x", 0))
@@ -386,7 +422,10 @@ class SVGValidator:
         return None
 
     def _get_font_size(self, elem: ET.Element) -> Optional[float]:
-        """Extract font size from element."""
+        """
+        Extract font size from element.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         # Check font-size attribute
         font_size = elem.get("font-size")
         if font_size:
@@ -403,7 +442,10 @@ class SVGValidator:
         return None
 
     def _attempt_fixes(self, svg_content: str) -> str:
-        """Attempt to fix common SVG issues."""
+        """
+        Attempt to fix common SVG issues.
+        Invoked by: src/doc_generator/infrastructure/image/validator.py
+        """
         # Add viewBox if missing
         if "viewBox" not in svg_content and "viewbox" not in svg_content:
             # Try to infer from width/height
@@ -429,6 +471,7 @@ def validate_svg(svg_content: str) -> ValidationResult:
 
     Returns:
         ValidationResult
+    Invoked by: src/doc_generator/infrastructure/image/validator.py
     """
     validator = SVGValidator()
     return validator.validate(svg_content)
@@ -443,6 +486,7 @@ def validate_svg_file(file_path: Path) -> ValidationResult:
 
     Returns:
         ValidationResult
+    Invoked by: (no references found)
     """
     try:
         svg_content = file_path.read_text(encoding="utf-8")

@@ -22,6 +22,9 @@ class UnifiedParser:
     """
 
     def __init__(self):
+        """
+        Invoked by: (no references found)
+        """
         if not is_docling_available():
             logger.warning(
                 "Docling not available - unified parser will have limited functionality"
@@ -39,6 +42,7 @@ class UnifiedParser:
 
         Raises:
             ParseError: If parsing fails
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, .claude/skills/pptx/ooxml/scripts/validation/docx.py, .claude/skills/pptx/ooxml/scripts/validation/pptx.py, .claude/skills/pptx/ooxml/scripts/validation/redlining.py, scripts/generate_from_folder.py, src/doc_generator/application/nodes/parse_content.py, src/doc_generator/application/workflow/nodes/parse_content.py, src/doc_generator/infrastructure/api/services/generation.py
         """
         path = Path(input_path)
 

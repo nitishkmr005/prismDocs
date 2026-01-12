@@ -27,6 +27,7 @@ def _detect_content_types(parsed_contents: list[dict]) -> str:
         
     Returns:
         Content type: "transcript", "slides", "mixed", or "document"
+    Invoked by: src/doc_generator/utils/content_merger.py
     """
     import re
     
@@ -84,6 +85,7 @@ def merge_folder_content(
             - temp_file: Path to temporary merged markdown file
             - metadata: Combined metadata including LLM-generated title
             - num_files: Number of files merged
+    Invoked by: scripts/generate_from_folder.py
     """
     logger.info(f"Merging {len(parsed_contents)} files using chunked LLM transformation")
 
@@ -208,6 +210,7 @@ def _basic_merge(
         
     Returns:
         Merged markdown content
+    Invoked by: src/doc_generator/utils/content_merger.py
     """
     sections = []
 
@@ -289,6 +292,7 @@ def _adjust_header_levels(content: str) -> str:
 
     Returns:
         Content with adjusted header levels
+    Invoked by: src/doc_generator/utils/content_merger.py
     """
     lines = content.split("\n")
     adjusted_lines = []

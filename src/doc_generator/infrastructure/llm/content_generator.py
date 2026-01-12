@@ -96,6 +96,7 @@ class LLMContentGenerator:
         
         Args:
             api_key: API key override. If not provided, uses env vars.
+        Invoked by: (no references found)
         """
         import os
         
@@ -161,7 +162,10 @@ class LLMContentGenerator:
         self.model = self.content_model
     
     def is_available(self) -> bool:
-        """Check if LLM content generation is available."""
+        """
+        Check if LLM content generation is available.
+        Invoked by: scripts/run_generator.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/image/claude_svg.py, src/doc_generator/infrastructure/image/gemini.py, src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py, src/doc_generator/infrastructure/pdf_utils.py, src/doc_generator/utils/content_merger.py
+        """
         return self.content_client is not None
     
     def generate_blog_content(
@@ -182,6 +186,7 @@ class LLMContentGenerator:
             
         Returns:
             GeneratedContent with markdown and visual markers
+        Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/utils/content_merger.py
         """
         if not self.is_available():
             logger.warning("LLM not available, returning cleaned raw content")
@@ -220,7 +225,10 @@ class LLMContentGenerator:
         max_tokens: int,
         outline: str = ""
     ) -> GeneratedContent:
-        """Process a single chunk of content."""
+        """
+        Process a single chunk of content.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         if outline:
             prompt = self._build_blog_from_outline_prompt(content, content_type, topic, outline)
         else:
@@ -241,7 +249,10 @@ class LLMContentGenerator:
         max_tokens: int,
         outline: str = ""
     ) -> GeneratedContent:
-        """Process long content in chunks and merge results."""
+        """
+        Process long content in chunks and merge results.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         # Split content into manageable chunks
         chunks = self._split_into_chunks(raw_content, max_chunk_size=10000)
@@ -326,6 +337,7 @@ class LLMContentGenerator:
             
         Returns:
             List of content chunks
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
         """
         # First, try to identify major section breaks
         # Look for patterns like "Topic Name\n0:00" or standalone section headers
@@ -392,6 +404,7 @@ class LLMContentGenerator:
             
         Returns:
             Generated title string
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
         """
         if not self.is_available():
             return topic_hint.replace("-", " ").replace("_", " ").title() if topic_hint else "Document"
@@ -496,7 +509,10 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
         topic: str,
         max_tokens: int = 1200,
     ) -> str:
-        """Generate a blog outline from raw content."""
+        """
+        Generate a blog outline from raw content.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         if not self.is_available():
             return ""
 
@@ -510,7 +526,10 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
             return ""
 
     def _call_llm(self, prompt: str, max_tokens: int, step: str = "content_generate") -> str:
-        """Make an LLM API call for content generation."""
+        """
+        Make an LLM API call for content generation.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py
+        """
         self._record_usage(step=step)
         if self.content_provider == "gemini":
             start_time = time.perf_counter()
@@ -587,6 +606,9 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
             return response_text
 
     def _record_usage(self, step: str) -> None:
+        """
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         LLMContentGenerator._total_calls += 1
         if self.content_model:
             LLMContentGenerator._models_used.add(self.content_model)
@@ -599,6 +621,9 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
         )
 
     def _record_call_details(self, start_time: float, response, step: str) -> None:
+        """
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         duration_ms = int((time.perf_counter() - start_time) * 1000)
         input_tokens = None
         output_tokens = None
@@ -625,6 +650,9 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
 
     @classmethod
     def usage_summary(cls) -> dict:
+        """
+        Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+        """
         return {
             "total_calls": cls._total_calls,
             "models": sorted(cls._models_used),
@@ -633,10 +661,16 @@ Return ONLY the title, nothing else. No quotes, no explanation."""
 
     @classmethod
     def usage_details(cls) -> list[dict]:
+        """
+        Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
+        """
         return list(cls._call_details)
     
     def _get_system_prompt(self) -> str:
-        """Get the system prompt for content generation."""
+        """
+        Get the system prompt for content generation.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         return """You are an expert technical writer who transforms raw educational content 
 (like lecture transcripts, slides, and documents) into polished, comprehensive blog posts.
 
@@ -666,7 +700,10 @@ Output format:
 - Preserve ALL technical content - do not skip topics"""
     
     def _build_generation_prompt(self, content: str, content_type: str, topic: str, is_chunk: bool = False) -> str:
-        """Build the prompt for single content generation."""
+        """
+        Build the prompt for single content generation.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         type_instructions = {
             "transcript": "This is a lecture transcript. Remove all timestamps and conversational elements while preserving ALL educational content.",
@@ -734,7 +771,10 @@ Output format:
 Generate the complete blog post. Start with # Title, then ## Introduction, then numbered sections:"""
 
     def _build_outline_prompt(self, content: str, content_type: str, topic: str) -> str:
-        """Build the prompt for outline generation."""
+        """
+        Build the prompt for outline generation.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         type_instructions = {
             "transcript": "This is a lecture transcript. Remove timestamps and preserve the educational structure.",
             "document": "This is a document. Extract the logical section structure.",
@@ -774,7 +814,10 @@ Return ONLY the outline in markdown. No commentary."""
         topic: str,
         outline: str,
     ) -> str:
-        """Build the prompt for blog generation using an outline."""
+        """
+        Build the prompt for blog generation using an outline.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         type_instructions = {
             "transcript": "This is a lecture transcript. Remove all timestamps and conversational elements while preserving ALL educational content.",
             "document": "This is a document. Restructure it into a clear blog format with numbered sections.",
@@ -845,7 +888,10 @@ Generate the complete blog post. Start with # Title, then ## Introduction, then 
         section_start: int,
         outline: str = ""
     ) -> str:
-        """Build prompt for processing a content chunk."""
+        """
+        Build prompt for processing a content chunk.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         position = "beginning" if chunk_index == 0 else "middle" if chunk_index < total_chunks - 1 else "end"
         
@@ -926,7 +972,10 @@ Content:
 Generate the blog post middle sections:"""
     
     def _extract_visual_markers(self, text: str, start_index: int = 0) -> list[VisualMarker]:
-        """Extract visual markers from generated text."""
+        """
+        Extract visual markers from generated text.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         markers = []
         marker_pattern = r'\[VISUAL:(\w+):([^:]+):([^\]]+)\]'
         
@@ -961,7 +1010,10 @@ Generate the blog post middle sections:"""
         return markers
     
     def _merge_sections(self, sections: list[str], title: str) -> str:
-        """Merge processed sections into a cohesive document."""
+        """
+        Merge processed sections into a cohesive document.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         # Start with the first section (which should have title and intro)
         merged = sections[0] if sections else ""
@@ -980,7 +1032,10 @@ Generate the blog post middle sections:"""
         return merged
     
     def _clean_content(self, content: str) -> str:
-        """Basic content cleaning without LLM."""
+        """
+        Basic content cleaning without LLM.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         # Remove timestamps
         cleaned = re.sub(r'^\d{1,2}:\d{2}(:\d{2})?\s*$', '', content, flags=re.MULTILINE)
         cleaned = re.sub(r'\n\d{1,2}:\d{2}(:\d{2})?\n', '\n', cleaned)
@@ -989,7 +1044,10 @@ Generate the blog post middle sections:"""
         return cleaned.strip()
     
     def _parse_generated_content(self, text: str, topic: str, outline: str = "") -> GeneratedContent:
-        """Parse generated text to extract markdown and visual markers."""
+        """
+        Parse generated text to extract markdown and visual markers.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         # Extract visual markers
         visual_markers = self._extract_visual_markers(text)
@@ -1012,7 +1070,10 @@ Generate the blog post middle sections:"""
         )
     
     def _fallback_generation(self, raw_content: str, topic: str) -> GeneratedContent:
-        """Fallback when LLM is not available - basic cleanup."""
+        """
+        Fallback when LLM is not available - basic cleanup.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         cleaned = self._clean_content(raw_content)
         
@@ -1030,7 +1091,10 @@ Generate the blog post middle sections:"""
         )
 
     def _extract_title_from_outline(self, outline: str, fallback: str) -> str:
-        """Extract title from outline heading if present."""
+        """
+        Extract title from outline heading if present.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         if not outline:
             return fallback
         match = re.search(r'^#\s+(.+)$', outline, re.MULTILINE)
@@ -1048,6 +1112,7 @@ Generate the blog post middle sections:"""
 
         Returns:
             Structured data dictionary for SVG generation
+        Invoked by: (no references found)
         """
         # Use visual client (Claude preferred) for diagram data generation
         if self.visual_client is None:
@@ -1118,7 +1183,10 @@ Generate the blog post middle sections:"""
             return {}
     
     def _build_visual_data_prompt(self, marker: VisualMarker, context: str) -> str:
-        """Build prompt for generating visual data."""
+        """
+        Build prompt for generating visual data.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
         
         data_formats = {
             "architecture": """{
@@ -1172,5 +1240,6 @@ def get_content_generator(api_key: Optional[str] = None) -> LLMContentGenerator:
         
     Returns:
         LLMContentGenerator instance
+    Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/utils/content_merger.py
     """
     return LLMContentGenerator(api_key=api_key)

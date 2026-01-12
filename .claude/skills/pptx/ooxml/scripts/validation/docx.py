@@ -22,7 +22,10 @@ class DOCXSchemaValidator(BaseSchemaValidator):
     ELEMENT_RELATIONSHIP_TYPES = {}
 
     def validate(self):
-        """Run all validation checks and return True if all pass."""
+        """
+        Run all validation checks and return True if all pass.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/ooxml/scripts/validation/base.py, src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/image/validator.py
+        """
         # Test 0: XML well-formedness
         if not self.validate_xml():
             return False
@@ -72,6 +75,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
     def validate_whitespace_preservation(self):
         """
         Validate that w:t elements with whitespace have xml:space='preserve'.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py
         """
         errors = []
 
@@ -125,6 +129,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
         """
         Validate that w:t elements are not within w:del elements.
         For some reason, XSD validation does not catch this, so we do it manually.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py
         """
         errors = []
 
@@ -171,7 +176,10 @@ class DOCXSchemaValidator(BaseSchemaValidator):
             return True
 
     def count_paragraphs_in_unpacked(self):
-        """Count the number of paragraphs in the unpacked document."""
+        """
+        Count the number of paragraphs in the unpacked document.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py
+        """
         count = 0
 
         for xml_file in self.xml_files:
@@ -190,7 +198,10 @@ class DOCXSchemaValidator(BaseSchemaValidator):
         return count
 
     def count_paragraphs_in_original(self):
-        """Count the number of paragraphs in the original docx file."""
+        """
+        Count the number of paragraphs in the original docx file.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py
+        """
         count = 0
 
         try:
@@ -217,6 +228,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
         """
         Validate that w:delText elements are not within w:ins elements.
         w:delText is only allowed in w:ins if nested within a w:del.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py
         """
         errors = []
 
@@ -261,7 +273,10 @@ class DOCXSchemaValidator(BaseSchemaValidator):
             return True
 
     def compare_paragraph_counts(self):
-        """Compare paragraph counts between original and new document."""
+        """
+        Compare paragraph counts between original and new document.
+        Invoked by: .claude/skills/pptx/ooxml/scripts/validation/docx.py
+        """
         original_count = self.count_paragraphs_in_original()
         new_count = self.count_paragraphs_in_unpacked()
 

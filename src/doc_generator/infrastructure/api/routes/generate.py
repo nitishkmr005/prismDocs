@@ -21,7 +21,10 @@ _cache_service: CacheService | None = None
 
 
 def get_generation_service() -> GenerationService:
-    """Get or create generation service."""
+    """
+    Get or create generation service.
+    Invoked by: src/doc_generator/infrastructure/api/routes/generate.py
+    """
     global _generation_service
     if _generation_service is None:
         _generation_service = GenerationService()
@@ -29,7 +32,10 @@ def get_generation_service() -> GenerationService:
 
 
 def get_cache_service() -> CacheService:
-    """Get or create cache service."""
+    """
+    Get or create cache service.
+    Invoked by: src/doc_generator/infrastructure/api/routes/generate.py
+    """
     global _cache_service
     if _cache_service is None:
         _cache_service = CacheService()
@@ -52,6 +58,7 @@ async def event_generator(
 
     Yields:
         SSE event dicts
+    Invoked by: src/doc_generator/infrastructure/api/routes/generate.py
     """
     from loguru import logger
     
@@ -82,6 +89,7 @@ async def event_generator(
 
             if cached_file_path:
                 cached_output_path = generation_service.storage.base_output_dir / cached_file_path
+                # StorageService.get_download_url: normalize cached output into a download link.
                 download_url = generation_service.storage.get_download_url(cached_output_path)
             else:
                 download_url = cached_download_url
@@ -145,6 +153,7 @@ async def generate_document(
 
     Returns:
         SSE event stream
+    Invoked by: (no references found)
     """
     from loguru import logger
     

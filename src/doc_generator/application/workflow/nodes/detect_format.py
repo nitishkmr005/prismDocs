@@ -21,6 +21,7 @@ def detect_format_node(state: WorkflowState) -> WorkflowState:
 
     Returns:
         Updated state with input_format set
+    Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
     input_path = state["input_path"]
 

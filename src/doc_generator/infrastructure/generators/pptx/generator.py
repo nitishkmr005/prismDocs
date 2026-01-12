@@ -35,7 +35,10 @@ class PPTXGenerator:
     """
 
     def __init__(self):
-        """Initialize PPTX generator."""
+        """
+        Initialize PPTX generator.
+        Invoked by: (no references found)
+        """
         self._image_cache: Path | None = None
         self._max_bullets_per_slide = 4
 
@@ -48,6 +51,7 @@ class PPTXGenerator:
 
         Returns:
             Path to generated image or None if failed
+        Invoked by: (no references found)
         """
         if not self._image_cache:
             return None
@@ -90,6 +94,7 @@ class PPTXGenerator:
 
         Raises:
             GenerationError: If PPTX generation fails
+        Invoked by: scripts/generate_from_folder.py, src/doc_generator/application/nodes/generate_output.py, src/doc_generator/application/workflow/nodes/generate_output.py, src/doc_generator/infrastructure/api/routes/generate.py, tests/api/test_generation_service.py
         """
         try:
             # Ensure output directory exists
@@ -160,6 +165,7 @@ class PPTXGenerator:
             markdown_content: Markdown content to convert
             metadata: Document metadata
             structured_content: Optional structured content with LLM enhancements
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         # Create presentation
         prs = create_presentation()
@@ -219,6 +225,7 @@ class PPTXGenerator:
         Args:
             prs: Presentation object
             slides: List of slide dictionaries with title, bullets, speaker_notes
+        Invoked by: (no references found)
         """
         for slide_data in slides:
             title = slide_data.get("title", "")
@@ -243,6 +250,7 @@ class PPTXGenerator:
         Args:
             prs: Presentation object
             visualizations: List of visualization dictionaries with type, title, path
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         for visual in visualizations:
             title = visual.get("title", "Visualization")
@@ -270,6 +278,7 @@ class PPTXGenerator:
         Args:
             prs: Presentation object
             section_images: Dict mapping section_id -> image info
+        Invoked by: (no references found)
         """
         if not section_images:
             return
@@ -312,6 +321,7 @@ class PPTXGenerator:
         Args:
             prs: Presentation object
             markdown_content: Markdown content to parse
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         section_images = section_images or {}
         current_slide_title = None
@@ -430,10 +440,14 @@ class PPTXGenerator:
 
         Returns:
             Path to local image or None
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         return resolve_image_path(url)
 
     def _generate_section_slides(
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         self,
         markdown_content: str,
         section_images: dict
@@ -450,6 +464,9 @@ class PPTXGenerator:
         return slides, sections
 
     def _extract_sections(self, markdown_content: str, section_images: dict) -> list[dict]:
+        """
+        Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         sections = []
         current_title = None
         current_lines = []
@@ -490,6 +507,9 @@ class PPTXGenerator:
         return sections
 
     def _add_llm_section_slides(
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         self,
         prs,
         slides: list[dict],
@@ -524,10 +544,16 @@ class PPTXGenerator:
                 self._add_bullet_slide_series(prs, section_title, bullets, speaker_notes=speaker_notes)
 
     def _normalize_title(self, title: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         return re.sub(r"\s+", " ", title or "").strip().lower()
 
     def _resolve_section_id(self, title: str, next_id: int) -> tuple[int, int]:
-        """Resolve section ID from numbered headings, falling back to sequential IDs."""
+        """
+        Resolve section ID from numbered headings, falling back to sequential IDs.
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         match = re.match(r"^(\\d+)[\\.:\\)\\s]+\\s*(.+)$", title)
         if match:
             section_id = int(match.group(1))
@@ -536,6 +562,9 @@ class PPTXGenerator:
         return next_id, next_id + 1
 
     def _extract_agenda(self, markdown_content: str) -> list[str]:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         headings = []
         for match in re.finditer(r"^##\s+(.+)$", markdown_content, re.MULTILINE):
             heading = match.group(1).strip()
@@ -544,6 +573,9 @@ class PPTXGenerator:
         return headings[:6]
 
     def _resolve_display_title(self, metadata_title: str, markdown_content: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         raw_title = (metadata_title or "").strip()
         markdown_title = self._extract_markdown_title(markdown_content)
         cleaned_meta = self._clean_title(raw_title)
@@ -554,10 +586,16 @@ class PPTXGenerator:
         return cleaned_meta or markdown_title or "Presentation"
 
     def _extract_markdown_title(self, markdown_content: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         match = re.search(r"^#\s+(.+)$", markdown_content, re.MULTILINE)
         return match.group(1).strip() if match else ""
 
     def _looks_like_placeholder(self, title: str) -> bool:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         if "/" in title or "\\" in title:
             return True
         if re.search(r"\.(pdf|docx|pptx|md|txt)$", title, re.IGNORECASE):
@@ -567,6 +605,9 @@ class PPTXGenerator:
         return False
 
     def _clean_title(self, title: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         if not title:
             return ""
         cleaned = title.strip()
@@ -579,6 +620,9 @@ class PPTXGenerator:
         return re.sub(r"\s+", " ", cleaned)
 
     def _add_bullet_slide_series(
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         self,
         prs,
         title: str,
@@ -597,11 +641,17 @@ class PPTXGenerator:
             )
 
     def _chunk_items(self, items: list[str], chunk_size: int) -> list[list[str]]:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         if not items:
             return []
         return [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
 
     def _expand_bullets(self, items: list[str]) -> list[str]:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         expanded = []
         for item in items:
             clean = self._normalize_bullet(item)
@@ -611,9 +661,15 @@ class PPTXGenerator:
         return expanded
 
     def _normalize_bullet(self, text: str) -> str:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         return text.lstrip("•-* ").strip()
 
     def _split_sentences(self, text: str) -> list[str]:
+        """
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
         if len(text) < 120:
             return [text]
         parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]

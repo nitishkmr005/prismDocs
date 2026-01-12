@@ -30,6 +30,7 @@ class StorageService:
         Args:
             base_output_dir: Base directory for all outputs
             base_url: Base URL for download links
+        Invoked by: (no references found)
         """
         self.base_output_dir = Path(base_output_dir)
         self.cache_dir = self.base_output_dir / "cache"
@@ -43,7 +44,11 @@ class StorageService:
         self._uploads: dict[str, dict] = {}
 
     def _get_file_dir(self, file_id: str) -> Path:
-        """Get the directory for a specific file_id."""
+        """Get the directory for a specific file_id.
+
+        Used by: save_upload, get_upload_path.
+        Invoked by: src/doc_generator/infrastructure/api/services/storage.py, src/doc_generator/infrastructure/storage/file_storage.py
+        """
         return self.base_output_dir / file_id
 
     def _ensure_file_dirs(self, file_id: str) -> dict[str, Path]:
@@ -51,6 +56,9 @@ class StorageService:
         
         Returns:
             Dict with paths for source, images, pdf, pptx
+
+        Used by: save_upload.
+        Invoked by: src/doc_generator/infrastructure/api/services/storage.py, src/doc_generator/infrastructure/storage/file_storage.py
         """
         file_dir = self._get_file_dir(file_id)
         dirs = {
@@ -82,6 +90,9 @@ class StorageService:
 
         Returns:
             Unique file ID (f_...)
+
+        Used by: src/doc_generator/infrastructure/api/routes/upload.py
+        Invoked by: src/doc_generator/infrastructure/api/routes/upload.py, tests/api/test_storage_service.py
         """
         file_id = f"f_{secrets.token_hex(12)}"
         dirs = self._ensure_file_dirs(file_id)
@@ -114,6 +125,9 @@ class StorageService:
 
         Raises:
             FileNotFoundError: If file_id not found
+
+        Used by: src/doc_generator/infrastructure/api/services/generation.py
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py, src/doc_generator/infrastructure/storage/file_storage.py, tests/api/test_storage_service.py
         """
         if file_id in self._uploads:
             return self._uploads[file_id]["path"]
@@ -128,78 +142,6 @@ class StorageService:
         
         raise FileNotFoundError(f"Upload not found: {file_id}")
 
-    def get_file_dirs(self, file_id: str) -> dict[str, Path]:
-        """Get directory paths for a file_id.
-        
-        Args:
-            file_id: File ID
-            
-        Returns:
-            Dict with paths for root, source, images, pdf, pptx
-        """
-        if file_id in self._uploads:
-            return self._uploads[file_id]["dirs"]
-        
-        # Recreate dirs structure if needed
-        return self._ensure_file_dirs(file_id)
-
-    def get_output_dir(self, file_id: str, output_format: str) -> Path:
-        """Get the output directory for a specific format.
-        
-        Args:
-            file_id: File ID
-            output_format: 'pdf' or 'pptx'
-            
-        Returns:
-            Path to output directory
-        """
-        dirs = self.get_file_dirs(file_id)
-        return dirs.get(output_format, dirs["root"])
-
-    def get_images_dir(self, file_id: str) -> Path:
-        """Get the images directory for a file_id."""
-        dirs = self.get_file_dirs(file_id)
-        return dirs["images"]
-
-    def get_upload_content(self, file_id: str) -> bytes:
-        """Get content of uploaded file.
-
-        Args:
-            file_id: File ID from save_upload
-
-        Returns:
-            File content bytes
-
-        Raises:
-            FileNotFoundError: If file_id not found
-        """
-        path = self.get_upload_path(file_id)
-        return path.read_bytes()
-
-    def get_upload_metadata(self, file_id: str) -> dict:
-        """Get metadata for uploaded file.
-
-        Args:
-            file_id: File ID from save_upload
-
-        Returns:
-            Metadata dict with filename, mime_type, path, created_at
-
-        Raises:
-            FileNotFoundError: If file_id not found
-        """
-        if file_id not in self._uploads:
-            # Try to reconstruct from disk
-            try:
-                path = self.get_upload_path(file_id)
-                return {
-                    "filename": path.name,
-                    "path": path,
-                    "file_id": file_id,
-                }
-            except FileNotFoundError:
-                raise FileNotFoundError(f"Upload not found: {file_id}")
-        return self._uploads[file_id].copy()
 
     def get_download_url(self, output_path: Path) -> str:
         """Generate download URL for output file.
@@ -209,6 +151,10 @@ class StorageService:
 
         Returns:
             Download URL with token
+
+        Used by: src/doc_generator/infrastructure/api/services/generation.py,
+                 src/doc_generator/infrastructure/api/routes/generate.py
+        Invoked by: src/doc_generator/infrastructure/api/routes/generate.py, src/doc_generator/infrastructure/api/services/generation.py, tests/api/test_storage_service.py
         """
         # Generate a simple token (in production, use signed URLs)
         token = secrets.token_urlsafe(16)
@@ -225,51 +171,12 @@ class StorageService:
         filename = output_path.name
         return f"{self.base_url}/{filename}?token={token}"
 
-    def cleanup_upload(self, file_id: str) -> None:
-        """Remove uploaded file and its directory.
-
-        Args:
-            file_id: File ID to remove
-        """
-        import shutil
-        
-        if file_id in self._uploads:
-            del self._uploads[file_id]
-        
-        file_dir = self._get_file_dir(file_id)
-        if file_dir.exists():
-            shutil.rmtree(file_dir)
-            logger.info(f"Cleaned up: {file_dir}")
-
-    def cleanup_expired_uploads(self, max_age_seconds: int = 3600) -> int:
-        """Remove uploads older than max_age.
-
-        Args:
-            max_age_seconds: Maximum age in seconds (default 1 hour)
-
-        Returns:
-            Number of files cleaned up
-        """
-        now = time.time()
-        expired = []
-
-        for file_id, metadata in self._uploads.items():
-            if now - metadata["created_at"] > max_age_seconds:
-                expired.append(file_id)
-
-        for file_id in expired:
-            self.cleanup_upload(file_id)
-
-        return len(expired)
-
     # Legacy compatibility properties
     @property
     def upload_dir(self) -> Path:
-        """Legacy: returns base output dir for backwards compatibility."""
-        return self.base_output_dir
+        """Legacy: returns base output dir for backwards compatibility.
 
-    @property
-    def output_dir(self) -> Path:
-        """Legacy: returns base output dir for backwards compatibility."""
+        Used by: src/doc_generator/infrastructure/api/services/generation.py
+        Invoked by: src/doc_generator/infrastructure/api/services/generation.py
+        """
         return self.base_output_dir
-

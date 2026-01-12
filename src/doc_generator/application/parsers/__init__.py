@@ -23,6 +23,7 @@ def get_parser(content_format: str):
 
     Raises:
         UnsupportedFormatError: If format is not supported
+    Invoked by: scripts/generate_from_folder.py, src/doc_generator/application/nodes/parse_content.py, src/doc_generator/application/workflow/nodes/parse_content.py, src/doc_generator/infrastructure/api/services/generation.py
     """
     format_lower = content_format.lower()
 

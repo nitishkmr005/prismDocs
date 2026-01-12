@@ -10,6 +10,9 @@ from pypdf import PdfReader
 
 # This matches the format used by PdfReader `get_fields` and `update_page_form_field_values` methods.
 def get_full_annotation_field_id(annotation):
+    """
+    Invoked by: .claude/skills/pdf/scripts/extract_form_field_info.py
+    """
     components = []
     while annotation:
         field_name = annotation.get('/T')
@@ -20,6 +23,9 @@ def get_full_annotation_field_id(annotation):
 
 
 def make_field_dict(field, field_id):
+    """
+    Invoked by: .claude/skills/pdf/scripts/extract_form_field_info.py
+    """
     field_dict = {"field_id": field_id}
     ft = field.get('/FT')
     if ft == "/Tx":
@@ -60,6 +66,9 @@ def make_field_dict(field, field_id):
 #   },
 # ]
 def get_field_info(reader: PdfReader):
+    """
+    Invoked by: .claude/skills/pdf/scripts/extract_form_field_info.py, .claude/skills/pdf/scripts/fill_fillable_fields.py
+    """
     fields = reader.get_fields()
 
     field_info_by_id = {}
@@ -124,6 +133,9 @@ def get_field_info(reader: PdfReader):
 
     # Sort by page number, then Y position (flipped in PDF coordinate system), then X.
     def sort_key(f):
+        """
+        Invoked by: .claude/skills/pdf/scripts/extract_form_field_info.py
+        """
         if "radio_options" in f:
             rect = f["radio_options"][0]["rect"] or [0, 0, 0, 0]
         else:
@@ -138,6 +150,9 @@ def get_field_info(reader: PdfReader):
 
 
 def write_field_info(pdf_path: str, json_output_path: str):
+    """
+    Invoked by: .claude/skills/pdf/scripts/extract_form_field_info.py
+    """
     reader = PdfReader(pdf_path)
     field_info = get_field_info(reader)
     with open(json_output_path, "w") as f:

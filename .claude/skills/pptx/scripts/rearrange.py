@@ -20,6 +20,9 @@ from pptx import Presentation
 
 
 def main():
+    """
+    Invoked by: .claude/skills/pdf/scripts/check_bounding_boxes_test.py, .claude/skills/pptx/ooxml/scripts/pack.py, .claude/skills/pptx/ooxml/scripts/validate.py, .claude/skills/pptx/scripts/inventory.py, .claude/skills/pptx/scripts/rearrange.py, .claude/skills/pptx/scripts/replace.py, .claude/skills/pptx/scripts/thumbnail.py, .claude/skills/skill-creator/scripts/init_skill.py, .claude/skills/skill-creator/scripts/package_skill.py, scripts/batch_process_topics.py, scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/run_generator.py
+    """
     parser = argparse.ArgumentParser(
         description="Rearrange PowerPoint slides based on a sequence of indices.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -73,7 +76,10 @@ Note: Slide indices are 0-based (first slide is 0, second is 1, etc.)
 
 
 def duplicate_slide(pres, index):
-    """Duplicate a slide in the presentation."""
+    """
+    Duplicate a slide in the presentation.
+    Invoked by: .claude/skills/pptx/scripts/rearrange.py
+    """
     source = pres.slides[index]
 
     # Use source's layout to preserve formatting
@@ -128,14 +134,20 @@ def duplicate_slide(pres, index):
 
 
 def delete_slide(pres, index):
-    """Delete a slide from the presentation."""
+    """
+    Delete a slide from the presentation.
+    Invoked by: .claude/skills/pptx/scripts/rearrange.py
+    """
     rId = pres.slides._sldIdLst[index].rId
     pres.part.drop_rel(rId)
     del pres.slides._sldIdLst[index]
 
 
 def reorder_slides(pres, slide_index, target_index):
-    """Move a slide from one position to another."""
+    """
+    Move a slide from one position to another.
+    Invoked by: .claude/skills/pptx/scripts/rearrange.py
+    """
     slides = pres.slides._sldIdLst
 
     # Remove slide element from current position
@@ -154,6 +166,7 @@ def rearrange_presentation(template_path, output_path, slide_sequence):
         template_path: Path to template PPTX file
         output_path: Path for output PPTX file
         slide_sequence: List of slide indices (0-based) to include
+    Invoked by: .claude/skills/pptx/scripts/rearrange.py
     """
     # Copy template to preserve dimensions and theme
     if template_path != output_path:
