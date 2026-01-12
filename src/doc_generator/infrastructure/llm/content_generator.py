@@ -223,7 +223,7 @@ class LLMContentGenerator:
         outline = self.generate_blog_outline(raw_content, content_type, topic)
         
         # For short content, process directly
-        if content_length <= 12000:
+        if content_length <= self.settings.llm.content_single_chunk_char_limit:
             return self._process_single_chunk(
                 raw_content,
                 content_type,
@@ -280,7 +280,10 @@ class LLMContentGenerator:
         """
         
         # Split content into manageable chunks
-        chunks = self._split_into_chunks(raw_content, max_chunk_size=10000)
+        chunks = self._split_into_chunks(
+            raw_content,
+            max_chunk_size=self.settings.llm.content_chunk_char_limit,
+        )
         logger.info(f"Split content into {len(chunks)} chunks")
         
         # First, generate a title based on content overview

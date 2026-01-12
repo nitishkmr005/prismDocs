@@ -125,6 +125,8 @@ class LlmSettings(BaseSettings):
     content_provider: str = "gemini"  # "gemini" or "openai"
     content_max_tokens: int = 8000
     content_temperature: float = 0.4
+    content_single_chunk_char_limit: int = 30000
+    content_chunk_char_limit: int = 10000
     
     # Legacy model setting (fallback)
     model: str = "gemini-2.5-flash"
