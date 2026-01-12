@@ -7,6 +7,8 @@ Uses Gemini for image generation based on merged markdown content.
 Section IDs are synced with title numbering in the markdown file.
 """
 
+from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
