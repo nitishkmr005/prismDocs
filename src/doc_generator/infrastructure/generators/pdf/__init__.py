@@ -14,7 +14,6 @@ from .utils import (
     make_table,
     make_table_of_contents,
     parse_markdown_lines,
-    rasterize_svg,
     reset_figure_counter,
 )
 
@@ -32,6 +31,5 @@ __all__ = [
     "make_table",
     "make_table_of_contents",
     "parse_markdown_lines",
-    "rasterize_svg",
     "reset_figure_counter",
 ]

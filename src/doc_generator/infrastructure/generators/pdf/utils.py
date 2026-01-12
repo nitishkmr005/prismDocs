@@ -15,7 +15,6 @@ import tempfile
 from pathlib import Path
 from typing import Iterator
 
-from cairosvg import svg2png
 from loguru import logger
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -355,47 +354,6 @@ def make_banner(text: str, styles: dict) -> Table:
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))
     return banner
-
-
-def rasterize_svg(svg_path: Path, image_cache: Path) -> Path | None:
-    """
-    Convert SVG to PNG for embedding in PDF.
-
-    Args:
-        svg_path: Path to SVG file
-        image_cache: Directory for cached images
-
-    Returns:
-        Path to generated PNG file, or None if conversion failed
-    Invoked by: (no references found)
-    """
-    try:
-        image_cache.mkdir(parents=True, exist_ok=True)
-        output_path = image_cache / (svg_path.stem + ".png")
-
-        if not output_path.exists():
-            # Validate SVG before conversion to avoid XML parsing errors
-            if not svg_path.exists():
-                logger.warning(f"SVG file not found: {svg_path}")
-                return None
-                
-            # Read and validate SVG content
-            try:
-                svg_content = svg_path.read_text(encoding="utf-8")
-                if not svg_content.strip() or "<svg" not in svg_content.lower():
-                    logger.warning(f"Invalid SVG content in: {svg_path.name}")
-                    return None
-            except Exception as e:
-                logger.warning(f"Could not read SVG file {svg_path.name}: {e}")
-                return None
-            
-            svg2png(url=str(svg_path), write_to=str(output_path), output_width=1600)
-            logger.info(f"Rasterized SVG: {svg_path.name} → {output_path.name}")
-
-        return output_path
-    except Exception as e:
-        logger.error(f"Failed to rasterize SVG {svg_path.name}: {e}")
-        return None
 
 
 # Global figure counter for image numbering

@@ -12,8 +12,6 @@ from loguru import logger
 
 def resolve_image_path(
     url: str,
-    image_cache: Optional[Path] = None,
-    rasterize_func: Optional[callable] = None
 ) -> Optional[Path]:
     """
     Resolve image URL or path to a local file path.
@@ -22,12 +20,9 @@ def resolve_image_path(
     - Absolute paths
     - Relative paths
     - Hugo static directory paths
-    - SVG files (optionally rasterized to PNG)
 
     Args:
         url: Image URL or path string
-        image_cache: Optional directory for cached/converted images
-        rasterize_func: Optional function to convert SVG to PNG
 
     Returns:
         Path to resolved local image or None if not found
@@ -51,9 +46,6 @@ def resolve_image_path(
 
     for candidate in candidates:
         if candidate.exists() and candidate.is_file():
-            # Handle SVG files - rasterize if function provided
-            if candidate.suffix.lower() == ".svg" and rasterize_func and image_cache:
-                return rasterize_func(candidate, image_cache)
             return candidate
 
     logger.warning(f"Image not found: {url}")

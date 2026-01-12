@@ -11,6 +11,13 @@ from loguru import logger
 from ...domain.exceptions import ParseError
 from ...domain.models import WorkflowState
 from ..parsers import get_parser
+from ...infrastructure.logging_utils import (
+    log_node_start,
+    log_node_end,
+    log_progress,
+    log_metric,
+    log_file_operation,
+)
 
 
 def parse_content_node(state: WorkflowState) -> WorkflowState:
@@ -24,29 +31,46 @@ def parse_content_node(state: WorkflowState) -> WorkflowState:
         Updated state with raw_content and metadata
     Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
+    log_node_start("parse_content", step_number=2)
+    
     try:
         # Get appropriate parser
-        parser = get_parser(state["input_format"])
+        input_format = state["input_format"]
+        log_progress(f"Using parser for format: {input_format}")
+        parser = get_parser(input_format)
 
         # Parse content
+        log_progress(f"Parsing: {state['input_path']}")
         content, metadata = parser.parse(state["input_path"])
 
         state["raw_content"] = content
         state["metadata"].update(metadata)
-        state["metadata"]["content_hash"] = hashlib.sha256(
-            content.encode("utf-8")
-        ).hexdigest()
+        
+        # Compute content hash for caching
+        content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        state["metadata"]["content_hash"] = content_hash
 
-        logger.info(f"Parsed content: {len(content)} characters, title='{metadata.get('title', 'N/A')}'")
+        # Log metrics
+        log_metric("Content Length", len(content), "chars")
+        log_metric("Title", metadata.get('title', 'N/A'))
+        log_metric("Content Hash", content_hash[:16] + "...")
+        
+        if "page_count" in metadata:
+            log_metric("Pages", metadata["page_count"])
+        
+        log_node_end("parse_content", success=True, 
+                    details=f"Parsed {len(content)} characters")
 
     except ParseError as e:
         error_msg = f"Parsing failed: {str(e)}"
         state["errors"].append(error_msg)
         logger.error(error_msg)
+        log_node_end("parse_content", success=False, details=error_msg)
 
     except Exception as e:
         error_msg = f"Unexpected parsing error: {str(e)}"
         state["errors"].append(error_msg)
         logger.error(error_msg)
+        log_node_end("parse_content", success=False, details=error_msg)
 
     return state

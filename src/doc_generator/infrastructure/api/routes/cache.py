@@ -7,6 +7,8 @@ from fastapi import APIRouter
 from loguru import logger
 from pydantic import BaseModel
 
+from ...settings import get_settings
+
 router = APIRouter(tags=["cache"])
 
 # Base output directory
@@ -50,16 +52,6 @@ def get_total_size(directory: Path) -> int:
     if not directory.exists():
         return 0
     return sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
-
-
-def count_files(directory: Path) -> int:
-    """
-    Count all files in directory recursively.
-    Invoked by: (no references found)
-    """
-    if not directory.exists():
-        return 0
-    return sum(1 for f in directory.rglob("*") if f.is_file())
 
 
 @router.get("/cache/stats", response_model=CacheStatsResponse)
@@ -140,15 +132,35 @@ async def clear_all() -> ClearResponse:
                 cache_cleared += 1
             except OSError:
                 pass
+
+    # Clear temp output directory
+    temp_cleared = 0
+    temp_dir = get_settings().generator.temp_dir
+    if temp_dir.exists():
+        for item in temp_dir.iterdir():
+            try:
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+                temp_cleared += 1
+            except OSError as e:
+                logger.warning(f"Failed to remove temp item {item}: {e}")
     
-    total = projects_cleared + cache_cleared
+    total = projects_cleared + cache_cleared + temp_cleared
     
-    logger.info(f"Cleared all: {projects_cleared} projects, {cache_cleared} cache entries")
+    logger.info(
+        f"Cleared all: {projects_cleared} projects, "
+        f"{cache_cleared} cache entries, {temp_cleared} temp items"
+    )
     
     return ClearResponse(
         cleared_projects=projects_cleared,
         cleared_cache=cache_cleared,
         total_cleared=total,
-        message=f"Cleared {total} items ({projects_cleared} projects, {cache_cleared} cache entries)",
+        message=(
+            f"Cleared {total} items "
+            f"({projects_cleared} projects, {cache_cleared} cache entries, "
+            f"{temp_cleared} temp items)"
+        ),
     )
-

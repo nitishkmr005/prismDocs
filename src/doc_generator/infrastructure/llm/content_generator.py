@@ -87,10 +87,9 @@ class LLMContentGenerator:
     
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize the content generator with separate clients for content and visuals.
+        Initialize the content generator with a content generation client.
         
-        - Content generation: Uses OpenAI GPT-4o (better structured output)
-        - Visual data generation: Uses Claude (better reasoning for diagrams)
+        - Content generation: Uses configured provider (Gemini/OpenAI/Claude)
         
         Args:
             api_key: API key override. If not provided, uses env vars.
@@ -108,19 +107,11 @@ class LLMContentGenerator:
         self.content_provider = None
         self.content_model = None
         
-        # Visual data client (prefer Claude)
-        self.visual_client = None
-        self.visual_provider = None
-        self.visual_model = None
-        
         # Setup content generation client (provider-driven)
         self.content_provider = self.settings.llm.content_provider or "openai"
         self.content_model = self.settings.llm.content_model or self.settings.llm.model
 
         self._init_content_client()
-        
-        # Setup visual data client (OpenAI default, Claude optional)
-        self._init_visual_client()
         
         # Legacy compatibility
         self.client = self.content_client
@@ -161,31 +152,6 @@ class LLMContentGenerator:
 
         logger.warning("Unsupported content provider requested - content generation disabled")
 
-    def _init_visual_client(self) -> None:
-        """
-        Initialize the visual data client based on settings.
-        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
-        """
-        svg_provider = self.settings.llm.svg_provider or "claude"
-        if self.settings.llm.use_claude_for_visuals and svg_provider == "claude":
-            if self.claude_api_key and ANTHROPIC_AVAILABLE:
-                self.visual_client = Anthropic(api_key=self.claude_api_key)
-                self.visual_provider = "claude"
-                self.visual_model = self.settings.llm.svg_model
-                logger.debug(f"Visual data client using Claude: {self.visual_model}")
-            else:
-                logger.warning("Claude requested for visuals but not available")
-            return
-
-        if self.openai_api_key and OPENAI_AVAILABLE:
-            self.visual_client = OpenAI(api_key=self.openai_api_key)
-            self.visual_provider = "openai"
-            self.visual_model = self.settings.llm.content_model
-            logger.debug(f"Visual data client using OpenAI: {self.visual_model}")
-            return
-
-        logger.warning("No visual data client available for diagram generation")
-    
     def is_available(self) -> bool:
         """
         Check if LLM content generation is available.
@@ -313,20 +279,18 @@ class LLMContentGenerator:
             
             try:
                 generated_text = self._call_llm(prompt, max_tokens, step="content_generate")
-                
-                # Parse visual markers from this chunk
-                chunk_markers = self._extract_visual_markers(generated_text, len(all_markers))
+                chunk_markdown, chunk_sections, chunk_markers = self._parse_chunk_response(
+                    generated_text,
+                    topic=topic,
+                    outline=outline,
+                    include_title=i == 0,
+                    marker_start=len(all_markers),
+                )
                 all_markers.extend(chunk_markers)
-                
-                # Extract sections for counting
-                chunk_sections = re.findall(r'^##\s+\d+\.\s+(.+)$', generated_text, re.MULTILINE)
                 section_counter += len(chunk_sections)
-                
-                # Clean the generated text (remove title if present in non-first chunk)
                 if i > 0:
-                    generated_text = re.sub(r'^#\s+.+\n+', '', generated_text)
-                
-                all_sections.append(generated_text.strip())
+                    chunk_markdown = re.sub(r'^#\s+.+\n+', '', chunk_markdown)
+                all_sections.append(chunk_markdown.strip())
                 
             except Exception as e:
                 logger.error(f"Failed to process chunk {i + 1}: {e}")
@@ -757,6 +721,137 @@ class LLMContentGenerator:
             section_start=section_start,
             outline=outline,
         )
+
+    def _safe_json_load(self, text: str) -> Optional[object]:
+        """
+        Best-effort JSON extraction from an LLM response.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
+        if not text:
+            return None
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        start_idx = None
+        for i, ch in enumerate(text):
+            if ch in "{[":
+                start_idx = i
+                break
+        if start_idx is None:
+            return None
+
+        stack = []
+        for i in range(start_idx, len(text)):
+            ch = text[i]
+            if ch in "{[":
+                stack.append(ch)
+            elif ch in "}]":
+                if not stack:
+                    continue
+                stack.pop()
+                if not stack:
+                    candidate = text[start_idx:i + 1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        return None
+        return None
+
+    def _normalize_heading(self, heading: str, level: int) -> str:
+        """
+        Normalize a heading into markdown at the given level.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
+        if not heading:
+            heading = "Section"
+        heading = heading.strip()
+        heading = re.sub(r"^#+\s*", "", heading)
+        return f"{'#' * level} {heading}"
+
+    def _json_to_markdown(self, data: dict, topic: str, include_title: bool = True) -> tuple[str, str, list[str]]:
+        """
+        Convert a JSON response into markdown.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
+        title = (data or {}).get("title") or topic or "Document"
+        intro = (data or {}).get("introduction") or ""
+        key_takeaways = (data or {}).get("key_takeaways") or ""
+        sections = (data or {}).get("sections") or []
+        body_parts = []
+
+        if include_title:
+            body_parts.append(f"# {title}".strip())
+        if intro:
+            body_parts.append(self._normalize_heading("Introduction", 2))
+            body_parts.append(intro.strip())
+
+        section_titles = []
+        for section in sections:
+            if isinstance(section, str):
+                heading = section
+                content = ""
+                subsections = []
+            else:
+                heading = section.get("heading") or section.get("title") or ""
+                content = section.get("content") or ""
+                subsections = section.get("subsections") or []
+
+            if heading:
+                section_titles.append(re.sub(r"^#+\s*", "", heading).strip())
+                body_parts.append(self._normalize_heading(heading, 2))
+            if content:
+                body_parts.append(content.strip())
+
+            for subsection in subsections:
+                if isinstance(subsection, str):
+                    sub_heading = subsection
+                    sub_content = ""
+                else:
+                    sub_heading = subsection.get("heading") or subsection.get("title") or ""
+                    sub_content = subsection.get("content") or ""
+                if sub_heading:
+                    body_parts.append(self._normalize_heading(sub_heading, 3))
+                if sub_content:
+                    body_parts.append(sub_content.strip())
+
+        if key_takeaways:
+            body_parts.append(self._normalize_heading("Key Takeaways", 2))
+            body_parts.append(key_takeaways.strip())
+
+        markdown = "\n\n".join([part for part in body_parts if part])
+        return markdown.strip(), title, section_titles
+
+    def _parse_chunk_response(
+        self,
+        text: str,
+        topic: str,
+        outline: str,
+        include_title: bool,
+        marker_start: int,
+    ) -> tuple[str, list[str], list[VisualMarker]]:
+        """
+        Parse a chunk response into markdown and markers.
+        Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
+        """
+        if self.settings.llm.content_json_mode:
+            data = self._safe_json_load(text)
+            if isinstance(data, dict):
+                markdown, title, sections = self._json_to_markdown(
+                    data,
+                    topic=topic,
+                    include_title=include_title,
+                )
+                markers = self._extract_visual_markers(markdown, marker_start)
+                if include_title and title:
+                    return markdown, sections, markers
+                return markdown, sections, markers
+
+        # Fallback to markdown parsing
+        markers = self._extract_visual_markers(text, marker_start)
+        sections = re.findall(r'^##\s+(.+)$', text, re.MULTILINE)
+        return text, sections, markers
     
     def _extract_visual_markers(self, text: str, start_index: int = 0) -> list[VisualMarker]:
         """
@@ -835,19 +930,32 @@ class LLMContentGenerator:
         Parse generated text to extract markdown and visual markers.
         Invoked by: src/doc_generator/infrastructure/llm/content_generator.py
         """
-        
-        # Extract visual markers
+        if self.settings.llm.content_json_mode:
+            data = self._safe_json_load(text)
+            if isinstance(data, dict):
+                markdown, title, sections = self._json_to_markdown(
+                    data,
+                    topic=topic,
+                    include_title=True,
+                )
+                visual_markers = self._extract_visual_markers(markdown)
+                logger.info(
+                    f"Generated content: {len(markdown)} chars, "
+                    f"{len(visual_markers)} visual markers, {len(sections)} sections"
+                )
+                return GeneratedContent(
+                    markdown=markdown,
+                    visual_markers=visual_markers,
+                    title=title,
+                    sections=sections,
+                    outline=outline,
+                )
+
         visual_markers = self._extract_visual_markers(text)
-        
-        # Extract title from first heading
         title_match = re.search(r'^#\s+(.+)$', text, re.MULTILINE)
         title = title_match.group(1).strip() if title_match else topic or "Document"
-        
-        # Extract section headings for TOC
         sections = re.findall(r'^##\s+(.+)$', text, re.MULTILINE)
-        
         logger.info(f"Generated content: {len(text)} chars, {len(visual_markers)} visual markers, {len(sections)} sections")
-        
         return GeneratedContent(
             markdown=text,
             visual_markers=visual_markers,

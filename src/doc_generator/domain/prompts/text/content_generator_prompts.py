@@ -29,10 +29,8 @@ Your expertise:
 - Creating comprehensive coverage of all topics mentioned
 
 Output format:
-- Use ## for main sections with numbers (## 1. Section Name)
-- Use ### for subsections with numbers (### 1.1 Subsection)
-- Write full paragraphs, not bullet points
-- Include visual markers where helpful
+- Respond with valid JSON only (no extra text)
+- Follow the JSON schema in the user prompt
 - Preserve ALL technical content - do not skip topics"""
 
 
@@ -96,13 +94,33 @@ def build_generation_prompt(content: str, content_type: str, topic: str, is_chun
    - Use `code` for technical terms
    - End with ## Key Takeaways section
 
+## Output JSON Schema
+Return JSON in this shape (string values may include markdown like **bold**, `code`, and mermaid blocks):
+{{
+  "title": "Title of the blog post",
+  "introduction": "Introduction paragraph(s). Do not include a heading.",
+  "sections": [
+    {{
+      "heading": "1. Section Name",
+      "content": "Paragraphs for this section. May include inline [VISUAL:...] markers and mermaid blocks.",
+      "subsections": [
+        {{
+          "heading": "1.1 Subsection Name",
+          "content": "Paragraphs for this subsection."
+        }}
+      ]
+    }}
+  ],
+  "key_takeaways": "Summary paragraph(s). Do not include a heading."
+}}
+
 ## Raw Content:
 
 {content}
 
 ---
 
-Generate the complete blog post. Start with # Title, then ## Introduction, then numbered sections:"""
+Return ONLY the JSON object. No surrounding commentary."""
 
 
 def build_outline_prompt(content: str, content_type: str, topic: str) -> str:
@@ -201,13 +219,33 @@ def build_blog_from_outline_prompt(
    - Use `code` for technical terms
    - End with ## Key Takeaways section
 
+## Output JSON Schema
+Return JSON in this shape (string values may include markdown like **bold**, `code`, and mermaid blocks):
+{{
+  "title": "Title of the blog post",
+  "introduction": "Introduction paragraph(s). Do not include a heading.",
+  "sections": [
+    {{
+      "heading": "1. Section Name",
+      "content": "Paragraphs for this section. May include inline [VISUAL:...] markers and mermaid blocks.",
+      "subsections": [
+        {{
+          "heading": "1.1 Subsection Name",
+          "content": "Paragraphs for this subsection."
+        }}
+      ]
+    }}
+  ],
+  "key_takeaways": "Summary paragraph(s). Do not include a heading."
+}}
+
 ## Raw Content:
 
 {content}
 
 ---
 
-Generate the complete blog post. Start with # Title, then ## Introduction, then numbered sections:"""
+Return ONLY the JSON object. No surrounding commentary."""
 
 
 def build_chunk_prompt(
@@ -239,8 +277,6 @@ def build_chunk_prompt(
 Transform this content into the BEGINNING of a comprehensive blog post.
 
 Requirements:
-- Start with # [Generate appropriate title]
-- Include ## Introduction paragraph
 - Use numbered sections starting from ## {section_start}. Section Name
 - Write detailed paragraphs, not bullet points
 - Include [VISUAL:type:title:description] markers where diagrams would help
@@ -248,13 +284,32 @@ Requirements:
 - Cover ALL topics in this chunk - do not skip anything
 - Use ONLY information in this chunk; do not add new details
 
+Output JSON Schema:
+{{
+  "title": "Title of the blog post",
+  "introduction": "Introduction paragraph(s). Do not include a heading.",
+  "sections": [
+    {{
+      "heading": "{section_start}. Section Name",
+      "content": "Paragraphs for this section. May include inline [VISUAL:...] markers and mermaid blocks.",
+      "subsections": [
+        {{
+          "heading": "{section_start}.1 Subsection Name",
+          "content": "Paragraphs for this subsection."
+        }}
+      ]
+    }}
+  ],
+  "key_takeaways": ""
+}}
+
 Content:
 
 {chunk}
 
 ---
 
-Generate the blog post beginning:"""
+Return ONLY the JSON object. No commentary."""
 
     if chunk_index == total_chunks - 1:
         return f"""{context}
@@ -270,13 +325,27 @@ Requirements:
 - Cover ALL topics in this chunk
 - Use ONLY information in this chunk; do not add new details
 
+Output JSON Schema:
+{{
+  "title": "",
+  "introduction": "",
+  "sections": [
+    {{
+      "heading": "{section_start}. Section Name",
+      "content": "Paragraphs for this section. May include inline [VISUAL:...] markers and mermaid blocks.",
+      "subsections": []
+    }}
+  ],
+  "key_takeaways": "Summary paragraph(s). Do not include a heading."
+}}
+
 Content:
 
 {chunk}
 
 ---
 
-Generate the blog post conclusion sections:"""
+Return ONLY the JSON object. No commentary."""
 
     return f"""{context}
 
@@ -290,13 +359,27 @@ Requirements:
 - Cover ALL topics in this chunk - do not skip anything
 - Use ONLY information in this chunk; do not add new details
 
+Output JSON Schema:
+{{
+  "title": "",
+  "introduction": "",
+  "sections": [
+    {{
+      "heading": "{section_start}. Section Name",
+      "content": "Paragraphs for this section. May include inline [VISUAL:...] markers and mermaid blocks.",
+      "subsections": []
+    }}
+  ],
+  "key_takeaways": ""
+}}
+
 Content:
 
 {chunk}
 
 ---
 
-Generate the blog post middle sections:"""
+Return ONLY the JSON object. No commentary."""
 
 
 def build_title_prompt(content: str, topic_hint: str) -> str:

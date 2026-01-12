@@ -9,10 +9,17 @@ from loguru import logger
 
 from ...domain.models import WorkflowState
 from ...infrastructure.llm import LLMContentGenerator, get_content_generator
-from ...infrastructure.llm import get_llm_service
 from ...infrastructure.settings import get_settings
 from ...utils.content_cleaner import clean_content_for_output
 from ...utils.content_cache import load_structured_content
+from ...infrastructure.logging_utils import (
+    log_node_start,
+    log_node_end,
+    log_progress,
+    log_metric,
+    log_cache_hit,
+    log_subsection,
+)
 
 
 def _detect_content_type(input_format: str, raw_content: str) -> str:
@@ -66,6 +73,8 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         - slides: Slide structures for PPTX (optional)
     Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
+    log_node_start("transform_content", step_number=3)
+    
     try:
         content = state.get("raw_content", "")
         metadata = state.get("metadata", {})
@@ -75,13 +84,16 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         if not content:
             logger.warning("No content to transform")
             state["structured_content"] = {"markdown": "", "title": "Empty Document"}
+            log_node_end("transform_content", success=True, details="No content to transform")
             return state
         
         # Detect content type for appropriate transformation
         content_type = _detect_content_type(input_format, content)
         topic = metadata.get("title", metadata.get("topic", ""))
         
-        logger.info(f"Transforming content: type={content_type}, format={input_format}, topic={topic}")
+        log_metric("Content Type", content_type)
+        log_metric("Input Format", input_format)
+        log_metric("Topic", topic or "Auto-detected")
         
         # Try cache reuse if requested/default and content hash matches
         settings = get_settings()
@@ -93,6 +105,7 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
             use_cache = settings.generator.reuse_cache_by_default
 
         if use_cache:
+            log_subsection("Checking Content Cache")
             cached = load_structured_content(state.get("input_path", ""))
             if cached:
                 cached_hash = cached.get("content_hash")
@@ -103,11 +116,14 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
                     if "title" not in metadata or not metadata["title"]:
                         metadata["title"] = cached.get("title", metadata.get("title", "Document"))
                     state["metadata"] = metadata
-                    logger.info("Reused cached structured content (content hash match)")
+                    log_cache_hit("content")
+                    log_node_end("transform_content", success=True, 
+                                details="Reused cached content")
                     return state
-                logger.info("Cache ignored due to content hash mismatch")
+                log_progress("Cache miss - content hash mismatch")
 
         # Get content generator
+        log_subsection("LLM Content Transformation")
         content_generator = get_content_generator()
         
         # Initialize structured content
@@ -118,12 +134,15 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         }
         
         if content_generator.is_available():
-            logger.info("LLM Content Generator available - transforming to blog format")
+            log_progress("LLM available - transforming to blog format")
             
             # Transform content using LLM
             max_tokens = metadata.get("max_tokens")
             if not max_tokens:
                 max_tokens = settings.llm.content_max_tokens
+            
+            log_metric("Max Tokens", max_tokens)
+            
             generated = content_generator.generate_blog_content(
                 raw_content=content,
                 content_type=content_type,
@@ -149,46 +168,17 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
                 for m in generated.visual_markers
             ]
             
-            logger.info(
-                f"LLM transformation complete: {len(generated.markdown)} chars, "
-                f"{len(generated.visual_markers)} visual markers, "
-                f"{len(generated.sections)} sections"
-            )
+            log_metric("Generated Length", len(generated.markdown), "chars")
+            log_metric("Visual Markers", len(generated.visual_markers))
+            log_metric("Sections", len(generated.sections))
+            log_metric("Title", generated.title)
             
-            # Also get LLM service for additional enhancements
-            llm = state.get("llm_service") or get_llm_service()
-            
-            if llm.is_available():
-                # Generate executive summary from the blog content
-                executive_summary = llm.generate_executive_summary(generated.markdown)
-                if executive_summary:
-                    structured["executive_summary"] = executive_summary
-                    logger.debug("Generated executive summary")
-                
-                # For PPTX output, generate optimized slide structure
-                if output_format == "pptx":
-                    slides = llm.generate_slide_structure(generated.markdown)
-                    if slides:
-                        structured["slides"] = slides
-                        logger.debug(f"Generated {len(slides)} slide structures")
-                
         else:
             # Fallback: Just clean the content
-            logger.info("LLM not available - using basic content cleaning")
+            log_progress("LLM not available - using basic content cleaning")
             cleaned_content = clean_content_for_output(content)
             structured["markdown"] = cleaned_content
-            
-            # Try to get basic enhancements from llm_service
-            llm = state.get("llm_service") or get_llm_service()
-            if llm.is_available():
-                executive_summary = llm.generate_executive_summary(cleaned_content)
-                if executive_summary:
-                    structured["executive_summary"] = executive_summary
-                
-                if output_format == "pptx":
-                    slides = llm.generate_slide_structure(cleaned_content)
-                    if slides:
-                        structured["slides"] = slides
+            log_metric("Cleaned Length", len(cleaned_content), "chars")
         
         structured["content_hash"] = metadata.get("content_hash")
         state["structured_content"] = structured
@@ -198,11 +188,8 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
             metadata["title"] = structured["title"]
             state["metadata"] = metadata
         
-        logger.info(
-            f"Transformed content: title='{structured['title']}', "
-            f"{len(structured.get('markdown', ''))} chars, "
-            f"{len(structured.get('visual_markers', []))} visual markers"
-        )
+        log_node_end("transform_content", success=True,
+                    details=f"Transformed to {len(structured.get('markdown', ''))} chars")
 
     except Exception as e:
         error_msg = f"Transformation failed: {str(e)}"
@@ -216,5 +203,7 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
             "title": state.get("metadata", {}).get("title", "Document"),
             "visual_markers": []
         }
+        
+        log_node_end("transform_content", success=False, details=error_msg)
 
     return state

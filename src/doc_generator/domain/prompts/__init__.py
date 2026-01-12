@@ -10,11 +10,9 @@ from .image import (
     CONTENT_AWARE_IMAGE_PROMPT,
     IMAGE_DESCRIPTION_PROMPT,
     IMAGE_STYLE_TEMPLATES,
-    build_alignment_prompt,
     build_gemini_image_prompt,
     build_image_description_prompt,
     build_prompt_generator_prompt,
-    build_prompt_improvement_prompt,
 )
 from .text import (
     build_blog_from_outline_prompt,
@@ -38,7 +36,6 @@ from .text import (
 )
 
 __all__ = [
-    "build_alignment_prompt",
     "build_blog_from_outline_prompt",
     "build_chunk_prompt",
     "build_generation_prompt",
@@ -46,7 +43,6 @@ __all__ = [
     "build_image_description_prompt",
     "build_outline_prompt",
     "build_prompt_generator_prompt",
-    "build_prompt_improvement_prompt",
     "build_title_prompt",
     "CONCEPT_EXTRACTION_PROMPT",
     "CONCEPT_EXTRACTION_SYSTEM_PROMPT",

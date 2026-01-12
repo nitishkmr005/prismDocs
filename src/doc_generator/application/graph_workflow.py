@@ -15,9 +15,12 @@ from ..infrastructure.llm import LLMContentGenerator, LLMService
 from ..infrastructure.settings import get_settings
 from .nodes import (
     detect_format_node,
+    describe_images_node,
+    enhance_content_node,
     generate_images_node,
     generate_output_node,
     parse_content_node,
+    persist_image_manifest_node,
     transform_content_node,
     validate_output_node,
 )
@@ -68,9 +71,12 @@ def build_workflow() -> StateGraph:
     1. detect_format -> Detect input format from extension/URL
     2. parse_content -> Extract content using appropriate parser
     3. transform_content -> Structure content for output (creates merged .md)
-    4. generate_images -> Generate and align images per section (uses merged content)
-    5. generate_output -> Generate PDF or PPTX
-    6. validate_output -> Validate generated file
+    4. enhance_content -> Generate summaries and slide structures
+    5. generate_images -> Generate images per section (uses merged content)
+    6. describe_images -> Generate image captions and embed data
+    7. persist_image_manifest -> Persist image metadata for cache reuse
+    8. generate_output -> Generate PDF or PPTX
+    9. validate_output -> Validate generated file
     7. Conditional retry on validation errors (max 3 attempts)
 
     Returns:
@@ -84,7 +90,10 @@ def build_workflow() -> StateGraph:
     workflow.add_node("detect_format", detect_format_node)
     workflow.add_node("parse_content", parse_content_node)
     workflow.add_node("transform_content", transform_content_node)
+    workflow.add_node("enhance_content", enhance_content_node)
     workflow.add_node("generate_images", generate_images_node)
+    workflow.add_node("describe_images", describe_images_node)
+    workflow.add_node("persist_image_manifest", persist_image_manifest_node)
     workflow.add_node("generate_output", generate_output_node)
     workflow.add_node("validate_output", validate_output_node)
 
@@ -92,8 +101,11 @@ def build_workflow() -> StateGraph:
     workflow.set_entry_point("detect_format")
     workflow.add_edge("detect_format", "parse_content")
     workflow.add_edge("parse_content", "transform_content")
-    workflow.add_edge("transform_content", "generate_images")
-    workflow.add_edge("generate_images", "generate_output")
+    workflow.add_edge("transform_content", "enhance_content")
+    workflow.add_edge("enhance_content", "generate_images")
+    workflow.add_edge("generate_images", "describe_images")
+    workflow.add_edge("describe_images", "persist_image_manifest")
+    workflow.add_edge("persist_image_manifest", "generate_output")
     workflow.add_edge("generate_output", "validate_output")
 
     # Conditional retry logic
@@ -106,7 +118,7 @@ def build_workflow() -> StateGraph:
         }
     )
 
-    logger.debug("Built LangGraph workflow with 6 nodes")
+    logger.debug("Built LangGraph workflow with 9 nodes")
 
     return workflow.compile()
 
@@ -133,6 +145,15 @@ def run_workflow(
 
     Invoked by: scripts/generate_from_folder.py, scripts/generate_pdf_from_cache.py, scripts/quick_pdf_with_images.py, scripts/run_generator.py, src/doc_generator/infrastructure/api/services/generation.py
     """
+    import time
+    from ..infrastructure.logging_utils import (
+        log_workflow_start,
+        log_workflow_end,
+        log_usage_summary,
+    )
+    
+    start_time = time.time()
+    
     settings = get_settings()
     output_format = output_format or settings.generator.default_output_format
     metadata = metadata or {}
@@ -142,6 +163,9 @@ def run_workflow(
         candidate = settings.generator.input_dir / input_path
         if candidate.exists():
             input_path = str(candidate)
+
+    # Log workflow start
+    log_workflow_start(input_path, output_format)
 
     # Build workflow
     workflow = build_workflow()
@@ -159,43 +183,46 @@ def run_workflow(
         "llm_service": llm_service,
     }
 
-    logger.info(f"Starting workflow: {input_path} -> {output_format}")
-
     # Execute workflow
     result = workflow.invoke(initial_state)
+    
+    # Calculate duration
+    duration_seconds = time.time() - start_time
 
-    # Log results
-    if result.get("errors"):
-        logger.error(f"Workflow completed with errors: {result['errors']}")
-    else:
-        logger.info(f"Workflow completed successfully: {result.get('output_path', 'N/A')}")
-
+    # Gather usage statistics
     llm_usage = LLMService.usage_summary()
     content_usage = LLMContentGenerator.usage_summary()
     total_llm_calls = llm_usage["total_calls"] + content_usage["total_calls"]
     models_used = sorted(set(llm_usage["models"]) | set(content_usage["models"]))
     providers_used = sorted(set(llm_usage["providers"]) | set(content_usage["providers"]))
     gemini_usage = GeminiImageGenerator.usage_summary()
-    logger.opt(colors=True).info(
-        "<cyan>LLM usage</cyan> calls={} models={} providers={}",
-        total_llm_calls,
-        models_used,
-        providers_used,
-    )
-    logger.opt(colors=True).info(
-        "<magenta>Gemini usage</magenta> calls={} models={}",
-        gemini_usage["total_calls"],
-        gemini_usage["models"],
-    )
-
+    
     llm_details = LLMService.usage_details() + LLMContentGenerator.usage_details()
     image_details = GeminiImageGenerator.usage_details()
     call_rows = llm_details + image_details
-    if call_rows:
-        logger.opt(colors=True).info(
-            "<cyan>Call timings</cyan>\n{}",
-            _format_call_table(call_rows)
+
+    # Log workflow end
+    if result.get("errors"):
+        log_workflow_end(
+            success=False,
+            errors=result["errors"],
+            duration_seconds=duration_seconds
         )
+    else:
+        log_workflow_end(
+            success=True,
+            output_path=result.get("output_path", "N/A"),
+            duration_seconds=duration_seconds
+        )
+
+    # Log usage summary
+    log_usage_summary(
+        llm_calls=total_llm_calls,
+        image_calls=gemini_usage["total_calls"],
+        models=models_used,
+        providers=providers_used,
+        call_details=call_rows if call_rows else None
+    )
 
     return result
 

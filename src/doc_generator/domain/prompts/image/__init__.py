@@ -3,11 +3,9 @@ Image prompt templates for generation and understanding.
 """
 
 from .image_generation_prompts import (
-    build_alignment_prompt,
     build_gemini_image_prompt,
     build_image_description_prompt,
     build_prompt_generator_prompt,
-    build_prompt_improvement_prompt,
 )
 from .image_prompts import (
     CONCEPT_EXTRACTION_PROMPT,
@@ -18,11 +16,9 @@ from .image_prompts import (
 )
 
 __all__ = [
-    "build_alignment_prompt",
     "build_gemini_image_prompt",
     "build_image_description_prompt",
     "build_prompt_generator_prompt",
-    "build_prompt_improvement_prompt",
     "CONCEPT_EXTRACTION_PROMPT",
     "CONCEPT_EXTRACTION_SYSTEM_PROMPT",
     "CONTENT_AWARE_IMAGE_PROMPT",

@@ -27,7 +27,6 @@ from ..infrastructure.settings import (
     ParserSettings,
     DoclingSettings,
     WebParserSettings,
-    SvgSettings,
     ImageGenerationSettings,
 )
 
@@ -46,6 +45,5 @@ __all__ = [
     "ParserSettings",
     "DoclingSettings",
     "WebParserSettings",
-    "SvgSettings",
     "ImageGenerationSettings",
 ]

@@ -15,7 +15,6 @@ from ....domain.exceptions import GenerationError
 from ...pdf_utils import parse_markdown_lines
 from ...settings import get_settings
 from .utils import (
-    add_chart_slide,
     add_content_slide,
     add_executive_summary_slide,
     add_image_slide,
@@ -210,11 +209,6 @@ class PPTXGenerator:
                     section_images=section_images
                 )
 
-            if allow_diagrams:
-                # Add visualization slides if generated
-                visualizations = structured_content.get("visualizations", [])
-                self._add_visualization_slides(prs, visualizations)
-
         else:
             # No LLM enhancement - use markdown-based generation
             self._add_slides_from_markdown(prs, markdown_content, allow_diagrams, section_images={})
@@ -248,34 +242,6 @@ class PPTXGenerator:
                 )
 
         logger.debug(f"Added {len(slides)} LLM-generated slides")
-
-    def _add_visualization_slides(self, prs, visualizations: list[dict]) -> None:
-        """
-        Add visualization slides from generated SVGs.
-
-        Args:
-            prs: Presentation object
-            visualizations: List of visualization dictionaries with type, title, path
-        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
-        """
-        for visual in visualizations:
-            title = visual.get("title", "Visualization")
-            svg_path = visual.get("path", "")
-
-            if not svg_path:
-                continue
-
-            svg_path = Path(svg_path)
-            if not svg_path.exists():
-                logger.warning(f"Visualization SVG not found: {svg_path}")
-                continue
-
-            try:
-                add_chart_slide(prs, title, svg_path)
-                vis_type = visual.get("type", "unknown")
-                logger.debug(f"Added {vis_type} visualization slide: {title}")
-            except Exception as e:
-                logger.warning(f"Failed to add visualization slide: {e}")
 
     def _add_section_image_slides(self, prs, section_images: dict) -> None:
         """

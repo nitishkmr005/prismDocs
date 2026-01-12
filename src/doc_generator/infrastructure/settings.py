@@ -125,8 +125,9 @@ class LlmSettings(BaseSettings):
     content_provider: str = "gemini"  # "gemini" or "openai"
     content_max_tokens: int = 8000
     content_temperature: float = 0.4
+    content_json_mode: bool = True
     content_single_chunk_char_limit: int = 30000
-    content_chunk_char_limit: int = 10000
+    content_chunk_char_limit: int = 30000
     
     # Legacy model setting (fallback)
     model: str = "gemini-2.5-flash"
@@ -140,52 +141,16 @@ class LlmSettings(BaseSettings):
     temperature_summary: float = 0.3
     temperature_slides: float = 0.4
 
-    # SVG/Visual generation settings (Claude Sonnet 4)
-    svg_model: str = "claude-sonnet-4-20250514"
-    svg_provider: str = "claude"  # Always Claude for visuals
-    svg_max_tokens: int = 4000
-    svg_temperature: float = 0.3
-    use_claude_for_visuals: bool = True
-    
     # Legacy Claude settings (for backwards compatibility)
     claude_model: str = "claude-sonnet-4-20250514"
     claude_max_tokens: int = 4000
     claude_temperature: float = 0.3
 
 
-class SvgSettings(BaseSettings):
-    """SVG generation settings."""
-
-    default_width: int = 800
-    default_height: int = 500
-    chart_colors: list[str] = Field(
-        default=[
-            "#1E5D5A",
-            "#D76B38",
-            "#2E86AB",
-            "#A23B72",
-            "#F18F01",
-            "#C73E1D",
-            "#3A7CA5",
-            "#5C946E",
-        ]
-    )
-    layer_colors: dict[str, str] = Field(
-        default={
-            "frontend": "#2E86AB",
-            "backend": "#1E5D5A",
-            "database": "#A23B72",
-            "external": "#D76B38",
-            "infrastructure": "#5C946E",
-            "default": "#3A7CA5",
-        }
-    )
-
-
 class ImageGenerationSettings(BaseSettings):
     """Image generation settings for Gemini and auto-detection."""
 
-    # Provider selection: "auto", "gemini", "svg", "mermaid"
+    # Provider selection: "auto", "gemini", "mermaid"
     default_provider: str = "auto"
 
     # Gemini settings
@@ -222,7 +187,6 @@ class Settings(BaseSettings):
     pptx: PptxSettings = Field(default_factory=PptxSettings)
     parsers: ParserSettings = Field(default_factory=ParserSettings)
     llm: LlmSettings = Field(default_factory=LlmSettings)
-    svg: SvgSettings = Field(default_factory=SvgSettings)
     image_generation: ImageGenerationSettings = Field(default_factory=ImageGenerationSettings)
 
     class Config:
@@ -308,9 +272,6 @@ def _merge_config(yaml_config: dict) -> dict:
 
     if "llm" in yaml_config:
         merged["llm"] = yaml_config["llm"]
-
-    if "svg" in yaml_config:
-        merged["svg"] = yaml_config["svg"]
 
     if "image_generation" in yaml_config:
         merged["image_generation"] = yaml_config["image_generation"]

@@ -22,9 +22,6 @@ from .llm import LLMService, LLMContentGenerator
 from .image import (
     GeminiImageGenerator,
     encode_image_base64,
-    ClaudeSVGGenerator,
-    SVGGenerator,
-    SVGValidator,
 )
 
 # Parsers
@@ -41,9 +38,6 @@ __all__ = [
     # Image
     "GeminiImageGenerator",
     "encode_image_base64",
-    "ClaudeSVGGenerator",
-    "SVGGenerator",
-    "SVGValidator",
     # Parsers
     "parsers",
 ]

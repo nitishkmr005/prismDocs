@@ -16,9 +16,12 @@ from ..infrastructure.llm import LLMService
 from ..infrastructure.settings import get_settings
 from .nodes import (
     detect_format_node,
+    describe_images_node,
+    enhance_content_node,
     generate_images_node,
     generate_output_node,
     parse_content_node,
+    persist_image_manifest_node,
     transform_content_node,
     validate_output_node,
 )
@@ -68,9 +71,12 @@ def build_workflow() -> StateGraph:
     1. detect_format -> Detect input format from extension/URL
     2. parse_content -> Extract content using appropriate parser
     3. transform_content -> Structure content for output (creates merged .md)
-    4. generate_images -> Generate and align images per section (uses merged content)
-    5. generate_output -> Generate PDF or PPTX
-    6. validate_output -> Validate generated file
+    4. enhance_content -> Generate summaries and slide structures
+    5. generate_images -> Generate images per section (uses merged content)
+    6. describe_images -> Generate image captions and embed data
+    7. persist_image_manifest -> Persist image metadata for cache reuse
+    8. generate_output -> Generate PDF or PPTX
+    9. validate_output -> Validate generated file
     7. Conditional retry on validation errors (max 3 attempts)
 
     Returns:
@@ -83,7 +89,10 @@ def build_workflow() -> StateGraph:
     workflow.add_node("detect_format", detect_format_node)
     workflow.add_node("parse_content", parse_content_node)
     workflow.add_node("transform_content", transform_content_node)
+    workflow.add_node("enhance_content", enhance_content_node)
     workflow.add_node("generate_images", generate_images_node)
+    workflow.add_node("describe_images", describe_images_node)
+    workflow.add_node("persist_image_manifest", persist_image_manifest_node)
     workflow.add_node("generate_output", generate_output_node)
     workflow.add_node("validate_output", validate_output_node)
 
@@ -91,8 +100,11 @@ def build_workflow() -> StateGraph:
     workflow.set_entry_point("detect_format")
     workflow.add_edge("detect_format", "parse_content")
     workflow.add_edge("parse_content", "transform_content")
-    workflow.add_edge("transform_content", "generate_images")
-    workflow.add_edge("generate_images", "generate_output")
+    workflow.add_edge("transform_content", "enhance_content")
+    workflow.add_edge("enhance_content", "generate_images")
+    workflow.add_edge("generate_images", "describe_images")
+    workflow.add_edge("describe_images", "persist_image_manifest")
+    workflow.add_edge("persist_image_manifest", "generate_output")
     workflow.add_edge("generate_output", "validate_output")
 
     # Conditional retry logic
@@ -105,7 +117,7 @@ def build_workflow() -> StateGraph:
         }
     )
 
-    logger.debug("Built LangGraph workflow with 6 nodes")
+    logger.debug("Built LangGraph workflow with 9 nodes")
 
     return workflow.compile()
 

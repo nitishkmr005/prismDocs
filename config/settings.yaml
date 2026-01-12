@@ -78,33 +78,9 @@ llm:
   max_tokens_slides: 2000
   temperature_summary: 0.3
   temperature_slides: 0.4
+  content_single_chunk_char_limit: 30000
+  content_chunk_char_limit: 30000
 
-  # Claude API settings for SVG generation
-  claude_model: "claude-sonnet-4-20250514" # Claude Sonnet 4.5
-  claude_max_tokens: 4000
-  claude_temperature: 0.3
-  use_claude_for_visuals: false # DISABLED - using Gemini images only
-
-# SVG generation settings (DISABLED - using Gemini images)
-svg:
-  default_width: 800
-  default_height: 500
-  chart_colors:
-    - "#1E5D5A" # Teal (primary)
-    - "#D76B38" # Orange (accent)
-    - "#2E86AB" # Blue
-    - "#A23B72" # Magenta
-    - "#F18F01" # Amber
-    - "#C73E1D" # Red
-    - "#3A7CA5" # Steel blue
-    - "#5C946E" # Green
-  layer_colors:
-    frontend: "#2E86AB"
-    backend: "#1E5D5A"
-    database: "#A23B72"
-    external: "#D76B38"
-    infrastructure: "#5C946E"
-    default: "#3A7CA5"
 
 # Image generation settings (Gemini-based)
 image_generation:
