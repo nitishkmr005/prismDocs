@@ -10,6 +10,7 @@ Section IDs are synced with title numbering in the markdown file.
 from __future__ import annotations
 
 import re
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -317,10 +318,15 @@ class GeminiPromptGenerator:
         )
 
         model = self.settings.llm.content_model or self.settings.llm.model
+        start_time = time.perf_counter()
         response = self.client.models.generate_content(
             model=model,
             contents=prompt,
         )
+        duration_ms = int((time.perf_counter() - start_time) * 1000)
+        usage_metadata = getattr(response, "usage_metadata", None)
+        input_tokens = getattr(usage_metadata, "prompt_token_count", None) if usage_metadata else None
+        output_tokens = getattr(usage_metadata, "candidates_token_count", None) if usage_metadata else None
         response_text = (response.text or "").strip()
         log_llm_call(
             name="image_prompt",
@@ -328,6 +334,9 @@ class GeminiPromptGenerator:
             response=response_text,
             provider="gemini",
             model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            duration_ms=duration_ms,
             metadata={"section_title": section_title},
         )
         if response_text.strip().lower() == "none":

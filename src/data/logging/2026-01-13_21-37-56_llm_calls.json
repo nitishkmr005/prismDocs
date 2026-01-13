@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-01-13T21:37:56",
+  "purpose": "image_prompt",
+  "model": "gemini-2.5-pro",
+  "prompt": "Decide whether this section needs an image.\n\nSection Title: Introduction\nSection Content:\nRunning large language models, such as a 70 billion parameter model, on a single GPU is often impossible due to memory constraints. For instance, even a high-end H100 GPU with 80GB of VRAM cannot accommodate a model like Llama-2-70B in full precision. This is where **Tensor Parallelism (TP)** becomes a critical solution. It works by splitting a model's weight matrices across multiple GPUs, enabling the execution of models that would otherwise be too large. This guide provides a hands-on approach to understanding and implementing tensor-parallel inference, with practical scripts for platforms like RunPod and Lambda Cloud.\n\nRules:\n- If an image is NOT needed, return exactly: none\n- If an image IS needed, return a single concise image prompt.\n- Use ONLY concepts present in the content.\n- Do NOT add new facts, tools, or labels.\n- The prompt should describe what to depict clearly.\n",
+  "response": "A diagram showing a large weight matrix being split into pieces, with each piece being placed onto one of several different GPUs.",
+  "input_tokens": null,
+  "output_tokens": null,
+  "latency_seconds": null
+}
