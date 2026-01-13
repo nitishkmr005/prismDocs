@@ -324,3 +324,29 @@ run-llm-architectures:  ## DEPRECATED: Use 'make llm-arch' or 'make process-fold
 	@echo ""
 	@echo "Redirecting to new command..."
 	@$(MAKE) llm-arch
+
+# ============================================================================
+# PDF Quality Validation (Feature 13)
+# ============================================================================
+
+validate-pdf:  ## Validate PDF quality (make validate-pdf INPUT=<pdf-file>)
+	@if [ -z "$(INPUT)" ]; then \
+		echo "❌ Usage: make validate-pdf INPUT=<pdf-file>"; \
+		echo ""; \
+		echo "Example:"; \
+		echo "  make validate-pdf INPUT=src/output/test/document.pdf"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(INPUT)" ]; then \
+		echo "❌ File not found: $(INPUT)"; \
+		exit 1; \
+	fi
+	@$(PYTHON) scripts/validate_pdf.py "$(INPUT)"
+
+test-pdf-features:  ## Test all PDF enhancements
+	@echo "🧪 Testing PDF enhancements..."
+	@$(PYTHON) test_all_pdf_features.py
+	@echo ""
+	@echo "📋 Validating generated PDF..."
+	@$(MAKE) validate-pdf INPUT=src/output/test/PDF_Enhancements_Test_-_Complete.pdf
+

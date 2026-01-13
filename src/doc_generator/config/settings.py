@@ -22,6 +22,12 @@ from ..infrastructure.settings import (
     PdfSettings,
     PdfPaletteSettings,
     PdfMarginSettings,
+    PdfTocSettings,
+    PdfCodeSettings,
+    PdfHeaderFooterSettings,
+    PdfTypographySettings,
+    PdfMetadataSettings,
+    PdfQualitySettings,
     PptxSettings,
     PptxThemeSettings,
     ParserSettings,
@@ -29,6 +35,7 @@ from ..infrastructure.settings import (
     WebParserSettings,
     ImageGenerationSettings,
 )
+
 
 __all__ = [
     "Settings",
@@ -40,6 +47,12 @@ __all__ = [
     "PdfSettings",
     "PdfPaletteSettings",
     "PdfMarginSettings",
+    "PdfTocSettings",
+    "PdfCodeSettings",
+    "PdfHeaderFooterSettings",
+    "PdfTypographySettings",
+    "PdfMetadataSettings",
+    "PdfQualitySettings",
     "PptxSettings",
     "PptxThemeSettings",
     "ParserSettings",
@@ -47,3 +60,4 @@ __all__ = [
     "WebParserSettings",
     "ImageGenerationSettings",
 ]
+

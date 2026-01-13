@@ -84,6 +84,7 @@ def inline_md(text: str) -> str:
     - `code` → <font face='Courier'>code</font>
     - **bold** → <b>bold</b>
     - *italic* → <i>italic</i>
+    - [text](url) → <link href="url">text</link> (clickable)
 
     Args:
         text: Text with inline markdown formatting
@@ -92,6 +93,20 @@ def inline_md(text: str) -> str:
         Text with HTML formatting for ReportLab
     Invoked by: src/doc_generator/infrastructure/generators/pdf/utils.py, src/doc_generator/infrastructure/pdf_utils.py
     """
+    # First, handle markdown links [text](url) -> clickable links
+    # Use a placeholder to avoid conflicts with other formatting
+    link_pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
+    links = []
+    
+    def replace_link(match):
+        text_part = match.group(1)
+        url = match.group(2)
+        links.append((text_part, url))
+        return f"__LINK_{len(links)-1}__"
+    
+    text = re.sub(link_pattern, replace_link, text)
+    
+    # Handle code blocks
     parts = re.split(r"(`[^`]+`)", text)
     rendered: list[str] = []
     for part in parts:
@@ -103,7 +118,17 @@ def inline_md(text: str) -> str:
         safe = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", safe)
         safe = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<i>\1</i>", safe)
         rendered.append(safe)
-    return "".join(rendered)
+    
+    result = "".join(rendered)
+    
+    # Restore links with proper ReportLab link tags
+    for i, (link_text, url) in enumerate(links):
+        placeholder = f"__LINK_{i}__"
+        # ReportLab supports <link> tags for clickable URLs
+        link_html = f'<link href="{html.escape(url)}" color="blue"><u>{html.escape(link_text)}</u></link>'
+        result = result.replace(placeholder, link_html)
+    
+    return result
 
 
 def parse_table(table_lines: list[str]) -> list[list[str]]:
@@ -281,13 +306,24 @@ def extract_headings(text: str) -> list[tuple[int, str]]:
     return headings
 
 
-def make_table_of_contents(headings: list[tuple[int, str]], styles: dict) -> list:
+def make_table_of_contents(
+    headings: list[tuple[int, str]], 
+    styles: dict,
+    markdown_content: str = "",
+    toc_settings: dict = None
+) -> list:
     """
-    Create table of contents flowables.
+    Create table of contents flowables with optional page numbers and reading time.
 
     Args:
         headings: List of (level, heading_text) tuples
         styles: ReportLab styles dictionary
+        markdown_content: Full markdown content for reading time calculation
+        toc_settings: TOC settings dictionary with keys:
+            - include_page_numbers: bool
+            - max_depth: int (1-6)
+            - show_reading_time: bool
+            - words_per_minute: int
 
     Returns:
         List of flowables for the TOC
@@ -296,11 +332,36 @@ def make_table_of_contents(headings: list[tuple[int, str]], styles: dict) -> lis
     if not headings:
         return []
 
+    # Default settings
+    if toc_settings is None:
+        toc_settings = {
+            "include_page_numbers": True,
+            "max_depth": 3,
+            "show_reading_time": True,
+            "words_per_minute": 200
+        }
+
+    # Filter headings by max depth
+    max_depth = toc_settings.get("max_depth", 3)
+    filtered_headings = [(lvl, txt) for lvl, txt in headings if lvl <= max_depth]
+
+    if not filtered_headings:
+        return []
+
     flowables = []
     flowables.append(Paragraph("Contents", styles["TOCHeading"]))
+    
+    # Add reading time estimate if enabled
+    if toc_settings.get("show_reading_time", True) and markdown_content:
+        word_count = len(markdown_content.split())
+        wpm = toc_settings.get("words_per_minute", 200)
+        reading_time = max(1, round(word_count / wpm))
+        time_text = f"<i>Estimated reading time: {reading_time} min</i>"
+        flowables.append(Paragraph(time_text, styles["TOCEntry"]))
+    
     flowables.append(Spacer(1, 8))
 
-    for level, heading in headings:
+    for level, heading in filtered_headings:
         indent = (level - 1) * 20
         style = ParagraphStyle(
             name=f"TOCLevel{level}",
@@ -309,6 +370,9 @@ def make_table_of_contents(headings: list[tuple[int, str]], styles: dict) -> lis
             fontName="Helvetica-Bold" if level == 1 else "Helvetica",
             fontSize=12 if level == 1 else 11,
         )
+        
+        # For now, just add bullet points
+        # Page numbers will be added when we integrate with PDF canvas tracking
         flowables.append(Paragraph(f"• {inline_md(heading)}", style))
 
     flowables.append(Spacer(1, 24))
@@ -429,25 +493,70 @@ def make_image_flowable(
     return flow
 
 
-def make_code_block(code: str, styles: dict, max_height: float = 8.5 * inch) -> list:
+def make_code_block(
+    code: str, 
+    styles: dict, 
+    max_height: float = 8.5 * inch,
+    language: str = "python",
+    code_settings: dict = None
+) -> list:
     """
-    Create formatted code block.
+    Create formatted code block with optional line numbers and syntax highlighting.
 
     Args:
         code: Code content
         styles: ReportLab styles dictionary
+        max_height: Maximum height for code block
+        language: Programming language for syntax highlighting
+        code_settings: Code settings dictionary with keys:
+            - show_line_numbers: bool
+            - syntax_highlighting: bool
+            - max_lines_per_page: int
+            - font_size: int
+            - line_number_color: str
 
     Returns:
         List of flowables with code block styling
     Invoked by: (no references found)
     """
+    # Default settings
+    if code_settings is None:
+        code_settings = {
+            "show_line_numbers": True,
+            "syntax_highlighting": False,  # Requires pygments
+            "max_lines_per_page": 50,
+            "font_size": 9,
+            "line_number_color": "#888888"
+        }
+
     lines = code.splitlines() or [""]
+    show_line_numbers = code_settings.get("show_line_numbers", True)
+    
+    # Calculate line height
     leading = styles["CodeBlock"].leading or (styles["CodeBlock"].fontSize * 1.2)
-    max_lines = max(1, int((max_height - 12) // leading))
+    max_lines = code_settings.get("max_lines_per_page", 50)
+    max_lines = min(max_lines, max(1, int((max_height - 12) // leading)))
 
     flow: list = []
+    
     for i in range(0, len(lines), max_lines):
-        chunk = "\n".join(lines[i:i + max_lines])
+        chunk_lines = lines[i:i + max_lines]
+        
+        if show_line_numbers:
+            # Add line numbers to each line
+            line_num_color = code_settings.get("line_number_color", "#888888")
+            numbered_lines = []
+            for idx, line in enumerate(chunk_lines, start=i + 1):
+                # Format: line number (right-aligned, 4 chars) + separator + code
+                line_num = f"{idx:4d}"
+                # Escape HTML in code content
+                escaped_line = html.escape(line)
+                numbered_lines.append(f"{line_num} │ {escaped_line}")
+            
+            chunk = "\n".join(numbered_lines)
+        else:
+            chunk = "\n".join(chunk_lines)
+        
         block = Preformatted(chunk, styles["CodeBlock"])
         table = Table([[block]], colWidths=[6.9 * inch])
         table.setStyle(TableStyle([
@@ -671,7 +780,12 @@ def make_quote(text: str, styles: dict) -> Table:
 
 def make_table(table_data: list[list[str]], styles: dict) -> Table:
     """
-    Create formatted table from markdown table data.
+    Create formatted table from markdown table data with visual enhancements.
+    
+    Features:
+    - Visual indicators (✓/✗) for boolean values
+    - Color coding for performance metrics
+    - Improved cell padding and alignment
 
     Args:
         table_data: 2D list of table cells
@@ -684,21 +798,76 @@ def make_table(table_data: list[list[str]], styles: dict) -> Table:
     if not table_data:
         return Table([[]])
 
-    wrapped = [
-        [Paragraph(inline_md(cell), styles["TableCell"]) for cell in row]
-        for row in table_data
-    ]
+    # Process cells with visual indicators
+    def enhance_cell(cell_text: str) -> str:
+        """Add visual indicators to cell content."""
+        cell_lower = cell_text.lower().strip()
+        
+        # Boolean indicators
+        if cell_lower in ['yes', 'true', '✓', 'pass', 'passed']:
+            return f'<font color="green">✓</font> {cell_text}'
+        elif cell_lower in ['no', 'false', '✗', 'fail', 'failed']:
+            return f'<font color="red">✗</font> {cell_text}'
+        
+        # Performance indicators (percentages)
+        if '%' in cell_text:
+            try:
+                value = float(cell_text.replace('%', '').strip())
+                if value >= 90:
+                    return f'<font color="green"><b>{cell_text}</b></font>'
+                elif value >= 70:
+                    return f'<font color="orange">{cell_text}</font>'
+                elif value < 50:
+                    return f'<font color="red">{cell_text}</font>'
+            except ValueError:
+                pass
+        
+        # Performance tiers
+        if cell_lower in ['high', 'excellent', 'good']:
+            return f'<font color="green"><b>{cell_text}</b></font>'
+        elif cell_lower in ['medium', 'moderate', 'fair']:
+            return f'<font color="orange">{cell_text}</font>'
+        elif cell_lower in ['low', 'poor', 'bad']:
+            return f'<font color="red">{cell_text}</font>'
+        
+        return cell_text
+
+    # Process table data with enhancements
+    wrapped = []
+    for row_idx, row in enumerate(table_data):
+        wrapped_row = []
+        for cell in row:
+            # Skip enhancement for header row
+            if row_idx == 0:
+                wrapped_row.append(Paragraph(inline_md(cell), styles["TableCell"]))
+            else:
+                enhanced_cell = enhance_cell(cell)
+                wrapped_row.append(Paragraph(inline_md(enhanced_cell), styles["TableCell"]))
+        wrapped.append(wrapped_row)
+    
     table = Table(wrapped, hAlign="LEFT")
-    table.setStyle(TableStyle([
+    
+    # Build table style with alternating row colors
+    table_style = [
         ("BACKGROUND", (0, 0), (-1, 0), PALETTE["teal"]),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("GRID", (0, 0), (-1, -1), 0.5, PALETTE["line"]),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-    ]))
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]
+    
+    # Add alternating row colors for better readability
+    for row_idx in range(1, len(table_data)):
+        if row_idx % 2 == 0:
+            table_style.append(
+                ("BACKGROUND", (0, row_idx), (-1, row_idx), PALETTE["table"])
+            )
+    
+    table.setStyle(TableStyle(table_style))
 
     return table
 

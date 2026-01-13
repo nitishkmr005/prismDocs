@@ -1,0 +1,60 @@
+{
+  "content_hash": "ccfcbac0c9430f6dcbb7c7688e57899b4fbca5f63c6745aa79100e2c47f8e6e4",
+  "section_titles": [
+    "Introduction",
+    "1. Introduction",
+    "2. Understanding the Need for Parallelism",
+    "3. How Tensor Parallelism Works",
+    "4. Applying TP to Transformer Layers",
+    "5. Implementing TP with HuggingFace Transformers",
+    "6. Hands-On Guide: TP on RunPod",
+    "7. Hands-On Guide: TP on Lambda Cloud",
+    "8. Performance Benchmarks and Observations",
+    "9. Limitations of Tensor Parallelism",
+    "10. Combining Tensor and Pipeline Parallelism",
+    "11. Key Takeaways",
+    "Key Takeaways"
+  ],
+  "descriptions": {
+    "1": "This diagram illustrates why Tensor Parallelism is crucial for running large models. A single GPU often lacks the memory to hold an entire model's weight matrix, resulting in an overflow error. By partitioning this large matrix into smaller slices and distributing them across multiple GPUs, Tensor Parallelism allows the devices to collectively hold and process the model successfully.",
+    "2": "This diagram visualizes three core strategies for running large models across multiple GPUs to overcome single-device memory limitations: Data, Pipeline, and Tensor Parallelism. Each approach differs in how it divides the workload, with Data Parallelism splitting the data batch, Pipeline Parallelism splitting sequential model layers, and Tensor Parallelism splitting the weight matrices within a single layer.",
+    "3": "This diagram visualizes how tensor parallelism splits a model's weight matrix for parallel computation. In column-parallel multiplication, the matrix is split by columns, and the independent output slices are concatenated. Conversely, in row-parallel multiplication, the matrix is split by rows, and the partial results are summed to produce the final output tensor.",
+    "4": "This diagram illustrates how Tensor Parallelism distributes a single Transformer layer's architecture across multiple GPUs. The weight matrices for both the multi-head attention (MHA) and feed-forward network (FFN) are partitioned using column-wise and row-wise splits. Crucial all-reduce communication steps are required to sum and synchronize the partial results from each GPU, allowing the layer to function as a cohesive unit.",
+    "5": "Tensor parallelism addresses memory limitations by splitting a model's large weight matrices across multiple GPUs. This diagram illustrates two fundamental approaches for partitioning a model layer. In colwise partitioning, the matrix is split vertically into column slices, while in rowwise partitioning, it is split horizontally into row slices, with each slice assigned to a different GPU.",
+    "6": "To deploy a multi-GPU environment for Tensor Parallelism on RunPod, start by selecting an optimized PyTorch template. Next, configure your hardware with a multi-GPU setup, such as four A100 80GB GPUs. Crucially, enable the NVLink (SXM) interconnect to ensure the high-bandwidth, low-latency communication between GPUs required for efficient model parallelism.",
+    "7": "When running Tensor Parallelism on Lambda Cloud, selecting an instance with an SXM interconnect is crucial for high performance. This technology provides a direct, high-bandwidth communication mesh between GPUs, enabling the rapid peer-to-peer data exchange required for multi-GPU workloads. This avoids the performance bottleneck of standard PCIe connections, which route communication indirectly through the CPU.",
+    "8": "This performance benchmark graph illustrates the trade-offs of scaling Tensor Parallelism (TP). As the TP size increases, memory efficiency improves with a linear decrease in memory usage per GPU. However, throughput gains, measured in tokens per second, are sub-linear, showing diminishing returns as more resources are added. This highlights the importance of finding a balanced point to optimize both memory efficiency and processing speed.",
+    "9": "While tensor parallelism splits a model across GPUs, its performance hinges on the communication speed between them. Fast, intra-node communication using high-speed interconnects like NVLink enables maximum throughput within a single server. However, a key limitation arises with slower inter-node communication, where networks like InfiniBand create a high-latency bottleneck that can throttle performance across different machines.",
+    "10": "This diagram illustrates a hybrid architecture combining two powerful techniques for running large models. The model is distributed across four sequential nodes using 4-way pipeline parallelism, where data flows from one stage to the next. Within each node, 8-way tensor parallelism is applied, splitting the model's layers into parallel shards to further distribute the computational load.",
+    "11": "This diagram illustrates how Tensor Parallelism splits a model's large weight matrix across multiple GPUs, a key technique for running models that exceed single-GPU memory. It showcases two methods: splitting the matrix by columns or by rows. In both cases, each GPU computes a partial result, which is then aggregated through an all-reduce communication step to produce the final output.",
+    "12": "Tensor Parallelism enables running large models by splitting a transformer layer's weight matrices across multiple GPUs. This diagram illustrates how matrices are split either column-wise or row-wise, with each GPU processing its slice in parallel. The partial results are then efficiently combined through an \"All-Reduce\" operation to produce the final aggregated output."
+  },
+  "section_map": {
+    "1": "1. Introduction",
+    "2": "2. Understanding the Need for Parallelism",
+    "3": "3. How Tensor Parallelism Works",
+    "4": "4. Applying TP to Transformer Layers",
+    "5": "5. Implementing TP with HuggingFace Transformers",
+    "6": "6. Hands-On Guide: TP on RunPod",
+    "7": "7. Hands-On Guide: TP on Lambda Cloud",
+    "8": "8. Performance Benchmarks and Observations",
+    "9": "9. Limitations of Tensor Parallelism",
+    "10": "10. Combining Tensor and Pipeline Parallelism",
+    "11": "11. Key Takeaways",
+    "12": "Key Takeaways"
+  },
+  "image_types": {
+    "1": "infographic",
+    "2": "infographic",
+    "3": "infographic",
+    "4": "infographic",
+    "5": "infographic",
+    "6": "infographic",
+    "7": "infographic",
+    "8": "infographic",
+    "9": "infographic",
+    "10": "infographic",
+    "11": "infographic",
+    "12": "infographic"
+  }
+}

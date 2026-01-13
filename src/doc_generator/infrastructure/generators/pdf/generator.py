@@ -156,6 +156,8 @@ class PDFGenerator:
         pagesize = page_sizes.get(page_size_key, letter)
 
         # Create document with configured margins
+        from .page_template import NumberedCanvas
+        
         doc = SimpleDocTemplate(
             str(output_path),
             pagesize=pagesize,
@@ -164,8 +166,33 @@ class PDFGenerator:
             topMargin=margin.top,
             bottomMargin=margin.bottom,
             title=display_title,
-            author=metadata.get("author", ""),
+            author=metadata.get("author", self.settings.pdf.metadata.default_author),
         )
+        
+        # Add PDF metadata if enabled
+        if self.settings.pdf.metadata.auto_add_metadata:
+            doc.author = metadata.get("author", self.settings.pdf.metadata.default_author)
+            doc.creator = self.settings.pdf.metadata.default_creator
+            doc.subject = metadata.get("subtitle", "")
+            
+            # Add keywords from metadata
+            keywords = metadata.get("keywords", [])
+            if isinstance(keywords, list):
+                doc.keywords = ", ".join(keywords)
+            elif isinstance(keywords, str):
+                doc.keywords = keywords
+        
+        # Configure custom canvas for headers/footers
+        def create_canvas(filename, **kwargs):
+            canvas_obj = NumberedCanvas(filename, **kwargs)
+            canvas_obj.doc_title = display_title
+            canvas_obj.show_header = self.settings.pdf.header_footer.show_header
+            canvas_obj.show_footer = self.settings.pdf.header_footer.show_footer
+            canvas_obj.show_page_numbers = self.settings.pdf.header_footer.show_page_numbers
+            canvas_obj.include_watermark = self.settings.pdf.header_footer.include_watermark
+            canvas_obj.watermark_text = self.settings.pdf.header_footer.watermark_text
+            canvas_obj.watermark_opacity = self.settings.pdf.header_footer.watermark_opacity
+            return canvas_obj
 
         story = []
 
@@ -237,7 +264,19 @@ class PDFGenerator:
             display_title
         )
         if headings:
-            story.extend(make_table_of_contents(headings, self.styles))
+            # Convert settings to dict for TOC function
+            toc_settings = {
+                "include_page_numbers": self.settings.pdf.toc.include_page_numbers,
+                "max_depth": self.settings.pdf.toc.max_depth,
+                "show_reading_time": self.settings.pdf.toc.show_reading_time,
+                "words_per_minute": self.settings.pdf.toc.words_per_minute
+            }
+            story.extend(make_table_of_contents(
+                headings, 
+                self.styles, 
+                markdown_content,
+                toc_settings
+            ))
             story.append(PageBreak())
 
         if exec_summary:
@@ -341,7 +380,19 @@ class PDFGenerator:
 
             elif kind == "code":
                 story.append(Spacer(1, 8))
-                story.extend(make_code_block(content_item, self.styles))
+                # Convert settings to dict for code block function
+                code_settings = {
+                    "show_line_numbers": self.settings.pdf.code.show_line_numbers,
+                    "syntax_highlighting": self.settings.pdf.code.syntax_highlighting,
+                    "max_lines_per_page": self.settings.pdf.code.max_lines_per_page,
+                    "font_size": self.settings.pdf.code.font_size,
+                    "line_number_color": self.settings.pdf.code.line_number_color
+                }
+                story.extend(make_code_block(
+                    content_item, 
+                    self.styles,
+                    code_settings=code_settings
+                ))
                 story.append(Spacer(1, 8))
 
             elif kind == "table":
@@ -353,9 +404,10 @@ class PDFGenerator:
                 if content_item.strip():
                     story.append(Paragraph(inline_md(content_item), self.styles["BodyCustom"]))
 
-        # Build PDF
+        # Build PDF with custom canvas
         element_count = len(story)
-        doc.build(story)
+        doc.build(story, canvasmaker=create_canvas)
+        logger.debug(f"PDF document built with {element_count} elements")
 
     def _resolve_section_id(self, title: str, next_id: int) -> tuple[int, int]:
         """

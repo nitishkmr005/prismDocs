@@ -52,6 +52,7 @@ project-name/
 │       ├── input/           # Input files to process
 │       ├── logging/         # LLM logs, JSON logs (timestamped)
 │       └── output/          # Generated outputs
+│       └── cache/           # Cached outputs
 ├── tests/
 │   └── __init__.py
 ├── docs/
