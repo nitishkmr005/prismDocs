@@ -59,10 +59,6 @@ export function useGeneration(): UseGenerationResult {
       setProgress(event.progress);
     }
 
-    if ("message" in event && event.message) {
-      setStatus(event.message);
-    }
-
     if (isCompleteEvent(event)) {
       setState("complete");
       setDownloadUrl(event.download_url);
@@ -72,6 +68,7 @@ export function useGeneration(): UseGenerationResult {
         slides: event.metadata.slides,
         imagesGenerated: event.metadata.images_generated,
       });
+      setStatus("Document generated successfully");
     } else if (isCacheHitEvent(event)) {
       setState("cache_hit");
       setDownloadUrl(event.download_url);
@@ -79,7 +76,9 @@ export function useGeneration(): UseGenerationResult {
     } else if (isErrorEvent(event)) {
       setState("error");
       setError(event.error);
+      setStatus("Generation failed");
     } else {
+      // Progress event - map status to user-friendly message
       const statusMessages: Record<string, string> = {
         parsing: "Parsing source documents...",
         transforming: "Transforming content...",
@@ -87,7 +86,10 @@ export function useGeneration(): UseGenerationResult {
         generating_output: "Creating document...",
         uploading: "Finalizing...",
       };
-      setStatus(statusMessages[event.status] || event.status);
+      
+      // Use custom message if provided, otherwise use status mapping
+      const displayMessage = event.message || statusMessages[event.status] || event.status;
+      setStatus(displayMessage);
     }
   }, []);
 
@@ -100,8 +102,8 @@ export function useGeneration(): UseGenerationResult {
         output_format: partialRequest.output_format || "pdf",
         sources: partialRequest.sources || [],
         provider: partialRequest.provider || "gemini",
-        model: partialRequest.model || "gemini-2.5-flash",
-        image_model: partialRequest.image_model || "gemini-2.5-flash-image",
+        model: partialRequest.model || "gemini-2.5-pro",
+        image_model: partialRequest.image_model || "gemini-3-pro-image-preview",
         preferences: { ...DEFAULT_PREFERENCES, ...partialRequest.preferences },
         cache: { ...DEFAULT_CACHE_OPTIONS, ...partialRequest.cache },
       };
