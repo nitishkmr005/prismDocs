@@ -31,13 +31,13 @@ help-docgen:  ## Show all available document generator commands
 	@echo "    make process-folder-fast FOLDER=llm-architectures"
 	@echo "    make process-folder FOLDER=machine-learning"
 	@echo ""
-	@echo "🔄 Batch Processing (Process all folders in src/data/):"
+	@echo "🔄 Batch Processing (Process all folders in backend/data/):"
 	@echo "  make batch-topics                           # Full processing (slow)"
 	@echo "  make batch-topics-fast                      # Reuse images (fast, recommended!)"
 	@echo ""
 	@echo "⚡ Quick PDF Generation (Skip image generation):"
 	@echo "  make quick-pdf INPUT=<file>                 # Generate PDF with existing images"
-	@echo "  Example: make quick-pdf INPUT=src/data/llm-architectures/slides.pdf"
+	@echo "  Example: make quick-pdf INPUT=backend/data/llm-architectures/slides.pdf"
 	@echo ""
 	@echo "📝 Single File Processing:"
 	@echo "  make run-docgen INPUT=<file> OUTPUT=<pdf|pptx>"
@@ -99,18 +99,18 @@ check-deps:  ## Check if dependencies are installed
 
 test-docgen:  ## Run document generator tests
 	@echo "Running tests..."
-	@pytest tests/ -v --cov=src/doc_generator --cov-report=term-missing
+	@pytest tests/ -v --cov=backend/doc_generator --cov-report=term-missing
 
 lint-docgen:  ## Lint and type check document generator code
 	@echo "Linting code..."
-	@ruff check src/doc_generator
+	@ruff check backend/doc_generator
 	@echo "Type checking..."
-	@mypy src/doc_generator
+	@mypy backend/doc_generator
 
 run-docgen:  ## Run document generator (make run-docgen INPUT=file.md OUTPUT=pdf)
 	@if [ -z "$(INPUT)" ]; then \
 		echo "Usage: make run-docgen INPUT=<file> OUTPUT=<pdf|pptx>"; \
-		echo "Example: make run-docgen INPUT=src/data/sample.md OUTPUT=pdf"; \
+		echo "Example: make run-docgen INPUT=backend/data/sample.md OUTPUT=pdf"; \
 		exit 1; \
 	fi
 	@$(PYTHON) scripts/run_generator.py $(INPUT) --output $(or $(OUTPUT),pdf)
@@ -120,15 +120,15 @@ docker-build:  ## Build Docker image for document generator
 	@docker build -t doc-generator:latest .
 	@echo "✅ Docker image built successfully"
 
-docker-run:  ## Run in Docker (make docker-run INPUT=src/data/file.md OUTPUT=pdf)
+docker-run:  ## Run in Docker (make docker-run INPUT=backend/data/file.md OUTPUT=pdf)
 	@if [ -z "$(INPUT)" ]; then \
 		echo "Usage: make docker-run INPUT=<file> OUTPUT=<pdf|pptx>"; \
-		echo "Example: make docker-run INPUT=src/data/sample.md OUTPUT=pdf"; \
+		echo "Example: make docker-run INPUT=backend/data/sample.md OUTPUT=pdf"; \
 		exit 1; \
 	fi
 	@docker run --rm \
-		-v $(PWD)/src/data:/app/src/data \
-		-v $(PWD)/src/output:/app/src/output \
+		-v $(PWD)/backend/data:/app/backend/data \
+		-v $(PWD)/backend/output:/app/backend/output \
 		doc-generator:latest $(INPUT) --output $(or $(OUTPUT),pdf)
 
 docker-compose-up:  ## Run with docker-compose
@@ -144,11 +144,36 @@ run-api:  ## Run FastAPI server for document generation (development)
 	@echo "📖 OpenAPI docs: http://localhost:8000/docs"
 	@echo "📖 ReDoc: http://localhost:8000/redoc"
 	@echo ""
-	@uv run uvicorn doc_generator.infrastructure.api.main:app --reload --host 0.0.0.0 --port 8000
+	@PYTHONPATH=backend uv run uvicorn doc_generator.infrastructure.api.main:app --reload --host 0.0.0.0 --port 8000
 
 run-api-prod:  ## Run FastAPI server for production (no reload)
 	@echo "🚀 Starting Document Generator API (production mode)..."
-	@uv run uvicorn doc_generator.infrastructure.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+	@PYTHONPATH=backend uv run uvicorn doc_generator.infrastructure.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# ============================================================================
+# Frontend Commands
+# ============================================================================
+
+frontend-install:  ## Install frontend dependencies
+	@echo "📦 Installing frontend dependencies..."
+	@cd frontend && npm install
+	@echo "✅ Frontend dependencies installed!"
+
+frontend-dev:  ## Run frontend development server
+	@echo "🌐 Starting frontend dev server..."
+	@echo "📍 URL: http://localhost:3000"
+	@cd frontend && npm run dev
+
+frontend-build:  ## Build frontend for production
+	@echo "🔨 Building frontend..."
+	@cd frontend && npm run build
+	@echo "✅ Frontend built!"
+
+dev-all:  ## Run both backend API and frontend (development)
+	@echo "🚀 Starting full-stack development..."
+	@echo "📍 Backend: http://localhost:8000"
+	@echo "📍 Frontend: http://localhost:3000"
+	@make run-api & make frontend-dev
 
 # ============================================================================
 # Folder-Based Processing Commands
@@ -161,23 +186,23 @@ process-folder:  ## Process a topic folder with full image generation (make proc
 		echo "Example:"; \
 		echo "  make process-folder FOLDER=llm-architectures"; \
 		echo ""; \
-		echo "Available folders in src/data/:"; \
-		find src/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
+		echo "Available folders in backend/data/:"; \
+		find backend/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
 		exit 1; \
 	fi
-	@if [ ! -d "src/data/$(FOLDER)" ]; then \
-		echo "❌ Folder not found: src/data/$(FOLDER)"; \
+	@if [ ! -d "backend/data/$(FOLDER)" ]; then \
+		echo "❌ Folder not found: backend/data/$(FOLDER)"; \
 		echo ""; \
 		echo "Available folders:"; \
-		find src/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
+		find backend/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
 		exit 1; \
 	fi
 	@echo "🚀 Processing folder: $(FOLDER)"
 	@echo "📝 Mode: Full processing (with image generation)"
-	@$(PYTHON) scripts/generate_from_folder.py src/data/$(FOLDER)
+	@$(PYTHON) scripts/generate_from_folder.py backend/data/$(FOLDER)
 	@echo ""
 	@echo "✅ Complete! Output files:"
-	@ls -lh src/output/$(FOLDER).pdf src/output/$(FOLDER).pptx 2>/dev/null || echo "  (check logs for errors)"
+	@ls -lh backend/output/$(FOLDER).pdf backend/output/$(FOLDER).pptx 2>/dev/null || echo "  (check logs for errors)"
 
 process-folder-fast:  ## Process a topic folder with existing images (FAST) (make process-folder-fast FOLDER=<name>)xw₹
 	@if [ -z "$(FOLDER)" ]; then \
@@ -186,42 +211,42 @@ process-folder-fast:  ## Process a topic folder with existing images (FAST) (mak
 		echo "Example:"; \
 		echo "  make process-folder-fast FOLDER=llm-architectures"; \
 		echo ""; \
-		echo "Available folders in src/data/:"; \
-		find src/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
+		echo "Available folders in backend/data/:"; \
+		find backend/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
 		exit 1; \
 	fi
-	@if [ ! -d "src/data/$(FOLDER)" ]; then \
-		echo "❌ Folder not found: src/data/$(FOLDER)"; \
+	@if [ ! -d "backend/data/$(FOLDER)" ]; then \
+		echo "❌ Folder not found: backend/data/$(FOLDER)"; \
 		echo ""; \
 		echo "Available folders:"; \
-		find src/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
+		find backend/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort; \
 		exit 1; \
 	fi
 	@echo "⚡ Processing folder: $(FOLDER)"
 	@echo "📝 Mode: Fast (reusing existing images)"
-	@$(PYTHON) scripts/generate_from_folder.py src/data/$(FOLDER) --skip-images
+	@$(PYTHON) scripts/generate_from_folder.py backend/data/$(FOLDER) --skip-images
 	@echo ""
 	@echo "✅ Complete! Output files:"
-	@ls -lh src/output/$(FOLDER).pdf src/output/$(FOLDER).pptx 2>/dev/null || echo "  (check logs for errors)"
+	@ls -lh backend/output/$(FOLDER).pdf backend/output/$(FOLDER).pptx 2>/dev/null || echo "  (check logs for errors)"
 
 batch-topics:  ## Process all topic folders with full image generation
-	@echo "🔄 Batch processing all topics in src/data/"
+	@echo "🔄 Batch processing all topics in backend/data/"
 	@echo "📝 Mode: Full processing (with image generation)"
 	@echo "⚠️  This may take a while..."
 	@echo ""
 	@$(PYTHON) scripts/batch_process_topics.py
 	@echo ""
 	@echo "✅ Batch processing complete!"
-	@echo "📂 Check src/output/ for generated files"
+	@echo "📂 Check backend/output/ for generated files"
 
 batch-topics-fast:  ## Process all topic folders with existing images (FAST - RECOMMENDED)
-	@echo "⚡ Batch processing all topics in src/data/"
+	@echo "⚡ Batch processing all topics in backend/data/"
 	@echo "📝 Mode: Fast (reusing existing images)"
 	@echo ""
 	@$(PYTHON) scripts/batch_process_topics.py --skip-images
 	@echo ""
 	@echo "✅ Batch processing complete!"
-	@echo "📂 Check src/output/ for generated files"
+	@echo "📂 Check backend/output/ for generated files"
 
 # ============================================================================
 # Quick PDF Generation (Skip image generation)
@@ -232,8 +257,8 @@ quick-pdf:  ## Generate PDF with existing images (make quick-pdf INPUT=<file>)
 		echo "❌ Usage: make quick-pdf INPUT=<file>"; \
 		echo ""; \
 		echo "Examples:"; \
-		echo "  make quick-pdf INPUT=src/data/llm-architectures/slides.pdf"; \
-		echo "  make quick-pdf INPUT=src/data/document.md"; \
+		echo "  make quick-pdf INPUT=backend/data/llm-architectures/slides.pdf"; \
+		echo "  make quick-pdf INPUT=backend/data/document.md"; \
 		exit 1; \
 	fi
 	@if [ ! -f "$(INPUT)" ]; then \
@@ -250,25 +275,25 @@ quick-pdf:  ## Generate PDF with existing images (make quick-pdf INPUT=<file>)
 
 clear-cache:  ## Clear content cache files
 	@echo "🗑️  Clearing content cache..."
-	@rm -rf src/output/cache/*.json
+	@rm -rf backend/output/cache/*.json
 	@echo "✅ Content cache cleared!"
 
 clear-images:  ## Clear generated images (WARNING: Images will need to be regenerated)
 	@echo "⚠️  WARNING: This will delete all generated images!"
-	@echo "Images in src/output/images/ will be removed."
+	@echo "Images in backend/output/images/ will be removed."
 	@read -p "Are you sure? (y/N): " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		rm -rf src/output/images/*.png; \
-		rm -rf src/output/pdf_images/*.png; \
+		rm -rf backend/output/images/*.png; \
+		rm -rf backend/output/pdf_images/*.png; \
 		echo "✅ Images cleared!"; \
 	else \
 		echo "❌ Cancelled"; \
 	fi
 
 list-topics:  ## List all available topic folders
-	@echo "📁 Available topic folders in src/data/:"
-	@find src/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort || echo "  (no folders found)"
+	@echo "📁 Available topic folders in backend/data/:"
+	@find backend/data -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort || echo "  (no folders found)"
 
 # ============================================================================
 # Convenient Shortcuts
@@ -286,7 +311,7 @@ llm-arch-full:  ## Shortcut: Process llm-architectures folder (full, with image 
 
 clean-docgen:  ## Clean document generator files and caches
 	@echo "Cleaning generated files..."
-	@rm -rf src/output/*
+	@rm -rf backend/output/*
 	@rm -rf **/__pycache__
 	@rm -rf .pytest_cache
 	@rm -rf .ruff_cache
@@ -334,7 +359,7 @@ validate-pdf:  ## Validate PDF quality (make validate-pdf INPUT=<pdf-file>)
 		echo "❌ Usage: make validate-pdf INPUT=<pdf-file>"; \
 		echo ""; \
 		echo "Example:"; \
-		echo "  make validate-pdf INPUT=src/output/test/document.pdf"; \
+		echo "  make validate-pdf INPUT=backend/output/test/document.pdf"; \
 		exit 1; \
 	fi
 	@if [ ! -f "$(INPUT)" ]; then \
@@ -348,5 +373,5 @@ test-pdf-features:  ## Test all PDF enhancements
 	@$(PYTHON) test_all_pdf_features.py
 	@echo ""
 	@echo "📋 Validating generated PDF..."
-	@$(MAKE) validate-pdf INPUT=src/output/test/PDF_Enhancements_Test_-_Complete.pdf
+	@$(MAKE) validate-pdf INPUT=backend/output/test/PDF_Enhancements_Test_-_Complete.pdf
 
