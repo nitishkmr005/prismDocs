@@ -1,6 +1,16 @@
 # Backend Dockerfile for FastAPI application
 FROM python:3.12.9-slim
 
+# Install system dependencies for document processing
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
@@ -31,5 +41,6 @@ ENV PYTHONPATH=/app
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import os, urllib.request; port=os.getenv('PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/api/health')"
 
-# Run the application
-CMD ["/app/start.sh"]
+# Run the application - use shell form to ensure script is executable at runtime
+# This handles volume mounts which may override the chmod done during build
+CMD ["/bin/bash", "-c", "chmod +x /app/start.sh && /app/start.sh"]
