@@ -161,6 +161,17 @@
 
 ## 🎯 What DocGen Does
 
+<div align="center">
+
+### 🌐 Web Application
+
+<img src=".github/webapp-screenshot.png" alt="DocGen Web Application" width="90%" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"/>
+
+<br/>
+<br/>
+
+</div>
+
 ### System Overview
 
 ```
@@ -171,38 +182,40 @@
 │  📄 PDF Documents   │       │  1️⃣  Detect Format     │       │  📕 PDF Reports     │
 │  📝 Markdown Files  │       │  2️⃣  Parse Content     │       │  📊 PPTX Slides     │
 │  🌐 Web URLs        │       │  3️⃣  Transform (LLM)   │       │  📝 Markdown Docs   │
-│  📊 DOCX/XLSX       │       │  4️⃣  Generate Output   │       │  ❓ FAQ Documents   │
-│  🖼️  Images (OCR)   │       │  5️⃣  Validate Result   │       │  🎙️  Podcasts*      │
-│  📋 Plain Text      │       │                        │       │                     │
+│  📊 DOCX/XLSX       │       │  4️⃣  Generate Images   │       │  🧠 Mind Maps       │
+│  🖼️  Images (OCR)   │       │  5️⃣  Describe Images   │       │  🖼️  Edited Images  │
+│  📋 Plain Text      │       │  6️⃣  Generate Output   │       │  🎙️  Podcasts*      │
+│                     │       │  7️⃣  Validate Result   │       │                     │
 │                     │       │   🔄 Auto-retry (3x)   │       │                     │
 └─────────────────────┘       └────────────────────────┘       └─────────────────────┘
                                          │
-                              ┌──────────┴──────────┐
-                              │                     │
-                       ┌──────▼──────┐      ┌──────▼──────┐
-                       │   Docling   │      │   LLM APIs  │
-                       │  OCR+Parse  │      │   Synthesis │
-                       └─────────────┘      └──────┬──────┘
-                                                   │
-                                            ┌──────▼──────┐
-                                            │   Image Gen │
-                                            │Gemini/DALL-E│
-                                            └─────────────┘
+                    ┌────────────────────┼────────────────────┐
+                    │                    │                    │
+             ┌──────▼──────┐      ┌──────▼──────┐     ┌──────▼──────┐
+             │   Docling   │      │   LLM APIs  │     │  Image Gen  │
+             │  OCR+Parse  │      │  Synthesis  │     │ Gemini/DALL-E│
+             └─────────────┘      └─────────────┘     └──────┬──────┘
+                                                             │
+                                                      ┌──────▼──────┐
+                                                      │   Vision AI │
+                                                      │  Understand │
+                                                      └─────────────┘
 
         Powered by: Claude • Gemini • OpenAI • Docling • ReportLab
 ```
 
 ### Core Stack
 
-| Component            | Technology                    | Purpose                                                       |
-| -------------------- | ----------------------------- | ------------------------------------------------------------- |
-| **Workflow Engine**  | LangGraph 0.2.55              | State machine orchestration with retry logic                  |
-| **Document Parsing** | Docling 2.66.0 (IBM Research) | Advanced OCR, table extraction, layout analysis               |
-| **LLM Synthesis**    | Claude/Gemini/OpenAI          | Content transformation and intelligent summarization          |
-| **Image Generation** | Gemini/DALL-E                 | AI-generated visuals and diagrams                             |
-| **PDF Generation**   | ReportLab 4.2.5               | Professional PDF rendering with custom styling                |
-| **PPTX Generation**  | python-pptx 1.0.2             | PowerPoint presentations with 16:9 layouts                    |
-| **Architecture**     | Clean Architecture            | Domain/Application/Infrastructure layers (zero circular deps) |
+| Component               | Technology                    | Purpose                                                       |
+| ----------------------- | ----------------------------- | ------------------------------------------------------------- |
+| **Workflow Engine**     | LangGraph 0.2.55              | State machine orchestration with retry logic                  |
+| **Document Parsing**    | Docling 2.66.0 (IBM Research) | Advanced OCR, table extraction, layout analysis               |
+| **LLM Synthesis**       | Claude/Gemini/OpenAI          | Content transformation and intelligent summarization          |
+| **Image Generation**    | Gemini Imagen/DALL-E          | AI-generated visuals, diagrams, and infographics              |
+| **Image Understanding** | Gemini Vision                 | Analyze generated images and write descriptive alt-text       |
+| **PDF Generation**      | ReportLab 4.2.5               | Professional PDF rendering with custom styling                |
+| **PPTX Generation**     | python-pptx 1.0.2             | PowerPoint presentations with 16:9 layouts                    |
+| **Architecture**        | Clean Architecture            | Domain/Application/Infrastructure layers (zero circular deps) |
 
 ### Two Ways to Use DocGen
 
@@ -242,16 +255,21 @@ Ingest and normalize content from diverse sources with intelligent extraction:
 
 - **Content Transformation:** LLM-driven summarization, restructuring, and style adaptation
 - **Visual Generation:** Context-aware diagrams, charts, and illustrations via Gemini/DALL-E
+- **Image Understanding:** AI vision analyzes generated images and writes descriptive alt-text automatically
 - **Intelligent Merging:** Multi-source synthesis with conflict resolution and deduplication
 - **Slide Generation:** Automatic PPTX layouts with bullet points, titles, and visuals
+- **Mind Map Creation:** Hierarchical concept visualization from document structure
 
 ### 📤 Professional Output Formats
 
-- **PDF:** ReportLab-based generation with custom styling, headers, footers, and TOC
-- **PPTX:** python-pptx presentations with 16:9 layouts and embedded images
-- **Markdown:** Structured docs with frontmatter and proper heading hierarchy
-- **FAQ Docs:** Q&A format generation from input content
-- **Podcasts:** MP3 audio generation (coming soon)
+| Format           | Description                              | Key Features                                                |
+| ---------------- | ---------------------------------------- | ----------------------------------------------------------- |
+| **📕 PDF**       | Professional reports with custom styling | Headers, footers, TOC, embedded images with AI descriptions |
+| **📊 PPTX**      | PowerPoint presentations                 | 16:9 layouts, bullet points, embedded visuals               |
+| **📝 Markdown**  | Structured documentation                 | Frontmatter, heading hierarchy, code blocks                 |
+| **🧠 Mind Maps** | Visual concept hierarchies               | Interactive diagrams from document structure                |
+| **🖼️ Images**    | AI-generated/edited visuals              | Context-aware diagrams, infographics, charts                |
+| **🎙️ Podcasts**  | Audio content (coming soon)              | Multi-voice MP3 generation                                  |
 
 ### ⚡ Production-Ready Features
 
