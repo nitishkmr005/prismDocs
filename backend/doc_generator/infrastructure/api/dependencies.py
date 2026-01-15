@@ -15,12 +15,14 @@ class APIKeys:
     google: Optional[str] = None
     openai: Optional[str] = None
     anthropic: Optional[str] = None
+    image: Optional[str] = None
 
 
 def extract_api_keys(
     x_google_key: Optional[str] = Header(None, alias="X-Google-Key"),
     x_openai_key: Optional[str] = Header(None, alias="X-OpenAI-Key"),
     x_anthropic_key: Optional[str] = Header(None, alias="X-Anthropic-Key"),
+    x_image_key: Optional[str] = Header(None, alias="X-Image-Key"),
 ) -> APIKeys:
     """Extract API keys from request headers.
 
@@ -37,6 +39,7 @@ def extract_api_keys(
         google=x_google_key,
         openai=x_openai_key,
         anthropic=x_anthropic_key,
+        image=x_image_key,
     )
 
 

@@ -45,6 +45,7 @@ def get_cache_service() -> CacheService:
 async def event_generator(
     request: GenerateRequest,
     api_key: str,
+    image_api_key: str,
     generation_service: GenerationService,
     cache_service: CacheService,
 ) -> AsyncIterator[dict]:
@@ -111,6 +112,7 @@ async def event_generator(
     async for event in generation_service.generate(
         request=request,
         api_key=api_key,
+        image_api_key=image_api_key,
     ):
         logger.debug(f"Yielding event: {type(event).__name__}")
         yield {"data": event.model_dump_json()}
@@ -161,6 +163,7 @@ async def generate_document(
     
     # Validate API key for provider
     api_key = get_api_key_for_provider(request.provider, api_keys)
+    image_api_key = api_keys.image or api_key
     logger.debug(f"API key validated for provider {request.provider}")
 
     generation_service = get_generation_service()
@@ -170,6 +173,7 @@ async def generate_document(
         event_generator(
             request=request,
             api_key=api_key,
+            image_api_key=image_api_key,
             generation_service=generation_service,
             cache_service=cache_service,
         )

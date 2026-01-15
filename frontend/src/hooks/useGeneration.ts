@@ -34,7 +34,11 @@ export interface UseGenerationResult {
     slides?: number;
     imagesGenerated?: number;
   } | null;
-  generate: (request: Partial<GenerateRequest>, apiKey: string) => Promise<void>;
+  generate: (
+    request: Partial<GenerateRequest>,
+    apiKey: string,
+    imageApiKey?: string
+  ) => Promise<void>;
   reset: () => void;
 }
 
@@ -106,7 +110,7 @@ export function useGeneration(): UseGenerationResult {
   }, []);
 
   const generate = useCallback(
-    async (partialRequest: Partial<GenerateRequest>, apiKey: string) => {
+    async (partialRequest: Partial<GenerateRequest>, apiKey: string, imageApiKey?: string) => {
       reset();
       setState("generating");
 
@@ -123,6 +127,7 @@ export function useGeneration(): UseGenerationResult {
       const options: GenerateOptions = {
         request,
         apiKey,
+        imageApiKey,
         onEvent: handleEvent,
         onError: (err) => {
           setState("error");

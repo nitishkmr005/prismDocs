@@ -19,6 +19,7 @@ function getApiKeyHeader(provider: string): string {
 export interface GenerateOptions {
   request: GenerateRequest;
   apiKey: string;
+  imageApiKey?: string;
   onEvent?: (event: GenerationEvent) => void;
   onError?: (error: Error) => void;
   signal?: AbortSignal;
@@ -27,13 +28,17 @@ export interface GenerateOptions {
 export async function generateDocument(
   options: GenerateOptions
 ): Promise<GenerationEvent> {
-  const { request, apiKey, onEvent, onError, signal } = options;
+  const { request, apiKey, imageApiKey, onEvent, onError, signal } = options;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "text/event-stream",
     [getApiKeyHeader(request.provider)]: apiKey,
   };
+
+  if (imageApiKey) {
+    headers["X-Image-Key"] = imageApiKey;
+  }
 
   const response = await fetch(getApiUrl(API_CONFIG.endpoints.generate), {
     method: "POST",

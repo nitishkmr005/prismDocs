@@ -56,12 +56,14 @@ class GenerationService:
         self,
         request: GenerateRequest,
         api_key: str,
+        image_api_key: str | None = None,
     ) -> AsyncIterator[ProgressEvent | CompleteEvent | ErrorEvent]:
         """Generate document with progress streaming.
 
         Args:
             request: Generation request
             api_key: API key for LLM provider
+            image_api_key: API key for image generation (falls back to api_key)
 
         Yields:
             Progress events, then completion or error event
@@ -180,7 +182,7 @@ class GenerationService:
                         "enable_image_generation": request.preferences.enable_image_generation,
                         "api_keys": {
                             "content": api_key,
-                            "image": api_key,  # Use same key for images (Gemini supports both)
+                            "image": image_api_key or api_key,
                         },
                     },
                     progress_callback=workflow_progress,

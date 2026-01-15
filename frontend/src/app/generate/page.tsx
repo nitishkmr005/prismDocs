@@ -52,7 +52,8 @@ export default function GeneratePage() {
             enable_image_generation: options.enableImageGeneration,
           },
         },
-        contentApiKey
+        contentApiKey,
+        imageApiKey
       );
     },
     [generate]
