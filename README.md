@@ -1,33 +1,15 @@
 <div align="center">
 
-<!-- Colorful Banner -->
-<svg width="800" height="120" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="800" height="120" fill="url(#gradient1)" rx="10"/>
-  <text x="400" y="55" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle">
-    DocGen
-  </text>
-  <text x="400" y="85" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" opacity="0.9">
-    AI-Powered Document Generation | Multi-Format | Production-Ready
-  </text>
-</svg>
+# DocGen
+
+### Transform any content into professional documents with AI
+
+**AI-Powered Document Generation | Multi-Format | Production-Ready**
+
+From Research Papers to Pitch Decks • From Web Articles to Study Guides  
+Built on LangGraph, Docling, and modern LLMs • Clean Architecture • Type-Safe • Extensible
 
 </div>
-
-<h3 align="center">
-Transform any content into professional documents with AI
-</h3>
-
-<p align="center">
-<strong>From Research Papers to Pitch Decks • From Web Articles to Study Guides</strong><br/>
-Built on LangGraph, Docling, and modern LLMs • Clean Architecture • Type-Safe • Extensible
-</p>
 
 <p align="center">
   <a href="#-quick-start">Quick Start</a> •
@@ -153,84 +135,9 @@ Built on LangGraph, Docling, and modern LLMs • Clean Architecture • Type-Saf
 
 ## 🎯 What DocGen Does
 
-```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│   Inputs    │─────▶│  LangGraph   │─────▶│  Outputs    │
-│ PDF/MD/URLs │      │  Workflow    │      │ PDF/PPTX/MP3│
-└─────────────┘      └──────────────┘      └─────────────┘
-                            │
-                    ┌───────┴────────┐
-                    │                │
-              ┌─────▼─────┐   ┌─────▼─────┐
-              │  Docling  │   │    LLM    │
-              │ OCR+Parse │   │ Synthesis │
-              └───────────┘   └─────┬─────┘
-                                    │
-                              ┌─────▼─────┐
-                              │   Image   │
-                              │ Generation│
-                              └───────────┘
-```
-
-**Core Stack:**
-- **Workflow:** LangGraph 0.2.55 - State machine orchestration with retry logic
-- **Parsing:** Docling 2.66.0 (IBM Research) - Advanced OCR, table extraction, layout analysis
-- **LLM Synthesis:** Claude/Gemini/OpenAI - Content transformation and intelligent summarization
-- **Image Generation:** Gemini/DALL-E - AI-generated visuals and diagrams
-- **Generation:** ReportLab 4.2.5 + python-pptx 1.0.2 - Professional PDF/PPTX rendering
-- **Architecture:** Clean Architecture - Domain/Application/Infrastructure layers with zero circular dependencies
-
-**Two Ways to Use DocGen:**
-
-1. **Python Package** (Coming Soon) - `pip install docgen` for programmatic access
-2. **Web UI + API** - FastAPI backend + Next.js frontend for UI-driven generation
-
----
-
-## What DocGen Does
-
-### Multi-Format Input Parsing
-Ingest and normalize content from diverse sources with intelligent extraction:
-
-| Format | Parser | Capabilities |
-|--------|--------|--------------|
-| **PDF** | Docling | OCR, table extraction, layout analysis, image extraction |
-| **Markdown** | Native | Frontmatter support, code blocks, nested structures |
-| **Web URLs** | MarkItDown | Article extraction, metadata parsing, link resolution |
-| **Office Docs** | Docling | DOCX, PPTX, XLSX with formatting preservation |
-| **Images** | Docling | PNG, JPG, TIFF with OCR and layout detection |
-| **Plain Text** | Native | TXT files with encoding detection |
-
-### AI-Powered Synthesis
-- **Content Transformation:** LLM-driven summarization, restructuring, and style adaptation
-- **Visual Generation:** Context-aware diagrams, charts, and illustrations via Gemini/DALL-E
-- **Intelligent Merging:** Multi-source synthesis with conflict resolution and deduplication
-- **Slide Generation:** Automatic PPTX layouts with bullet points, titles, and visuals
-
-### Professional Output Formats
-- **PDF:** ReportLab-based generation with custom styling, headers, footers, and TOC
-- **PPTX:** python-pptx presentations with 16:9 layouts and embedded images
-- **Markdown:** Structured docs with frontmatter and proper heading hierarchy
-- **FAQ Docs:** Q&A format generation from input content
-- **Podcasts:** MP3 audio generation (coming soon)
-
-### Production-Ready Features
-- **LangGraph Workflow:** State machine with automatic retry (max 3 attempts) on failures
-- **Caching:** Content and image caching to reduce LLM costs and latency
-- **Logging:** Structured logging with Loguru for observability
-- **Type Safety:** Pydantic validation throughout the pipeline
-- **Docker Support:** Containerized backend and frontend for easy deployment
-- **BYO API Keys:** Users bring their own LLM credentials (Claude, Gemini, OpenAI)
-
----
-
-## 🏗️ Architecture
-
-DocGen follows **Hybrid Clean Architecture** for maintainability, testability, and extensibility.
-
 <div align="center">
 
-### System Architecture
+### System Overview
 
 <svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
@@ -296,6 +203,62 @@ DocGen follows **Hybrid Clean Architecture** for maintainability, testability, a
 </svg>
 
 </div>
+
+**Core Stack:**
+- **Workflow:** LangGraph 0.2.55 - State machine orchestration with retry logic
+- **Parsing:** Docling 2.66.0 (IBM Research) - Advanced OCR, table extraction, layout analysis
+- **LLM Synthesis:** Claude/Gemini/OpenAI - Content transformation and intelligent summarization
+- **Image Generation:** Gemini/DALL-E - AI-generated visuals and diagrams
+- **Generation:** ReportLab 4.2.5 + python-pptx 1.0.2 - Professional PDF/PPTX rendering
+- **Architecture:** Clean Architecture - Domain/Application/Infrastructure layers with zero circular dependencies
+
+**Two Ways to Use DocGen:**
+
+1. **Python Package** (Coming Soon) - `pip install docgen` for programmatic access
+2. **Web UI + API** - FastAPI backend + Next.js frontend for UI-driven generation
+
+### Multi-Format Input Parsing
+
+Ingest and normalize content from diverse sources with intelligent extraction:
+
+| Format | Parser | Capabilities |
+|--------|--------|--------------|
+| **PDF** | Docling | OCR, table extraction, layout analysis, image extraction |
+| **Markdown** | Native | Frontmatter support, code blocks, nested structures |
+| **Web URLs** | MarkItDown | Article extraction, metadata parsing, link resolution |
+| **Office Docs** | Docling | DOCX, PPTX, XLSX with formatting preservation |
+| **Images** | Docling | PNG, JPG, TIFF with OCR and layout detection |
+| **Plain Text** | Native | TXT files with encoding detection |
+
+### AI-Powered Synthesis
+- **Content Transformation:** LLM-driven summarization, restructuring, and style adaptation
+- **Visual Generation:** Context-aware diagrams, charts, and illustrations via Gemini/DALL-E
+- **Intelligent Merging:** Multi-source synthesis with conflict resolution and deduplication
+- **Slide Generation:** Automatic PPTX layouts with bullet points, titles, and visuals
+
+### Professional Output Formats
+- **PDF:** ReportLab-based generation with custom styling, headers, footers, and TOC
+- **PPTX:** python-pptx presentations with 16:9 layouts and embedded images
+- **Markdown:** Structured docs with frontmatter and proper heading hierarchy
+- **FAQ Docs:** Q&A format generation from input content
+- **Podcasts:** MP3 audio generation (coming soon)
+
+### Production-Ready Features
+- **LangGraph Workflow:** State machine with automatic retry (max 3 attempts) on failures
+- **Caching:** Content and image caching to reduce LLM costs and latency
+- **Logging:** Structured logging with Loguru for observability
+- **Type Safety:** Pydantic validation throughout the pipeline
+- **Docker Support:** Containerized backend and frontend for easy deployment
+- **BYO API Keys:** Users bring their own LLM credentials (Claude, Gemini, OpenAI)
+
+---
+
+
+## 🏗️ Architecture
+
+DocGen follows **Hybrid Clean Architecture** for maintainability, testability, and extensibility.
+
+
 
 ### Clean Architecture Layers
 
