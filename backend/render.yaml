@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: doc-generator-api
+    runtime: python
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "uvicorn doc_generator.infrastructure.api.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.9
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+    autoDeploy: true
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/health
