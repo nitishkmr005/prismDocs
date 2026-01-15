@@ -81,13 +81,19 @@ def _init_image_components(metadata: dict, settings):
     Initialize image generation helpers based on configuration.
     Invoked by: src/doc_generator/application/nodes/generate_images.py
     """
+    # Get API key from metadata
+    api_keys = metadata.get("api_keys", {})
+    image_api_key = api_keys.get("image")
+
     detector = ImageTypeDetector()
     provider = (
         metadata.get("image_provider") or settings.image_generation.default_provider
     )
     gemini_gen = None
     if provider == "gemini":
-        gemini_gen = GeminiImageGenerator(model=metadata.get("image_model"))
+        gemini_gen = GeminiImageGenerator(
+            api_key=image_api_key, model=metadata.get("image_model")
+        )
     else:
         logger.info(f"Image provider '{provider}' not supported for raster generation")
     return detector, gemini_gen
@@ -256,8 +262,12 @@ def _process_section_image(
     section_title = section["title"]
     section_content = section["content"]
 
+    # Get API key from metadata
+    api_keys = metadata.get("api_keys", {})
+    image_api_key = api_keys.get("image")
+
     # LLM decides image type + prompt based on section content.
-    decision = detector.detect(section_title, section_content)
+    decision = detector.detect(section_title, section_content, api_key=image_api_key)
     _apply_requested_style(decision, metadata.get("image_style", "auto"))
     logger.debug(
         f"Section '{section_title}': {decision.image_type.value} "
@@ -305,11 +315,14 @@ def _process_section_image(
 class GeminiPromptGenerator:
     """Generate image prompts using Gemini LLM based on section content."""
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         """
-        Invoked by: (no references found)
+        Initialize with optional API key from request.
+
+        Args:
+            api_key: API key from request headers, falls back to ENV if not provided
         """
-        self.api_key = get_gemini_api_key()
+        self.api_key = api_key or get_gemini_api_key()
         self.settings = get_settings()
         self.client = create_gemini_client(self.api_key)
         if self.api_key and self.client is None:
@@ -393,7 +406,9 @@ class ImageTypeDetector:
         """
         return True  # Always available, uses fallback if LLM unavailable
 
-    def detect(self, section_title: str, content: str) -> ImageDecision:
+    def detect(
+        self, section_title: str, content: str, api_key: str | None = None
+    ) -> ImageDecision:
         """
         Detect the best image type and generate content-specific prompt.
 
@@ -405,12 +420,13 @@ class ImageTypeDetector:
         Args:
             section_title: Title of the section
             content: Content of the section
+            api_key: Optional API key from request headers
 
         Returns:
             ImageDecision with type, content-specific prompt, and confidence
         Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
         """
-        prompt_generator = GeminiPromptGenerator()
+        prompt_generator = GeminiPromptGenerator(api_key=api_key)
         if not prompt_generator.is_available():
             logger.warning("Prompt generator unavailable - skipping image generation")
             return ImageDecision(

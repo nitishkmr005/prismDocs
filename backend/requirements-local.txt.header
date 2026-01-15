@@ -1,0 +1,6 @@
+# Full requirements for local macOS development with UV
+# DO NOT USE FOR DOCKER - use requirements-docker.txt instead
+# This file contains macOS-specific packages like pyobjc and ocrmac
+# which won't work in Linux containers.
+
+# For Docker deployment, see: requirements-docker.txt

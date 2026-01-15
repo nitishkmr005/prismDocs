@@ -178,6 +178,10 @@ class GenerationService:
                         "max_tokens": request.preferences.max_tokens,
                         "file_id": file_id,
                         "enable_image_generation": request.preferences.enable_image_generation,
+                        "api_keys": {
+                            "content": api_key,
+                            "image": api_key,  # Use same key for images (Gemini supports both)
+                        },
                     },
                     progress_callback=workflow_progress,
                 ),
