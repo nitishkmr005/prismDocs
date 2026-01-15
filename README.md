@@ -5,28 +5,30 @@
 <br/>
 
 <p>
-  <strong>Transform any content into professional documents with AI</strong>
+  <strong>🚀 Transform any content into professional documents with AI</strong>
   <br/>
   <em>From Research Papers to Pitch Decks • From Web Articles to Study Guides</em>
 </p>
 
 <br/>
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://www.docker.com/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.128-009688.svg)](https://fastapi.tiangolo.com/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2.55-purple.svg)](https://github.com/langchain-ai/langgraph)
+[![Python](https://img.shields.io/badge/Python-3.11+-00b4d8?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-06d6a0?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Code Style](https://img.shields.io/badge/Code_Style-Black-000000?style=flat-square)](https://github.com/psf/black)
+[![Docker](https://img.shields.io/badge/Docker-Ready-7c3aed?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.128-c026d3?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-0.2.55-a78bfa?style=flat-square)](https://github.com/langchain-ai/langgraph)
 
-Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • Type-Safe • Extensible
+<br/>
+
+**Built on** `LangGraph` • `Docling` • `Claude` • `Gemini` • `OpenAI` **| Clean Architecture | Type-Safe | Extensible**
 
 <p align="center">
-  <a href="#-quick-start"><b>Quick Start</b></a> •
-  <a href="#-use-cases-by-role"><b>Use Cases</b></a> •
-  <a href="#-api-usage"><b>API</b></a> •
-  <a href="#-architecture"><b>Architecture</b></a> •
-  <a href="#-roadmap"><b>Roadmap</b></a>
+  <a href="#-quick-start"><b>🚀 Quick Start</b></a> •
+  <a href="#-use-cases-by-role"><b>✨ Use Cases</b></a> •
+  <a href="#-api-usage"><b>📡 API</b></a> •
+  <a href="#-architecture"><b>🏗️ Architecture</b></a> •
+  <a href="#-roadmap"><b>🗺️ Roadmap</b></a>
 </p>
 
 </div>
@@ -55,9 +57,11 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 <td width="50%" valign="top">
 
 ### 👨‍💼 **For Executives & Business Leaders**
-> *"Create consistent, on-brand presentations in minutes"*
+
+> _"Create consistent, on-brand presentations in minutes"_
 
 **What You Can Do:**
+
 - 📊 Transform meeting notes → Pitch decks
 - 🎨 Brand-consistent presentations
 - 📄 Executive summaries from long reports
@@ -69,9 +73,11 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 <td width="50%" valign="top">
 
 ### 🎓 **For Students & Researchers**
-> *"Turn research papers into study materials automatically"*
+
+> _"Turn research papers into study materials automatically"_
 
 **What You Can Do:**
+
 - 📚 PDF papers → Study guides + flashcards
 - 🔬 arXiv formatting for submissions
 - 📝 Literature reviews from multiple sources
@@ -85,9 +91,11 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 <td width="50%" valign="top">
 
 ### 💼 **For Job Seekers & Career Professionals**
-> *"Generate professional resumes and interview prep in one click"*
+
+> _"Generate professional resumes and interview prep in one click"_
 
 **What You Can Do:**
+
 - 📋 Professional resume generation
 - 💬 Interview Q&A preparation docs
 - 🎯 Tailored cover letters
@@ -99,9 +107,11 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 <td width="50%" valign="top">
 
 ### 🎨 **For Content Creators & Marketers**
-> *"Scale your content production with AI"*
+
+> _"Scale your content production with AI"_
 
 **What You Can Do:**
+
 - 🎙️ Blog posts → Podcast scripts
 - 🖼️ YouTube thumbnails generation
 - 📱 Social media content packages
@@ -115,9 +125,11 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 <td width="50%" valign="top">
 
 ### 👨‍💻 **For Developers & Technical Writers**
-> *"Documentation that writes itself"*
+
+> _"Documentation that writes itself"_
 
 **What You Can Do:**
+
 - 📖 Code → Technical documentation
 - 🔀 API documentation generation
 - 📊 Architecture diagrams (Mermaid)
@@ -129,9 +141,11 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 <td width="50%" valign="top">
 
 ### 🏢 **For Teams & Enterprises**
-> *"Scalable document generation infrastructure"*
+
+> _"Scalable document generation infrastructure"_
 
 **What You Can Do:**
+
 - 🔄 Automated report generation
 - 🏭 High-volume processing
 - 🔐 Self-hosted deployment
@@ -180,22 +194,22 @@ Built on **LangGraph**, **Docling**, and modern LLMs • Clean Architecture • 
 
 ### Core Stack
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Workflow Engine** | LangGraph 0.2.55 | State machine orchestration with retry logic |
-| **Document Parsing** | Docling 2.66.0 (IBM Research) | Advanced OCR, table extraction, layout analysis |
-| **LLM Synthesis** | Claude/Gemini/OpenAI | Content transformation and intelligent summarization |
-| **Image Generation** | Gemini/DALL-E | AI-generated visuals and diagrams |
-| **PDF Generation** | ReportLab 4.2.5 | Professional PDF rendering with custom styling |
-| **PPTX Generation** | python-pptx 1.0.2 | PowerPoint presentations with 16:9 layouts |
-| **Architecture** | Clean Architecture | Domain/Application/Infrastructure layers (zero circular deps) |
+| Component            | Technology                    | Purpose                                                       |
+| -------------------- | ----------------------------- | ------------------------------------------------------------- |
+| **Workflow Engine**  | LangGraph 0.2.55              | State machine orchestration with retry logic                  |
+| **Document Parsing** | Docling 2.66.0 (IBM Research) | Advanced OCR, table extraction, layout analysis               |
+| **LLM Synthesis**    | Claude/Gemini/OpenAI          | Content transformation and intelligent summarization          |
+| **Image Generation** | Gemini/DALL-E                 | AI-generated visuals and diagrams                             |
+| **PDF Generation**   | ReportLab 4.2.5               | Professional PDF rendering with custom styling                |
+| **PPTX Generation**  | python-pptx 1.0.2             | PowerPoint presentations with 16:9 layouts                    |
+| **Architecture**     | Clean Architecture            | Domain/Application/Infrastructure layers (zero circular deps) |
 
 ### Two Ways to Use DocGen
 
-| Method | Status | Best For |
-|--------|--------|----------|
-| **🐍 Python Package** | Coming Soon | Programmatic access, scripts, automation |
-| **🌐 Web UI + API** | ✅ Available Now | Interactive use, team collaboration |
+| Method                | Status           | Best For                                 |
+| --------------------- | ---------------- | ---------------------------------------- |
+| **🐍 Python Package** | Coming Soon      | Programmatic access, scripts, automation |
+| **🌐 Web UI + API**   | ✅ Available Now | Interactive use, team collaboration      |
 
 ```python
 # Coming Soon: Python Package
@@ -215,14 +229,14 @@ result = generator.create(
 
 Ingest and normalize content from diverse sources with intelligent extraction:
 
-| Format | Parser | Capabilities |
-|--------|--------|--------------|
-| **PDF** | Docling | OCR, table extraction, layout analysis, image extraction |
-| **Markdown** | Native | Frontmatter support, code blocks, nested structures |
-| **Web URLs** | MarkItDown | Article extraction, metadata parsing, link resolution |
-| **Office Docs** | Docling | DOCX, PPTX, XLSX with formatting preservation |
-| **Images** | Docling | PNG, JPG, TIFF with OCR and layout detection |
-| **Plain Text** | Native | TXT files with encoding detection |
+| Format          | Parser     | Capabilities                                             |
+| --------------- | ---------- | -------------------------------------------------------- |
+| **PDF**         | Docling    | OCR, table extraction, layout analysis, image extraction |
+| **Markdown**    | Native     | Frontmatter support, code blocks, nested structures      |
+| **Web URLs**    | MarkItDown | Article extraction, metadata parsing, link resolution    |
+| **Office Docs** | Docling    | DOCX, PPTX, XLSX with formatting preservation            |
+| **Images**      | Docling    | PNG, JPG, TIFF with OCR and layout detection             |
+| **Plain Text**  | Native     | TXT files with encoding detection                        |
 
 ### 🤖 AI-Powered Synthesis
 
@@ -296,6 +310,7 @@ graph LR
 ```
 
 **Node Responsibilities:**
+
 - `detect_format`: Identify input type (PDF, MD, URL, etc.)
 - `parse_content`: Extract raw content using appropriate parser
 - `transform_content`: LLM synthesis + image generation
@@ -304,11 +319,11 @@ graph LR
 
 ### Configuration Management
 
-| Type | Location | Purpose |
-|------|----------|---------|
-| **YAML Config** | `backend/config/settings.yaml` | Defaults (page layouts, colors, LLM params) |
-| **Environment Variables** | `.env` | Secrets (API keys, database URLs) |
-| **Pydantic Settings** | Runtime | Type-safe config with validation and auto-reload |
+| Type                      | Location                       | Purpose                                          |
+| ------------------------- | ------------------------------ | ------------------------------------------------ |
+| **YAML Config**           | `backend/config/settings.yaml` | Defaults (page layouts, colors, LLM params)      |
+| **Environment Variables** | `.env`                         | Secrets (API keys, database URLs)                |
+| **Pydantic Settings**     | Runtime                        | Type-safe config with validation and auto-reload |
 
 ---
 
@@ -323,6 +338,7 @@ graph LR
 ### Option 1: Web UI (Fastest) ⚡
 
 **Run with Docker Compose:**
+
 ```bash
 # Clone the repo
 git clone https://github.com/your-org/docgen.git
@@ -335,6 +351,7 @@ docker-compose up --build
 ```
 
 **Or deploy to cloud:**
+
 - **Backend:** Deploy to [Render](https://render.com) using `backend/render.yaml`
 - **Frontend:** Deploy to [Vercel](https://vercel.com) using `vercel.json`
 
@@ -383,6 +400,7 @@ npm install && npm run dev
 ### Configuration
 
 **Backend config** (`backend/config/settings.yaml`):
+
 ```yaml
 generator:
   output_dir: "data/output"
@@ -390,7 +408,7 @@ generator:
 
 pdf:
   page_size: "letter"
-  margin: {top: 72, bottom: 18, left: 72, right: 72}
+  margin: { top: 72, bottom: 18, left: 72, right: 72 }
 
 pptx:
   layout: "LAYOUT_16x9"
@@ -399,6 +417,7 @@ pptx:
 ```
 
 **Environment variables** (`.env`):
+
 ```bash
 # LLM API Keys (choose one or more)
 ANTHROPIC_API_KEY=your_claude_key
@@ -416,6 +435,7 @@ DATABASE_URL=postgresql://user:pass@localhost/docgen
 DocGen exposes a FastAPI backend for programmatic document generation.
 
 ### Authentication (Coming Soon)
+
 API authentication with user-managed API keys is planned. Currently, bring your own LLM keys via headers.
 
 ### Generate Documents (SSE Stream)
@@ -423,6 +443,7 @@ API authentication with user-managed API keys is planned. Currently, bring your 
 **Endpoint:** `POST /api/generate`
 
 **Headers:**
+
 ```bash
 Content-Type: application/json
 X-Anthropic-Key: your_claude_key     # For Claude
@@ -431,6 +452,7 @@ X-Google-Key: your_gemini_key        # For Gemini
 ```
 
 **Request Body:**
+
 ```json
 {
   "output_format": "pdf",
@@ -438,11 +460,11 @@ X-Google-Key: your_gemini_key        # For Gemini
   "model": "gemini-2.0-flash-exp",
   "image_model": "imagen-3.0-generate-001",
   "sources": [
-    {"type": "file", "file_id": "f_abc123"},
-    {"type": "url", "url": "https://arxiv.org/pdf/2301.07041"},
-    {"type": "text", "content": "Additional context to include"}
+    { "type": "file", "file_id": "f_abc123" },
+    { "type": "url", "url": "https://arxiv.org/pdf/2301.07041" },
+    { "type": "text", "content": "Additional context to include" }
   ],
-  "cache": {"reuse": true}
+  "cache": { "reuse": true }
 }
 ```
 
@@ -460,6 +482,7 @@ curl -N -X POST http://localhost:8000/api/generate \
 ```
 
 **Stream Events:**
+
 ```
 event: progress
 data: {"message": "Parsing PDF...", "progress": 20}
@@ -473,11 +496,11 @@ data: {"download_url": "/api/download/f_abc/pdf/output.pdf", "file_path": "f_abc
 
 ### Other Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/upload` | POST | Upload files for processing |
-| `/api/download/{file_id}/{format}/{filename}` | GET | Download generated files |
-| `/api/health` | GET | Health check endpoint |
+| Endpoint                                      | Method | Purpose                     |
+| --------------------------------------------- | ------ | --------------------------- |
+| `/api/upload`                                 | POST   | Upload files for processing |
+| `/api/download/{file_id}/{format}/{filename}` | GET    | Download generated files    |
+| `/api/health`                                 | GET    | Health check endpoint       |
 
 📖 **Full API documentation:** Available at `/docs` when running the backend
 
@@ -526,6 +549,7 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 <summary><b>🎨 Enhanced Generation</b> (expand to see details)</summary>
 
 **Content & Media:**
+
 - ⏳ **Podcast MP3 generation** - Multi-voice support with ElevenLabs/Azure TTS
 - 📋 **Mind maps** - Visual hierarchy with D3.js/Mermaid
 - 📋 **FAQ cards** - Structured Q&A with auto-formatting
@@ -533,6 +557,7 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 - ✅ **Image generation toggle** - Per-request control
 
 **Developer Tools:**
+
 - ⏳ **Advanced code blocks** - Syntax highlighting + line numbers
 - ⏳ **Mermaid diagrams** - Flowcharts, sequence diagrams, ER diagrams
 - 📋 **API documentation** - OpenAPI/Swagger to markdown
@@ -544,6 +569,7 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 <summary><b>🔧 UI/UX Improvements</b> (expand to see details)</summary>
 
 **User Experience:**
+
 - ⏳ **API key vault** - Secure multi-provider key management
 - ⏳ **Real-time preview** - See documents as they generate
 - 📋 **Batch processing** - Process multiple files at once
@@ -551,6 +577,7 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 - 📋 **Generation history** - Track past generations
 
 **Marketplace:**
+
 - 📋 **Template library** - 50+ pre-built templates
 - 📋 **Community templates** - Share and discover
 - 📋 **Style customization** - Brand colors, fonts, layouts
@@ -562,12 +589,14 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 <summary><b>📄 Document Templates</b> (expand to see details)</summary>
 
 **Professional:**
+
 - 📋 **Resumes** - Tech, Marketing, Finance, Academic, Creative
 - 📋 **Research papers** - arXiv, IEEE, ACM, Nature formats
 - 📋 **Pitch decks** - Startup, Sales, Investor presentations
 - 📋 **Reports** - Annual, Quarterly, Project status
 
 **Creative & Personal:**
+
 - 📋 **Wedding cards** - Invitations, save-the-dates, programs
 - 📋 **YouTube thumbnails** - 10+ design styles
 - 📋 **Social media** - Instagram posts, Twitter threads
@@ -579,12 +608,14 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 <summary><b>🚀 Platform & Scale</b> (expand to see details)</summary>
 
 **Distribution:**
+
 - 📋 **PyPI package** - `pip install docgen` with CLI
 - 📋 **Docker Hub** - Pre-built images for all platforms
 - 📋 **npm package** - JavaScript/TypeScript SDK
 - 📋 **GitHub Action** - CI/CD integration
 
 **Enterprise Features:**
+
 - 📋 **Authentication** - OAuth2, SSO, API keys
 - 📋 **User management** - Teams, roles, permissions
 - 📋 **Rate limiting** - Per-user, per-tier quotas
@@ -678,6 +709,7 @@ We welcome contributions! Please follow these guidelines:
 6. **Commits:** Use conventional commits (feat, fix, docs, refactor, test)
 
 **Before submitting a PR:**
+
 ```bash
 make lint        # Ensure code passes linting
 make test        # Ensure tests pass
@@ -696,6 +728,7 @@ docker-compose down
 
 # Or change port in docker-compose.yml
 ```
+
 </details>
 
 <details>
@@ -708,6 +741,7 @@ make setup
 # Or manually
 uv pip install -e ".[dev]"
 ```
+
 </details>
 
 <details>
@@ -717,6 +751,7 @@ uv pip install -e ".[dev]"
 # Rebuild without cache
 docker-compose build --no-cache
 ```
+
 </details>
 
 <details>
@@ -731,6 +766,7 @@ curl https://api.anthropic.com/v1/messages \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
   -H "anthropic-version: 2023-06-01"
 ```
+
 </details>
 
 <details>
@@ -739,6 +775,7 @@ curl https://api.anthropic.com/v1/messages \
 ```bash
 chmod 755 backend/data/output
 ```
+
 </details>
 
 ### Getting Help
@@ -753,12 +790,16 @@ chmod 755 backend/data/output
 
 DocGen is built on the shoulders of giants:
 
-- **[Docling](https://github.com/DS4SD/docling)** by IBM Research - Advanced document parsing with OCR and layout analysis
-- **[MarkItDown](https://github.com/microsoft/markitdown)** by Microsoft - Document-to-markdown conversion
-- **[LangGraph](https://github.com/langchain-ai/langgraph)** by LangChain - Workflow orchestration and state machines
-- **[ReportLab](https://www.reportlab.com/)** - Professional PDF generation
-- **[python-pptx](https://github.com/scanny/python-pptx)** - PowerPoint presentation generation
-- **[Loguru](https://github.com/Delgan/loguru)** - Beautiful and powerful logging
+| Project                                                    | Creator          | Purpose                                                |
+| ---------------------------------------------------------- | ---------------- | ------------------------------------------------------ |
+| **[Docling](https://github.com/DS4SD/docling)**            | IBM Research     | Advanced document parsing with OCR and layout analysis |
+| **[MarkItDown](https://github.com/microsoft/markitdown)**  | Microsoft        | Document-to-markdown conversion                        |
+| **[LangGraph](https://github.com/langchain-ai/langgraph)** | LangChain        | Workflow orchestration and state machines              |
+| **[ReportLab](https://www.reportlab.com/)**                | ReportLab Europe | Professional PDF generation                            |
+| **[python-pptx](https://github.com/scanny/python-pptx)**   | Steve Canny      | PowerPoint presentation generation                     |
+| **[Loguru](https://github.com/Delgan/loguru)**             | Delgan           | Beautiful and powerful logging                         |
+
+---
 
 ## 📄 License
 
@@ -768,12 +809,24 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
+<br/>
+
 **Built with ❤️ for developers who value clean architecture, type safety, and extensibility.**
+
+<br/>
 
 ⭐ **Star this repo if you find it useful!**
 
-[![GitHub stars](https://img.shields.io/github/stars/your-org/docgen?style=social)](https://github.com/your-org/docgen/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/your-org/docgen?style=social)](https://github.com/your-org/docgen/network/members)
-[![GitHub watchers](https://img.shields.io/github/watchers/your-org/docgen?style=social)](https://github.com/your-org/docgen/watchers)
+<br/>
+
+[![GitHub stars](https://img.shields.io/github/stars/your-org/docgen?style=for-the-badge&logo=github&color=06d6a0)](https://github.com/your-org/docgen/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/your-org/docgen?style=for-the-badge&logo=github&color=00b4d8)](https://github.com/your-org/docgen/network/members)
+[![GitHub watchers](https://img.shields.io/github/watchers/your-org/docgen?style=for-the-badge&logo=github&color=7c3aed)](https://github.com/your-org/docgen/watchers)
+
+<br/>
+
+---
+
+**[⬆ Back to Top](#)**
 
 </div>
