@@ -41,7 +41,7 @@ def resolve_image_path(
         Path(url),  # Absolute path
         Path(cleaned),  # Relative path
         Path("static") / cleaned,  # Hugo static dir
-        Path("backend/data/output") / cleaned,  # Output dir
+        Path("data/output") / cleaned,  # Output dir
     ]
 
     for candidate in candidates:

@@ -50,8 +50,8 @@ class GeneratorConfig(BaseModel):
         max_retries: Maximum generation retries
     """
 
-    input_dir: Path = Field(default=Path("backend/data/input"))
-    output_dir: Path = Field(default=Path("backend/data/output"))
+    input_dir: Path = Field(default=Path("data/input"))
+    output_dir: Path = Field(default=Path("data/output"))
     default_output_format: OutputFormat = Field(default=OutputFormat.PDF)
     max_retries: int = Field(default=3, ge=1, le=5)
 

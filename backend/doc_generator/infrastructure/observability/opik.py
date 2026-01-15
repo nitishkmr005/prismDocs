@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover - optional dependency
 
 _client: Any | None = None
 _enabled: bool | None = None
-_log_dir = Path("backend/data/logging")
+_log_dir = Path("data/logging")
 
 
 def _truncate(text: str | None, limit: int = 4000) -> str:

@@ -230,7 +230,7 @@ def load_existing_images(
     return section_images
 
 
-def clear_cache(cache_dir: Path = Path("backend/data/cache")) -> None:
+def clear_cache(cache_dir: Path = Path("data/cache")) -> None:
     """
     Clear all cached content files.
 
