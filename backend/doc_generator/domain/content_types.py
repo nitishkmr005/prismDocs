@@ -25,23 +25,24 @@ class OutputFormat(str, Enum):
     PDF = "pdf"
     PPTX = "pptx"
     MARKDOWN = "markdown"
+    PDF_FROM_PPTX = "pdf_from_pptx"
 
 
 class ImageType(str, Enum):
     """Supported image generation types."""
 
     INFOGRAPHIC = "infographic"  # Gemini - explains concepts visually
-    DECORATIVE = "decorative"    # Gemini - thematic header image
-    DIAGRAM = "diagram"          # SVG - architecture, flowcharts
-    CHART = "chart"              # SVG - data comparisons
-    MERMAID = "mermaid"          # Mermaid - sequence diagrams, flows
-    NONE = "none"                # Skip image for this section
+    DECORATIVE = "decorative"  # Gemini - thematic header image
+    DIAGRAM = "diagram"  # SVG - architecture, flowcharts
+    CHART = "chart"  # SVG - data comparisons
+    MERMAID = "mermaid"  # Mermaid - sequence diagrams, flows
+    NONE = "none"  # Skip image for this section
 
 
 class Audience(str, Enum):
     """Target audience for document generation - affects styling and content depth."""
 
-    TECHNICAL = "technical"      # Technical team presentation - detailed, technical depth
-    EXECUTIVE = "executive"      # Leadership/stakeholders - high-level, business focus
-    CLIENT = "client"            # External client-facing - polished, professional branding
+    TECHNICAL = "technical"  # Technical team presentation - detailed, technical depth
+    EXECUTIVE = "executive"  # Leadership/stakeholders - high-level, business focus
+    CLIENT = "client"  # External client-facing - polished, professional branding
     EDUCATIONAL = "educational"  # Training material - explanatory, step-by-step

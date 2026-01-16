@@ -1,9 +1,10 @@
-"""Output generators for PDF, PPTX, and Markdown."""
+"""Output generators for PDF, PPTX, Markdown, and PDF from PPTX."""
 
 from ...domain.content_types import OutputFormat
 from ...domain.exceptions import UnsupportedFormatError
 from .markdown import MarkdownGenerator
 from .pdf import PDFGenerator
+from .pdf_from_pptx import PDFFromPPTXGenerator
 from .pptx import PPTXGenerator
 
 
@@ -12,7 +13,7 @@ def get_generator(output_format: str):
     Get appropriate generator for output format.
 
     Args:
-        output_format: Output format (pdf, pptx, markdown)
+        output_format: Output format (pdf, pptx, markdown, pdf_from_pptx)
 
     Returns:
         Generator instance
@@ -32,7 +33,16 @@ def get_generator(output_format: str):
     if format_lower in ["markdown", "md", OutputFormat.MARKDOWN]:
         return MarkdownGenerator()
 
+    if format_lower in ["pdf_from_pptx", OutputFormat.PDF_FROM_PPTX]:
+        return PDFFromPPTXGenerator()
+
     raise UnsupportedFormatError(f"Unsupported output format: {output_format}")
 
 
-__all__ = ["MarkdownGenerator", "PDFGenerator", "PPTXGenerator", "get_generator"]
+__all__ = [
+    "MarkdownGenerator",
+    "PDFGenerator",
+    "PDFFromPPTXGenerator",
+    "PPTXGenerator",
+    "get_generator",
+]

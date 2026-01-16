@@ -10,6 +10,7 @@ class OutputFormat(str, Enum):
     PDF = "pdf"
     PPTX = "pptx"
     MARKDOWN = "markdown"
+    PDF_FROM_PPTX = "pdf_from_pptx"
 
 
 class Provider(str, Enum):

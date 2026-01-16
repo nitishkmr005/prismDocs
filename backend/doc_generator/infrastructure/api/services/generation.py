@@ -248,11 +248,38 @@ class GenerationService:
             # Count pages/slides from structured content
             pages = 0
             slides = 0
+
             if request.output_format.value == "pdf":
                 sections = structured_content.get("sections", [])
                 pages = max(1, len(sections))
             elif request.output_format.value == "pptx":
-                slides = len(structured_content.get("sections", []))
+                # For PPTX, count slides from either 'slides' or 'sections' key
+                slides = len(
+                    structured_content.get(
+                        "slides", structured_content.get("sections", [])
+                    )
+                )
+            elif request.output_format.value == "pdf_from_pptx":
+                # For PDF from PPTX, try to get actual page count from the PDF
+                try:
+                    if (
+                        output_path
+                        and Path(output_path).exists()
+                        and output_path.endswith(".pdf")
+                    ):
+                        from pypdf import PdfReader
+
+                        pdf_reader = PdfReader(output_path)
+                        pages = len(pdf_reader.pages)
+                except Exception as e:
+                    logger.warning(f"Could not read PDF page count: {e}")
+                    # Fallback: estimate from slide count
+                    slide_count = len(
+                        structured_content.get(
+                            "slides", structured_content.get("sections", [])
+                        )
+                    )
+                    pages = max(1, slide_count + 1)
 
             images_generated = len(structured_content.get("section_images", {}))
             title = structured_content.get(

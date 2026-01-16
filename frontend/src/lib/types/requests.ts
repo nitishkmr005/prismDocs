@@ -1,6 +1,6 @@
 // API request types matching FastAPI schemas
 
-export type OutputFormat = "pdf" | "pptx" | "markdown";
+export type OutputFormat = "pdf" | "pptx" | "markdown" | "pdf_from_pptx";
 
 export type Provider = "gemini" | "google" | "openai" | "anthropic";
 

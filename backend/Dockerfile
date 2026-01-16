@@ -2,6 +2,7 @@
 FROM python:3.12.9-slim
 
 # Install system dependencies for document processing
+# Including LibreOffice for high-quality PPTX to PDF conversion
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libpango-1.0-0 \
@@ -11,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shared-mime-info \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    # LibreOffice for PPTX to PDF conversion
+    libreoffice-writer \
+    libreoffice-impress \
+    libreoffice-common \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory

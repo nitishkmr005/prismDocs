@@ -34,9 +34,9 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
         log_progress,
         log_metric,
     )
-    
+
     log_node_start("validate_output", step_number=9)
-    
+
     if not state.get("output_path"):
         error_msg = "No output path specified"
         state["errors"].append(error_msg)
@@ -57,7 +57,7 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
         file_size = output_path.stat().st_size
         if file_size == 0:
             raise ValidationError(f"Output file is empty: {output_path}")
-        
+
         # Format file size
         if file_size < 1024:
             size_str = f"{file_size} bytes"
@@ -72,6 +72,7 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
         extension_map = {
             "markdown": ".md",
             "md": ".md",
+            "pdf_from_pptx": ".pdf",  # PDF from PPTX produces a PDF file
         }
         expected_ext = extension_map.get(format_value, f".{format_value}")
         if output_path.suffix.lower() != expected_ext:
@@ -80,8 +81,11 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
             )
         log_metric("Format Match", "✓")
 
-        log_node_end("validate_output", success=True, 
-                    details=f"Valid {state['output_format'].upper()}: {size_str}")
+        log_node_end(
+            "validate_output",
+            success=True,
+            details=f"Valid {state['output_format'].upper()}: {size_str}",
+        )
 
     except ValidationError as e:
         state["errors"].append(str(e))

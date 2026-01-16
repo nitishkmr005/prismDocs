@@ -8,9 +8,10 @@ from loguru import logger
 
 from ..settings import get_settings
 
+
 class StorageService:
     """Manages uploads and generated outputs with organized folder structure.
-    
+
     Directory structure:
         data/output/
             <file_id>/
@@ -60,9 +61,9 @@ class StorageService:
 
     def _ensure_file_dirs(self, file_id: str) -> dict[str, Path]:
         """Ensure all subdirectories exist for a file_id.
-        
+
         Returns:
-            Dict with paths for source, images, pdf, pptx
+            Dict with paths for source, images, pdf, pptx, pdf_from_pptx
         Invoked by: src/doc_generator/infrastructure/api/services/storage.py, src/doc_generator/infrastructure/storage/file_storage.py
         """
         file_dir = self._get_file_dir(file_id)
@@ -73,6 +74,7 @@ class StorageService:
             "pdf": file_dir / "pdf",
             "pptx": file_dir / "pptx",
             "markdown": file_dir / "markdown",
+            "pdf_from_pptx": file_dir / "pdf_from_pptx",
         }
         for d in dirs.values():
             d.mkdir(parents=True, exist_ok=True)
@@ -100,7 +102,7 @@ class StorageService:
         """
         file_id = f"f_{secrets.token_hex(12)}"
         dirs = self._ensure_file_dirs(file_id)
-        
+
         # Save to source directory with original filename
         storage_path = dirs["source"] / filename
 
@@ -133,7 +135,7 @@ class StorageService:
         """
         if file_id in self._uploads:
             return self._uploads[file_id]["path"]
-        
+
         # Try to find on disk if not in memory (after server restart)
         file_dir = self._get_file_dir(file_id)
         source_dir = file_dir / "source"
@@ -141,32 +143,32 @@ class StorageService:
             files = list(source_dir.iterdir())
             if files:
                 return files[0]
-        
+
         raise FileNotFoundError(f"Upload not found: {file_id}")
 
     def get_file_dirs(self, file_id: str) -> dict[str, Path]:
         """Get directory paths for a file_id.
-        
+
         Args:
             file_id: File ID
-            
+
         Returns:
             Dict with paths for root, source, images, pdf, pptx
         Invoked by: src/doc_generator/infrastructure/storage/file_storage.py
         """
         if file_id in self._uploads:
             return self._uploads[file_id]["dirs"]
-        
+
         # Recreate dirs structure if needed
         return self._ensure_file_dirs(file_id)
 
     def get_output_dir(self, file_id: str, output_format: str) -> Path:
         """Get the output directory for a specific format.
-        
+
         Args:
             file_id: File ID
             output_format: 'pdf' or 'pptx'
-            
+
         Returns:
             Path to output directory
         Invoked by: (no references found)
@@ -236,7 +238,7 @@ class StorageService:
         """
         # Generate a simple token (in production, use signed URLs)
         token = secrets.token_urlsafe(16)
-        
+
         # Try to extract file_id and create a cleaner URL
         parts = output_path.parts
         for i, part in enumerate(parts):
@@ -264,10 +266,10 @@ class StorageService:
         Invoked by: src/doc_generator/infrastructure/storage/file_storage.py, tests/api/test_storage_service.py
         """
         import shutil
-        
+
         if file_id in self._uploads:
             del self._uploads[file_id]
-        
+
         file_dir = self._get_file_dir(file_id)
         if file_dir.exists():
             shutil.rmtree(file_dir)
