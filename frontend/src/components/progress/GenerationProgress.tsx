@@ -236,13 +236,26 @@ export function GenerationProgress({
               <div className="mt-4 border rounded-lg overflow-hidden bg-muted">
                 <div className="bg-muted px-4 py-2 border-b flex items-center justify-between">
                   <span className="text-sm font-medium">Markdown Preview</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.open(downloadUrl, "_blank")}
-                  >
-                    Open in New Tab
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (previewContent) {
+                          navigator.clipboard.writeText(previewContent);
+                        }
+                      }}
+                    >
+                      Copy
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(downloadUrl, "_blank")}
+                    >
+                      Open in New Tab
+                    </Button>
+                  </div>
                 </div>
                 {previewLoading && (
                   <div className="p-6 text-sm text-muted-foreground">Loading preview...</div>

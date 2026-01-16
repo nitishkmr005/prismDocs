@@ -5,6 +5,8 @@ Transforms raw content into structured blog-style format for generators.
 Uses LLM to generate well-structured educational content with visual markers.
 """
 
+from pathlib import Path
+
 from loguru import logger
 
 from ...domain.models import WorkflowState
@@ -124,7 +126,15 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
 
         # Get content generator
         log_subsection("LLM Content Transformation")
-        content_generator = get_content_generator()
+        api_keys = metadata.get("api_keys", {})
+        content_api_key = api_keys.get("content") if isinstance(api_keys, dict) else None
+        provider = metadata.get("provider")
+        model = metadata.get("model")
+        content_generator = get_content_generator(
+            api_key=content_api_key,
+            provider=provider,
+            model=model,
+        )
         
         # Initialize structured content
         structured = {
@@ -183,8 +193,15 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         structured["content_hash"] = metadata.get("content_hash")
         state["structured_content"] = structured
         
-        # Update metadata with generated title
-        if "title" not in metadata or not metadata["title"]:
+        # Update metadata with generated title when filename-derived titles are used
+        input_path = state.get("input_path", "")
+        input_stem = Path(input_path).stem if input_path else ""
+        current_title = metadata.get("title", "")
+        if (
+            not current_title
+            or current_title == input_stem
+            or input_stem.startswith("temp_input_")
+        ):
             metadata["title"] = structured["title"]
             state["metadata"] = metadata
         

@@ -85,7 +85,12 @@ class LLMContentGenerator:
     _providers_used: set[str] = set()
     _call_details: list[dict] = []
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
         """
         Initialize the content generator with a content generation client.
         
@@ -108,8 +113,11 @@ class LLMContentGenerator:
         self.content_model = None
         
         # Setup content generation client (provider-driven)
-        self.content_provider = self.settings.llm.content_provider or "openai"
-        self.content_model = self.settings.llm.content_model or self.settings.llm.model
+        resolved_provider = (provider or self.settings.llm.content_provider or "openai").lower()
+        if resolved_provider == "google":
+            resolved_provider = "gemini"
+        self.content_provider = resolved_provider
+        self.content_model = model or self.settings.llm.content_model or self.settings.llm.model
 
         self._init_content_client()
         
@@ -997,7 +1005,11 @@ class LLMContentGenerator:
             return match.group(1).strip()
         return fallback
 
-def get_content_generator(api_key: Optional[str] = None) -> LLMContentGenerator:
+def get_content_generator(
+    api_key: Optional[str] = None,
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+) -> LLMContentGenerator:
     """
     Get or create content generator instance.
     
@@ -1008,4 +1020,4 @@ def get_content_generator(api_key: Optional[str] = None) -> LLMContentGenerator:
         LLMContentGenerator instance
     Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/utils/content_merger.py
     """
-    return LLMContentGenerator(api_key=api_key)
+    return LLMContentGenerator(api_key=api_key, provider=provider, model=model)

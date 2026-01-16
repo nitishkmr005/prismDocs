@@ -175,7 +175,14 @@ class StorageService:
                 # Found file_id, construct relative path from there
                 rel_path = "/".join(parts[i:])
                 return f"{self.base_url}/{rel_path}?token={token}"
-        
+
+        # Use path relative to output root when possible to avoid collisions
+        try:
+            rel_path = output_path.relative_to(self.base_output_dir).as_posix()
+            return f"{self.base_url}/{rel_path}?token={token}"
+        except ValueError:
+            pass
+
         # Fallback to just filename
         filename = output_path.name
         return f"{self.base_url}/{filename}?token={token}"
