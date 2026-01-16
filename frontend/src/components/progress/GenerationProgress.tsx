@@ -33,6 +33,7 @@ export function GenerationProgress({
 }: GenerationProgressProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewContent, setPreviewContent] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [activeAction, setActiveAction] = useState<"download" | "preview" | null>(
@@ -46,10 +47,13 @@ export function GenerationProgress({
   const isPdf =
     downloadUrl?.toLowerCase().includes(".pdf") || downloadUrl?.includes("/pdf/");
   const isPptx = downloadUrl?.toLowerCase().includes(".pptx") || downloadUrl?.includes("/pptx/");
+  const isMarkdown =
+    downloadUrl?.toLowerCase().includes(".md") || downloadUrl?.includes("/markdown/");
 
   useEffect(() => {
-    if (!showPreview || !downloadUrl || !isPdf) {
+    if (!showPreview || !downloadUrl || (!isPdf && !isMarkdown)) {
       setPreviewUrl(null);
+      setPreviewContent(null);
       setPreviewError(null);
       setPreviewLoading(false);
       return;
@@ -60,26 +64,36 @@ export function GenerationProgress({
     const controller = new AbortController();
     setPreviewLoading(true);
     setPreviewError(null);
+    setPreviewContent(null);
 
-    fetch(downloadUrl, { signal: controller.signal })
-      .then((res) => {
+    const loadPreview = async () => {
+      try {
+        const res = await fetch(downloadUrl, { signal: controller.signal });
         if (!res.ok) {
           throw new Error(`Preview failed (${res.status})`);
         }
-        return res.blob();
-      })
-      .then((blob) => {
         if (!active) return;
-        objectUrl = URL.createObjectURL(blob);
-        setPreviewUrl(objectUrl);
-      })
-      .catch((err) => {
+
+        if (isPdf) {
+          const blob = await res.blob();
+          if (!active) return;
+          objectUrl = URL.createObjectURL(blob);
+          setPreviewUrl(objectUrl);
+          return;
+        }
+
+        const text = await res.text();
+        if (!active) return;
+        setPreviewContent(text);
+      } catch (err) {
         if (!active || controller.signal.aborted) return;
         setPreviewError(err instanceof Error ? err.message : "Preview failed");
-      })
-      .finally(() => {
+      } finally {
         if (active) setPreviewLoading(false);
-      });
+      }
+    };
+
+    loadPreview();
 
     return () => {
       active = false;
@@ -88,7 +102,7 @@ export function GenerationProgress({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [downloadUrl, isPdf, showPreview]);
+  }, [downloadUrl, isMarkdown, isPdf, showPreview]);
 
   return (
     <Card className="w-full">
@@ -160,7 +174,7 @@ export function GenerationProgress({
                   </a>
                 </Button>
               )}
-              {downloadUrl && isPdf && (
+              {downloadUrl && (isPdf || isMarkdown) && (
                 <Button
                   variant={activeAction === "preview" ? "default" : "secondary"}
                   onClick={() => {
@@ -213,6 +227,33 @@ export function GenerationProgress({
                     className="w-full h-[600px] border-0"
                     title="Document Preview"
                   />
+                )}
+              </div>
+            )}
+
+            {/* Markdown Preview */}
+            {downloadUrl && isMarkdown && showPreview && (
+              <div className="mt-4 border rounded-lg overflow-hidden bg-muted">
+                <div className="bg-muted px-4 py-2 border-b flex items-center justify-between">
+                  <span className="text-sm font-medium">Markdown Preview</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.open(downloadUrl, "_blank")}
+                  >
+                    Open in New Tab
+                  </Button>
+                </div>
+                {previewLoading && (
+                  <div className="p-6 text-sm text-muted-foreground">Loading preview...</div>
+                )}
+                {previewError && (
+                  <div className="p-6 text-sm text-red-500">{previewError}</div>
+                )}
+                {!previewLoading && !previewError && previewContent && (
+                  <pre className="p-6 text-sm whitespace-pre-wrap break-words">
+                    {previewContent}
+                  </pre>
                 )}
               </div>
             )}

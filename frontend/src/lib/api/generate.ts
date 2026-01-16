@@ -1,6 +1,7 @@
 import { API_CONFIG, getApiUrl } from "@/config/api";
 import { GenerateRequest } from "@/lib/types/requests";
 import { GenerationEvent } from "@/lib/types/responses";
+import { formatErrorDetail } from "./client";
 
 function getApiKeyHeader(provider: string): string {
   switch (provider.toLowerCase()) {
@@ -49,8 +50,11 @@ export async function generateDocument(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      formatErrorDetail(errorData.detail) ||
+      `Generation failed: ${response.statusText}`;
     const error = new Error(
-      errorData.detail || `Generation failed: ${response.statusText}`
+      errorMessage
     );
     onError?.(error);
     throw error;

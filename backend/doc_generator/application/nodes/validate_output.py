@@ -68,7 +68,12 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
         log_metric("File Size", size_str)
 
         # Check extension
-        expected_ext = f".{state['output_format']}"
+        format_value = str(state["output_format"]).lower()
+        extension_map = {
+            "markdown": ".md",
+            "md": ".md",
+        }
+        expected_ext = extension_map.get(format_value, f".{format_value}")
         if output_path.suffix.lower() != expected_ext:
             raise ValidationError(
                 f"Output file has wrong extension: {output_path.suffix}, expected {expected_ext}"

@@ -75,6 +75,7 @@ class StorageService:
             "images": file_dir / "images",
             "pdf": file_dir / "pdf",
             "pptx": file_dir / "pptx",
+            "markdown": file_dir / "markdown",
         }
         for d in dirs.values():
             d.mkdir(parents=True, exist_ok=True)

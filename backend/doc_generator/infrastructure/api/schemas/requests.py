@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class OutputFormat(str, Enum):
     PDF = "pdf"
     PPTX = "pptx"
+    MARKDOWN = "markdown"
 
 
 class Provider(str, Enum):

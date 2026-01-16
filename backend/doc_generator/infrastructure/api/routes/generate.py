@@ -135,7 +135,7 @@ async def event_generator(
     description=(
         "Stream document generation progress via Server-Sent Events (SSE). "
         "Provide one or more sources (file_id, url, or text) and choose "
-        "`output_format` of `pdf` or `pptx`. "
+        "`output_format` of `pdf`, `pptx`, or `markdown`. "
         "Use the returned `file_path` or `download_url` to fetch the output from "
         "`GET /api/download/{file_path}`."
     ),

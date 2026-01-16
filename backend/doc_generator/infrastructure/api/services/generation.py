@@ -251,7 +251,7 @@ class GenerationService:
             if request.output_format.value == "pdf":
                 sections = structured_content.get("sections", [])
                 pages = max(1, len(sections))
-            else:
+            elif request.output_format.value == "pptx":
                 slides = len(structured_content.get("sections", []))
 
             images_generated = len(structured_content.get("section_images", {}))

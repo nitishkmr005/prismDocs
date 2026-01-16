@@ -16,6 +16,49 @@ export interface RequestOptions extends RequestInit {
   provider?: string;
 }
 
+export function formatErrorDetail(detail: unknown): string | undefined {
+  if (!detail) {
+    return undefined;
+  }
+  if (typeof detail === "string") {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (!item || typeof item !== "object") {
+          return undefined;
+        }
+        const record = item as { loc?: unknown; msg?: unknown };
+        const loc =
+          Array.isArray(record.loc) && record.loc.length > 0
+            ? record.loc.join(".")
+            : undefined;
+        const msg = typeof record.msg === "string" ? record.msg : undefined;
+        if (loc && msg) {
+          return `${loc}: ${msg}`;
+        }
+        if (msg) {
+          return msg;
+        }
+        return undefined;
+      })
+      .filter((message): message is string => Boolean(message));
+
+    if (messages.length > 0) {
+      return messages.join("; ");
+    }
+  }
+  if (typeof detail === "object") {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return "Request failed with an unknown error.";
+    }
+  }
+  return String(detail);
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestOptions = {}
@@ -42,8 +85,11 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      formatErrorDetail(errorData.detail) ||
+      `API request failed: ${response.statusText}`;
     throw new ApiClientError(
-      errorData.detail || `API request failed: ${response.statusText}`,
+      errorMessage,
       errorData.code,
       response.status
     );

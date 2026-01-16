@@ -1,6 +1,6 @@
 import { API_CONFIG, getApiUrl } from "@/config/api";
 import { UploadResponse } from "@/lib/types/responses";
-import { ApiClientError } from "./client";
+import { ApiClientError, formatErrorDetail } from "./client";
 
 export async function uploadFile(file: File): Promise<UploadResponse> {
   const formData = new FormData();
@@ -13,8 +13,11 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+      formatErrorDetail(errorData.detail) ||
+      `Upload failed: ${response.statusText}`;
     throw new ApiClientError(
-      errorData.detail || `Upload failed: ${response.statusText}`,
+      errorMessage,
       errorData.code,
       response.status
     );
