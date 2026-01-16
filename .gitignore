@@ -22,3 +22,4 @@ __pycache__/
 
 # Output files
 # src/output/
+.vercel

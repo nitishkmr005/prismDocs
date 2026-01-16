@@ -1,0 +1,61 @@
+# Hugging Face Spaces Dockerfile for FastAPI application
+FROM python:3.12.9-slim
+
+# Install system dependencies for document processing
+# Including LibreOffice for high-quality PPTX to PDF conversion
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    # LibreOffice for PPTX to PDF conversion
+    libreoffice-writer \
+    libreoffice-impress \
+    libreoffice-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user (required by HF Spaces)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Set working directory
+WORKDIR $HOME/app
+
+# HF Spaces cache directories (must be in writable locations)
+ENV HF_HOME=/tmp/hf_cache \
+    TRANSFORMERS_CACHE=/tmp/transformers_cache \
+    TORCH_HOME=/tmp/torch_cache \
+    XDG_CACHE_HOME=/tmp/.cache \
+    MPLCONFIGDIR=/tmp/matplotlib
+
+# Copy minimal requirements for Docker
+COPY --chown=user requirements-docker.txt requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY --chown=user . .
+
+# Create necessary directories in /tmp (writable in HF Spaces)
+RUN mkdir -p /tmp/data/cache /tmp/data/output /tmp/data/temp /tmp/data/logging \
+    /tmp/hf_cache /tmp/transformers_cache /tmp/torch_cache /tmp/.cache /tmp/matplotlib
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=$HOME/app \
+    PORT=7860 \
+    ENVIRONMENT=production
+
+# Expose HF Spaces required port
+EXPOSE 7860
+
+# Run the application directly (simpler for HF Spaces)
+CMD ["python", "-m", "uvicorn", "doc_generator.infrastructure.api.main:app", "--host", "0.0.0.0", "--port", "7860"]

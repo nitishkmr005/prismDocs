@@ -1,0 +1,132 @@
+# Railway-optimized Dockerfile for PrismDocs Backend
+# Optimized for build speed with multi-stage builds and layer caching
+
+# ============================================
+# Stage 1: System dependencies (cached layer)
+# ============================================
+FROM python:3.12.9-slim AS system-deps
+
+# Install system dependencies in a single layer
+# This layer is cached and reused across builds
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Core document processing libs
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    # Build essentials for some pip packages
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# ============================================
+# Stage 2: Python dependencies (cached layer)
+# ============================================
+FROM system-deps AS python-deps
+
+WORKDIR /app
+
+# Install pip and wheel first for faster installs
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools
+
+# Copy ONLY requirements first (Docker layer caching)
+COPY requirements-railway.txt requirements.txt
+
+# Install Python dependencies in groups to leverage caching
+# If one group changes, only that layer needs rebuilding
+
+# Group 1: Core FastAPI (fast, small)
+RUN pip install --no-cache-dir \
+    fastapi==0.128.0 \
+    uvicorn==0.40.0 \
+    python-multipart==0.0.21 \
+    sse-starlette==3.1.2 \
+    starlette==0.50.0 \
+    pydantic==2.10.5 \
+    pydantic-settings==2.7.1
+
+# Group 2: AI/LLM APIs (medium size)
+RUN pip install --no-cache-dir \
+    google-genai==1.57.0 \
+    openai==2.14.0 \
+    anthropic==0.75.0 \
+    langchain-core==0.3.25 \
+    langgraph==0.2.55
+
+# Group 3: Document processing (HEAVY - docling is the slowest)
+# Install docling with --no-deps and manually install lighter deps
+RUN pip install --no-cache-dir \
+    python-docx==1.2.0 \
+    python-pptx==1.0.2 \
+    pypdf==5.1.0 \
+    reportlab==4.2.5 \
+    pillow==11.3.0 \
+    markitdown==0.0.1a2 \
+    cairosvg==2.7.1 \
+    pdfminer-six==20260107
+
+# Group 4: Docling (heaviest dependency - separate layer for caching)
+# Use timeout and retries for reliability
+RUN pip install --no-cache-dir --timeout 600 docling==2.66.0
+
+# Group 5: Utilities and monitoring
+RUN pip install --no-cache-dir \
+    loguru==0.7.3 \
+    sentry-sdk==2.49.0 \
+    opik==1.9.76 \
+    supabase==2.15.1 \
+    requests==2.32.3 \
+    aiofiles==25.1.0 \
+    python-dotenv==1.0.0 \
+    pyyaml==6.0.2 \
+    click==8.3.1
+
+# ============================================
+# Stage 3: Final production image
+# ============================================
+FROM python:3.12.9-slim AS production
+
+# Install only runtime system dependencies (no build tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+WORKDIR /app
+
+# Copy installed Python packages from builder
+COPY --from=python-deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=python-deps /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p data/cache data/output data/temp data/logging
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV PORT=8000
+
+# Expose port
+EXPOSE 8000
+
+# Health check with longer start period for Railway
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+    CMD python -c "import os, urllib.request; port=os.getenv('PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/api/health')"
+
+# Start command - direct python for faster startup
+CMD ["python", "-m", "uvicorn", "doc_generator.infrastructure.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
