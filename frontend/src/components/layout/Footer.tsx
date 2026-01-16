@@ -12,7 +12,7 @@ export function Footer() {
         </div>
         <div className="flex items-center gap-4">
           <Link
-            href="https://github.com/nitishkmr005/document-generator"
+            href="https://github.com/nitishkmr005/PrismDocs"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-muted-foreground hover:text-violet-600 transition-colors"
