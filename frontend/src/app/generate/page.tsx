@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { GenerateForm } from "@/components/forms/GenerateForm";
 import { GenerationProgress } from "@/components/progress/GenerationProgress";
-import { useGeneration } from "@/hooks/useGeneration";
+import { useGeneration, GenerationState } from "@/hooks/useGeneration";
 import {
   OutputFormat,
   Provider,
@@ -224,6 +224,70 @@ function FeatureTile({
   );
 }
 
+function ProgressPanel({
+  state,
+  progress,
+  status,
+  downloadUrl,
+  error,
+  metadata,
+  onReset,
+  onNewGeneration,
+  featureColor,
+}: {
+  state: GenerationState;
+  progress: number;
+  status: string;
+  downloadUrl: string | null;
+  error: string | null;
+  metadata: { title?: string; pages?: number; slides?: number; imagesGenerated?: number } | null;
+  onReset: () => void;
+  onNewGeneration: () => void;
+  featureColor: string;
+}) {
+  if (state === "idle") {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 rounded-xl border border-dashed border-border bg-muted/20">
+        <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+          <svg
+            className="w-8 h-8 text-muted-foreground"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-muted-foreground mb-2">
+          Ready to Generate
+        </h3>
+        <p className="text-sm text-muted-foreground/70 max-w-xs">
+          Fill in the form and click "Generate Document" to create your content
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full min-h-[400px] p-6 rounded-xl border bg-card">
+      <GenerationProgress
+        state={state}
+        progress={progress}
+        status={status}
+        downloadUrl={downloadUrl}
+        error={error}
+        metadata={metadata}
+        onReset={onReset}
+      />
+    </div>
+  );
+}
+
 export default function GeneratePage() {
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
   const {
@@ -240,12 +304,14 @@ export default function GeneratePage() {
   const handleFeatureSelect = useCallback((feature: Feature) => {
     if (!feature.comingSoon) {
       setSelectedFeature(feature);
+      reset(); // Reset any previous generation state
     }
-  }, []);
+  }, [reset]);
 
   const handleBackToFeatures = useCallback(() => {
     setSelectedFeature(null);
-  }, []);
+    reset();
+  }, [reset]);
 
   const handleSubmit = useCallback(
     (
@@ -282,84 +348,82 @@ export default function GeneratePage() {
     [generate]
   );
 
-  const handleReset = useCallback(() => {
+  const handleNewGeneration = useCallback(() => {
     reset();
-    setSelectedFeature(null);
   }, [reset]);
 
   const isGenerating = state === "generating";
 
-  // Show generation progress when generating or complete
-  if (state !== "idle") {
-    return (
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="mx-auto max-w-3xl space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-              {selectedFeature?.title || "Generate Document"}
-            </h1>
-          </div>
-          <GenerationProgress
-            state={state}
-            progress={progress}
-            status={status}
-            downloadUrl={downloadUrl}
-            error={error}
-            metadata={metadata}
-            onReset={handleReset}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Show form when a feature is selected
+  // Show form when a feature is selected (split layout)
   if (selectedFeature) {
     return (
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="mx-auto max-w-3xl space-y-6">
-          <button
-            onClick={handleBackToFeatures}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      <div className="container mx-auto px-4 py-6 md:py-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={handleBackToFeatures}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back to features
-          </button>
-
-          <div className="text-center space-y-2">
-            <div
-              className={`inline-flex h-14 w-14 rounded-xl ${selectedFeature.bgColor} items-center justify-center mb-2`}
-            >
-              <span className={selectedFeature.color}>
-                {selectedFeature.icon}
-              </span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Back
+            </button>
+            <div className="flex items-center gap-3">
+              <div
+                className={`h-10 w-10 rounded-lg ${selectedFeature.bgColor} flex items-center justify-center`}
+              >
+                <span className={`${selectedFeature.color} [&>svg]:w-5 [&>svg]:h-5`}>
+                  {selectedFeature.icon}
+                </span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">{selectedFeature.title}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {selectedFeature.description}
+                </p>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-              {selectedFeature.title}
-            </h1>
-            <p className="text-muted-foreground">
-              {selectedFeature.description}
-            </p>
           </div>
 
-          <GenerateForm
-            onSubmit={handleSubmit}
-            isGenerating={isGenerating}
-            defaultOutputFormat={selectedFeature.defaultOutputFormat}
-            outputOptions={selectedFeature.outputOptions}
-          />
+          {/* Split Layout */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left: Form */}
+            <div className="order-2 lg:order-1">
+              <GenerateForm
+                onSubmit={handleSubmit}
+                isGenerating={isGenerating}
+                defaultOutputFormat={selectedFeature.defaultOutputFormat}
+                outputOptions={selectedFeature.outputOptions}
+              />
+            </div>
+
+            {/* Right: Progress Panel */}
+            <div className="order-1 lg:order-2 lg:sticky lg:top-24 lg:self-start">
+              <ProgressPanel
+                state={state}
+                progress={progress}
+                status={status}
+                downloadUrl={downloadUrl}
+                error={error}
+                metadata={metadata}
+                onReset={reset}
+                onNewGeneration={handleNewGeneration}
+                featureColor={selectedFeature.color}
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
