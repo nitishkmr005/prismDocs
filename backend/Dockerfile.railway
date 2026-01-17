@@ -101,6 +101,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shared-mime-info \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    # LibreOffice for high-quality PPTX to PDF conversion
+    libreoffice-impress \
+    libreoffice-common \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

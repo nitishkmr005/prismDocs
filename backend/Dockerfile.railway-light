@@ -4,7 +4,7 @@
 
 FROM python:3.12.9-slim
 
-# Install minimal system dependencies
+# Install minimal system dependencies + LibreOffice for PPTX to PDF
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libpango-1.0-0 \
@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdk-pixbuf2.0-0 \
     libffi-dev \
     shared-mime-info \
+    # LibreOffice for high-quality PPTX to PDF conversion
+    libreoffice-impress \
+    libreoffice-common \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
