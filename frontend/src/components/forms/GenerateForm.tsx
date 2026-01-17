@@ -56,26 +56,34 @@ interface GenerateFormProps {
 
 const contentModelOptions: Record<Provider, ModelOption[]> = {
   gemini: [
+    { value: "gemini-2.5-flash", label: "gemini-2.5-flash" },
+    { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite" },
+    { value: "gemini-2.5-pro", label: "gemini-2.5-pro" },
     { value: "gemini-3-flash-preview", label: "gemini-3-flash-preview" },
     { value: "gemini-3-pro-preview", label: "gemini-3-pro-preview" },
-    { value: "gemini-2.5-pro", label: "gemini-2.5-pro" },
-    { value: "gemini-2.5-flash", label: "gemini-2.5-flash" },
   ],
   openai: [
-    { value: "gpt-5.2", label: "gpt-5.2" },
-    { value: "gpt-5-mini", label: "gpt-5-mini" },
     { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
     { value: "gpt-4.1", label: "gpt-4.1" },
+    { value: "gpt-5-mini", label: "gpt-5-mini" },
+    { value: "gpt-5.2", label: "gpt-5.2" },
   ],
   anthropic: [
-    { value: "anthropic.claude-haiku-4-5-20251001-v1:0", label: "claude-haiku-4.5" },
-    { value: "anthropic.claude-sonnet-4-5-20250929-v1:0", label: "claude-sonnet-4.5" },
+    {
+      value: "anthropic.claude-haiku-4-5-20251001-v1:0",
+      label: "anthropic.claude-haiku-4-5-20251001-v1:0",
+    },
+    {
+      value: "anthropic.claude-sonnet-4-5-20250929-v1:0",
+      label: "anthropic.claude-sonnet-4-5-20250929-v1:0",
+    },
   ],
   google: [
+    { value: "gemini-2.5-flash", label: "gemini-2.5-flash" },
+    { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite" },
+    { value: "gemini-2.5-pro", label: "gemini-2.5-pro" },
     { value: "gemini-3-flash-preview", label: "gemini-3-flash-preview" },
     { value: "gemini-3-pro-preview", label: "gemini-3-pro-preview" },
-    { value: "gemini-2.5-pro", label: "gemini-2.5-pro" },
-    { value: "gemini-2.5-flash", label: "gemini-2.5-flash" },
   ],
 };
 
@@ -103,7 +111,7 @@ export function GenerateForm({
 
   const [outputFormat, setOutputFormat] = useState<OutputFormat>(defaultOutputFormat);
   const [provider, setProvider] = useState<Provider>("gemini");
-  const [contentModel, setContentModel] = useState<string>("gemini-2.5-pro");
+  const [contentModel, setContentModel] = useState<string>("gemini-2.5-flash");
   const [imageModel, setImageModel] = useState<string>("gemini-3-pro-image-preview");
   const [audience, setAudience] = useState<Audience>("technical");
   const [imageStyle, setImageStyle] = useState<ImageStyle>("auto");
@@ -117,7 +125,14 @@ export function GenerateForm({
       return;
     }
     if (!options.some((option) => option.value === contentModel)) {
-      setContentModel(options[0].value);
+      const defaultByProvider: Partial<Record<Provider, string>> = {
+        gemini: "gemini-2.5-flash",
+        google: "gemini-2.5-flash",
+        openai: "gpt-4.1-mini",
+        anthropic: "anthropic.claude-haiku-4-5-20251001-v1:0",
+      };
+      const fallback = defaultByProvider[provider] || options[0].value;
+      setContentModel(fallback);
     }
   }, [provider, contentModel]);
 

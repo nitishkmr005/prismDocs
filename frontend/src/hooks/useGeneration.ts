@@ -120,7 +120,7 @@ export function useGeneration(): UseGenerationResult {
         output_format: partialRequest.output_format || "pdf",
         sources: partialRequest.sources || [],
         provider: partialRequest.provider || "gemini",
-        model: partialRequest.model || "gemini-2.5-pro",
+        model: partialRequest.model || "gemini-2.5-flash",
         image_model: partialRequest.image_model || "gemini-3-pro-image-preview",
         preferences: { ...DEFAULT_PREFERENCES, ...partialRequest.preferences },
         cache: { ...DEFAULT_CACHE_OPTIONS, ...partialRequest.cache },

@@ -120,9 +120,9 @@ parsers:
 
 # LLM service settings
 llm:
-  model: "gemini-2.5-pro"
+  model: "gemini-2.5-flash"
   content_provider: "gemini"
-  content_model: "gemini-2.5-pro"
+  content_model: "gemini-2.5-flash"
   max_summary_points: 5
   max_slides: 10
   max_tokens_summary: 500
