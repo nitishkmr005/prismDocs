@@ -2,8 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { GenerateForm } from "@/components/forms/GenerateForm";
-import { ImageGenerateForm } from "@/components/forms/ImageGenerateForm";
-import { ImageEditForm } from "@/components/forms/ImageEditForm";
+import { ImageStudioForm } from "@/components/forms/ImageStudioForm";
 import { GenerationProgress } from "@/components/progress/GenerationProgress";
 import { MindMapForm, MindMapViewer, MindMapProgress } from "@/components/mindmap";
 import { useGeneration, GenerationState } from "@/hooks/useGeneration";
@@ -23,8 +22,7 @@ import { MindMapMode } from "@/lib/types/mindmap";
 // Feature type definition
 type FeatureType =
   | "content"
-  | "image"
-  | "image-edit"
+  | "image-studio"
   | "resume"
   | "podcast"
   | "mindmap"
@@ -82,9 +80,9 @@ const features: Feature[] = [
     ],
   },
   {
-    id: "image",
-    title: "Image Generation",
-    description: "Generate AI images from descriptions",
+    id: "image-studio",
+    title: "Image Studio",
+    description: "Create & refine AI images",
     icon: (
       <svg
         className="w-7 h-7"
@@ -98,38 +96,18 @@ const features: Feature[] = [
           strokeWidth={2}
           d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
         />
-      </svg>
-    ),
-    color: "text-fuchsia-600",
-    bgColor:
-      "bg-gradient-to-br from-fuchsia-100 to-fuchsia-50 dark:from-fuchsia-900/40 dark:to-fuchsia-950/40",
-    shadowColor: "hover:shadow-fuchsia-500/20",
-    defaultOutputFormat: "pdf",
-    outputOptions: [{ value: "pdf", label: "PDF Document" }],
-  },
-  {
-    id: "image-edit",
-    title: "Image Editing",
-    description: "Edit and enhance existing images",
-    icon: (
-      <svg
-        className="w-7 h-7"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
-          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+          d="M5 3v4M3 5h4"
         />
       </svg>
     ),
-    color: "text-rose-600",
+    color: "text-fuchsia-600",
     bgColor:
-      "bg-gradient-to-br from-rose-100 to-rose-50 dark:from-rose-900/40 dark:to-rose-950/40",
-    shadowColor: "hover:shadow-rose-500/20",
+      "bg-gradient-to-br from-fuchsia-100 via-rose-100 to-fuchsia-50 dark:from-fuchsia-900/40 dark:via-rose-900/40 dark:to-fuchsia-950/40",
+    shadowColor: "hover:shadow-fuchsia-500/20",
     defaultOutputFormat: "pdf",
     outputOptions: [{ value: "pdf", label: "PDF Document" }],
   },
@@ -547,10 +525,8 @@ export default function GeneratePage() {
           </div>
 
           {/* Feature-specific content */}
-          {selectedFeature.id === "image" ? (
-            <ImageGenerateForm />
-          ) : selectedFeature.id === "image-edit" ? (
-            <ImageEditForm />
+          {selectedFeature.id === "image-studio" ? (
+            <ImageStudioForm />
           ) : selectedFeature.id === "mindmap" ? (
             /* Mind Map Layout */
             <div className="grid gap-6 lg:grid-cols-2">
