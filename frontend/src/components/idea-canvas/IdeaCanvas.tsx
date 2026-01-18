@@ -56,16 +56,32 @@ function canvasToFlow(
   const OPTION_NODE_HEIGHT = 50; // Smaller height for option nodes
   const HORIZONTAL_SPACING = 100; // Space between parent and children (edge length)
   const VERTICAL_SPACING = 30;   // Space between siblings
-  const OPTION_SPACING = 15;     // Smaller spacing between options
+  const OPTION_SPACING = 24;     // Extra breathing room between options
+  const SELECTED_OPTION_GAP = 12; // Extra separation after the selected option
 
   // Helper to find answer child with options from a question node
   const getAnswerWithOptions = (node: CanvasNodeType) => {
     if (node.type !== "question") return null;
     const answerChild = node.children.find(c => c.type === "answer");
-    if (answerChild && answerChild.options && answerChild.options.length > 1) {
+    if (answerChild && answerChild.options && answerChild.options.length > 0) {
       return answerChild;
     }
     return null;
+  };
+
+  const getOptionsHeight = (
+    options: { id: string }[],
+    selectedId?: string,
+  ) => {
+    const baseHeight =
+      options.length * OPTION_NODE_HEIGHT +
+      (options.length - 1) * OPTION_SPACING;
+    if (!selectedId) return baseHeight;
+    const selectedIndex = options.findIndex((option) => option.id === selectedId);
+    if (selectedIndex === -1 || selectedIndex === options.length - 1) {
+      return baseHeight;
+    }
+    return baseHeight + SELECTED_OPTION_GAP;
   };
 
   // Calculate subtree height - now considering options branching from question nodes
@@ -74,8 +90,10 @@ function canvasToFlow(
     const answerWithOptions = getAnswerWithOptions(node);
     if (answerWithOptions) {
       // Options height (they branch from question)
-      const optionsHeight = answerWithOptions.options!.length * OPTION_NODE_HEIGHT + 
-        (answerWithOptions.options!.length - 1) * OPTION_SPACING;
+      const optionsHeight = getOptionsHeight(
+        answerWithOptions.options!,
+        answerWithOptions.selected_option_id,
+      );
       
       // The answer's children will branch from the selected option
       let childrenHeight = 0;
@@ -90,9 +108,11 @@ function canvasToFlow(
     }
 
     // For answer nodes with options (shouldn't happen in new flow, but keep for safety)
-    if (node.type === "answer" && node.options && node.options.length > 1) {
-      const optionsHeight = node.options.length * OPTION_NODE_HEIGHT + 
-        (node.options.length - 1) * OPTION_SPACING;
+    if (node.type === "answer" && node.options && node.options.length > 0) {
+      const optionsHeight = getOptionsHeight(
+        node.options,
+        node.selected_option_id,
+      );
       
       if (node.children.length === 0) {
         return Math.max(NODE_HEIGHT, optionsHeight);
@@ -148,13 +168,19 @@ function canvasToFlow(
     if (answerWithOptions) {
       // Create option nodes branching from this question (not the answer)
       const optionX = x + NODE_WIDTH + HORIZONTAL_SPACING;
-      const totalOptionsHeight = answerWithOptions.options!.length * OPTION_NODE_HEIGHT + 
-        (answerWithOptions.options!.length - 1) * OPTION_SPACING;
+      const totalOptionsHeight = getOptionsHeight(
+        answerWithOptions.options!,
+        answerWithOptions.selected_option_id,
+      );
       let optionY = y + (NODE_HEIGHT - totalOptionsHeight) / 2;
 
-      answerWithOptions.options!.forEach((option) => {
+      answerWithOptions.options!.forEach((option, index) => {
         const optionNodeId = `${node.id}_opt_${option.id}`;
         const isSelectedOption = option.id === answerWithOptions.selected_option_id;
+        const extraSelectedGap =
+          isSelectedOption && index < answerWithOptions.options!.length - 1
+            ? SELECTED_OPTION_GAP
+            : 0;
 
         nodes.push({
           id: optionNodeId,
@@ -209,7 +235,7 @@ function canvasToFlow(
           });
         }
 
-        optionY += OPTION_NODE_HEIGHT + OPTION_SPACING;
+        optionY += OPTION_NODE_HEIGHT + OPTION_SPACING + extraSelectedGap;
       });
       
       // Don't process children normally - we already handled answer's children above
@@ -222,7 +248,7 @@ function canvasToFlow(
       // Filter out answer nodes that have options (they're represented by options branching from question)
       const visibleChildren = node.children.filter(child => {
         // Skip answer nodes that have options - their content is shown as options from the question
-        if (child.type === "answer" && child.options && child.options.length > 1) {
+        if (child.type === "answer" && child.options && child.options.length > 0) {
           return false;
         }
         return true;

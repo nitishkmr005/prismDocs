@@ -12,6 +12,7 @@ import { useIdeaCanvas } from "@/hooks/useIdeaCanvas";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   OutputFormat,
   Provider,
@@ -459,6 +460,7 @@ export default function GeneratePage() {
   const [reportError, setReportError] = useState<string | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [exitedToSummary, setExitedToSummary] = useState(false);
+  const [markdownCopied, setMarkdownCopied] = useState(false);
   
   // Image generation from report state
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -586,79 +588,9 @@ export default function GeneratePage() {
     [submitCanvasAnswer, user?.id]
   );
 
-  // Generate report handler
-  const handleGenerateReport = useCallback(async () => {
-    if (!canvasSessionId || !canvasApiKey) {
-      setReportError("No active canvas session");
-      return;
-    }
-
-    setIsGeneratingReport(true);
-    setReportError(null);
-
-    try {
-      const result = await generateCanvasReport({
-        sessionId: canvasSessionId,
-        outputFormat: "both",
-        provider: canvasProvider,
-        apiKey: canvasApiKey,
-      });
-
-      setReportData({
-        title: result.title,
-        markdown_content: result.markdown_content || "",
-        pdf_base64: result.pdf_base64,
-      });
-      setShowReportModal(true);
-    } catch (err) {
-      setReportError(err instanceof Error ? err.message : "Failed to generate report");
-    } finally {
-      setIsGeneratingReport(false);
-    }
-  }, [canvasSessionId, canvasApiKey, canvasProvider]);
-
-  // Download report as markdown
-  const handleDownloadMarkdown = useCallback(() => {
-    if (!reportData) return;
-    
-    const blob = new Blob([reportData.markdown_content], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${reportData.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [reportData]);
-
-  // Download report as PDF
-  const handleDownloadPdf = useCallback(() => {
-    if (!reportData?.pdf_base64) return;
-    
-    // Convert base64 to blob
-    const byteCharacters = atob(reportData.pdf_base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: "application/pdf" });
-    
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${reportData.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [reportData]);
-
-  // Generate handwritten-style image from report
-  const handleGenerateImageFromReport = useCallback(async () => {
-    if (!reportData || !canvasApiKey) {
-      setImageGenError("No report data or API key available");
+  const generateImageFromReportContent = useCallback(async (reportTitle: string, reportMarkdown: string) => {
+    if (!canvasApiKey) {
+      setImageGenError("No API key available");
       return;
     }
 
@@ -667,13 +599,12 @@ export default function GeneratePage() {
     setGeneratedImage(null);
 
     try {
-      // Create a prompt from the report content
       const summaryPrompt = `Create a beautiful hand-drawn style infographic that visually summarizes this implementation plan:
 
-Title: ${reportData.title}
+Title: ${reportTitle}
 
 Key points to visualize:
-${reportData.markdown_content.slice(0, 1500)}
+${reportMarkdown.slice(0, 1500)}
 
 Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with icons and arrows connecting concepts. Include the main title at the top.`;
 
@@ -698,7 +629,113 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
     } finally {
       setIsGeneratingImage(false);
     }
-  }, [reportData, canvasApiKey]);
+  }, [canvasApiKey]);
+
+  // Generate report handler
+  const handleGenerateReport = useCallback(async () => {
+    if (!canvasSessionId || !canvasApiKey) {
+      setReportError("No active canvas session");
+      return;
+    }
+
+    setIsGeneratingReport(true);
+    setReportError(null);
+    setImageGenError(null);
+    setMarkdownCopied(false);
+
+    try {
+      const result = await generateCanvasReport({
+        sessionId: canvasSessionId,
+        outputFormat: "both",
+        provider: canvasProvider,
+        apiKey: canvasApiKey,
+      });
+
+      setReportData({
+        title: result.title,
+        markdown_content: result.markdown_content || "",
+        pdf_base64: result.pdf_base64,
+      });
+      setShowReportModal(true);
+      void generateImageFromReportContent(result.title, result.markdown_content || "");
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : "Failed to generate report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [canvasSessionId, canvasApiKey, canvasProvider, generateImageFromReportContent]);
+
+  // Download report as markdown
+  const handleDownloadMarkdown = useCallback(() => {
+    if (!reportData) return;
+    
+    const blob = new Blob([reportData.markdown_content], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${reportData.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [reportData]);
+
+  const createPdfBlob = useCallback((pdfBase64: string) => {
+    const byteCharacters = atob(pdfBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: "application/pdf" });
+  }, []);
+
+  // Download report as PDF
+  const handleDownloadPdf = useCallback(() => {
+    if (!reportData?.pdf_base64) return;
+    
+    const blob = createPdfBlob(reportData.pdf_base64);
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${reportData.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [reportData, createPdfBlob]);
+
+  const handleOpenPdfPreview = useCallback(() => {
+    if (!reportData?.pdf_base64) return;
+
+    const blob = createPdfBlob(reportData.pdf_base64);
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }, [reportData, createPdfBlob]);
+
+  const handleCopyMarkdown = useCallback(async () => {
+    if (!reportData?.markdown_content) return;
+
+    try {
+      await navigator.clipboard.writeText(reportData.markdown_content);
+      setMarkdownCopied(true);
+      setTimeout(() => setMarkdownCopied(false), 1500);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = reportData.markdown_content;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setMarkdownCopied(true);
+      setTimeout(() => setMarkdownCopied(false), 1500);
+    }
+  }, [reportData]);
 
   const isGenerating = state === "generating";
   const isMindMapGenerating = mindMapState === "generating";
@@ -841,8 +878,8 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
                 </div>
 
                 {/* Right: Report & Actions */}
-                <div className="order-2">
-                  <div className="space-y-6">
+                <div className="order-2 flex flex-col lg:min-h-[calc(100vh-280px)]">
+                  <div className="flex flex-col gap-6 h-full">
                     {/* Success Card */}
                     <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-6">
                       <div className="flex items-start gap-4">
@@ -886,14 +923,14 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
                             {isGeneratingReport ? (
                               <>
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                Generating Report...
+                                Generating Report Pack...
                               </>
                             ) : (
                               <>
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Generate Report
+                                Generate Report Pack
                               </>
                             )}
                           </Button>
@@ -904,7 +941,7 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
                       ) : (
                         <div className="space-y-4">
                           {/* Download Buttons */}
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <Button 
                               onClick={handleDownloadPdf} 
                               disabled={!reportData?.pdf_base64}
@@ -922,133 +959,132 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
                               </svg>
                               Download MD
                             </Button>
-                          </div>
-                          
-                          {/* Generate Images Section */}
-                          <div className="pt-4 border-t">
-                            <label className="text-sm font-medium mb-2 block">
-                              Create Visual Summary
-                            </label>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              onClick={() => {
+                                if (generatedImage) {
+                                  downloadImage(
+                                    generatedImage.data,
+                                    `${reportData?.title.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "infographic"}`,
+                                    generatedImage.format as "png" | "svg"
+                                  );
+                                }
+                              }}
+                              disabled={!generatedImage || isGeneratingImage}
+                              variant="outline"
                               className="w-full"
-                              disabled={isGeneratingImage}
-                              onClick={handleGenerateImageFromReport}
+                              size="lg"
                             >
                               {isGeneratingImage ? (
                                 <>
-                                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                                  Generating Infographic...
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                                  Generating Image...
                                 </>
                               ) : (
                                 <>
                                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  Generate Handwritten Infographic
-                                </>
-                              )}
-                            </Button>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Creates a whiteboard-style visual summary of your report
-                            </p>
-                            
-                            {/* Image Generation Error */}
-                            {imageGenError && (
-                              <p className="text-xs text-red-600 mt-2">{imageGenError}</p>
-                            )}
-                            
-                            {/* Generated Image Preview */}
-                            {generatedImage && (
-                              <div className="mt-4 space-y-3">
-                                <div className="rounded-lg border overflow-hidden bg-white">
-                                  <img 
-                                    src={`data:image/${generatedImage.format};base64,${generatedImage.data}`}
-                                    alt="Generated infographic"
-                                    className="w-full h-auto"
-                                  />
-                                </div>
-                                <Button 
-                                  size="sm"
-                                  variant="outline"
-                                  className="w-full"
-                                  onClick={() => {
-                                    if (generatedImage) {
-                                      downloadImage(
-                                        generatedImage.data, 
-                                        `${reportData?.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'infographic'}`, 
-                                        generatedImage.format as "png" | "svg"
-                                      );
-                                    }
-                                  }}
-                                >
-                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                   </svg>
                                   Download Image
-                                </Button>
-                              </div>
-                            )}
+                                </>
+                              )}
+                            </Button>
                           </div>
-                          
+
+                          {imageGenError && (
+                            <p className="text-xs text-red-600">{imageGenError}</p>
+                          )}
                         </div>
                       )}
                     </div>
 
                     {/* Preview Card with Tabs */}
                     {reportData && (
-                      <div className="bg-card border rounded-xl overflow-hidden">
-                        <div className="px-4 py-3 border-b bg-muted/50 flex items-center justify-between">
+                      <div className="bg-card border rounded-xl overflow-hidden flex flex-col flex-1 min-h-[560px]">
+                        <div className="px-4 py-3 border-b bg-muted/50">
                           <h4 className="font-medium text-sm">Report Preview</h4>
-                          <div className="flex gap-1">
-                            <button 
-                              id="preview-pdf-tab"
-                              onClick={() => {
-                                document.getElementById("preview-pdf")?.classList.remove("hidden");
-                                document.getElementById("preview-md")?.classList.add("hidden");
-                                document.getElementById("preview-pdf-tab")?.classList.add("bg-primary", "text-primary-foreground");
-                                document.getElementById("preview-md-tab")?.classList.remove("bg-primary", "text-primary-foreground");
-                              }}
-                              className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground"
-                            >
-                              PDF
-                            </button>
-                            <button 
-                              id="preview-md-tab"
-                              onClick={() => {
-                                document.getElementById("preview-pdf")?.classList.add("hidden");
-                                document.getElementById("preview-md")?.classList.remove("hidden");
-                                document.getElementById("preview-md-tab")?.classList.add("bg-primary", "text-primary-foreground");
-                                document.getElementById("preview-pdf-tab")?.classList.remove("bg-primary", "text-primary-foreground");
-                              }}
-                              className="text-xs px-2 py-1 rounded hover:bg-muted"
-                            >
-                              Markdown
-                            </button>
+                        </div>
+
+                        <Tabs defaultValue="pdf" className="flex flex-col flex-1 min-h-[560px]">
+                          <div className="px-4 pt-3">
+                            <TabsList>
+                              <TabsTrigger value="pdf">PDF</TabsTrigger>
+                              <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                              <TabsTrigger value="image">Image</TabsTrigger>
+                            </TabsList>
                           </div>
-                        </div>
-                        
-                        {/* PDF Preview */}
-                        <div id="preview-pdf" className="h-[500px]">
-                          {reportData.pdf_base64 ? (
-                            <iframe
-                              src={`data:application/pdf;base64,${reportData.pdf_base64}`}
-                              className="w-full h-full border-0"
-                              title="PDF Preview"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">
-                              <p>PDF generation in progress...</p>
+
+                          <TabsContent value="pdf" className="flex flex-1 min-h-[520px] flex-col">
+                            <div className="flex items-center justify-end px-4 py-2 border-b">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleOpenPdfPreview}
+                                disabled={!reportData.pdf_base64}
+                              >
+                                Open in New Tab
+                              </Button>
                             </div>
-                          )}
-                        </div>
-                        
-                        {/* Markdown Preview */}
-                        <div id="preview-md" className="hidden p-4 max-h-[500px] overflow-y-auto">
-                          <pre className="text-sm font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                            {reportData.markdown_content}
-                          </pre>
-                        </div>
+                            <div className="flex-1 min-h-0">
+                              {reportData.pdf_base64 ? (
+                                <iframe
+                                  src={`data:application/pdf;base64,${reportData.pdf_base64}#view=FitH&zoom=page-width`}
+                                  className="w-full h-full border-0 bg-white"
+                                  title="PDF Preview"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full text-muted-foreground">
+                                  <p>PDF generation in progress...</p>
+                                </div>
+                              )}
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="markdown" className="p-4 flex-1 min-h-[520px] overflow-y-auto space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">Markdown</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCopyMarkdown}
+                                disabled={!reportData.markdown_content}
+                              >
+                                {markdownCopied ? "Copied" : "Copy"}
+                              </Button>
+                            </div>
+                            <pre className="text-sm font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                              {reportData.markdown_content}
+                            </pre>
+                          </TabsContent>
+
+                          <TabsContent value="image" className="p-4 flex-1 min-h-[520px] overflow-y-auto">
+                            {isGeneratingImage ? (
+                              <div className="flex items-center justify-center h-[420px] text-muted-foreground">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                  Generating visual summary...
+                                </div>
+                              </div>
+                            ) : generatedImage ? (
+                              <div className="space-y-3">
+                                <div className="rounded-lg border overflow-hidden bg-white">
+                                  <img
+                                    src={`data:image/${generatedImage.format};base64,${generatedImage.data}`}
+                                    alt="Generated infographic"
+                                    className="w-full h-auto"
+                                  />
+                                </div>
+                              </div>
+                            ) : imageGenError ? (
+                              <div className="flex items-center justify-center h-[420px] text-red-600 text-sm">
+                                {imageGenError}
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center h-[420px] text-muted-foreground text-sm">
+                                Image generation pending...
+                              </div>
+                            )}
+                          </TabsContent>
+                        </Tabs>
                       </div>
                     )}
 
@@ -1056,7 +1092,7 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
                     <Button 
                       variant="ghost" 
                       onClick={() => { resetCanvas(); setReportData(null); setExitedToSummary(false); }}
-                      className="w-full"
+                      className="w-full mt-auto"
                     >
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
