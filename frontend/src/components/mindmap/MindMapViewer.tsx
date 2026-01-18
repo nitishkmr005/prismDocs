@@ -32,13 +32,41 @@ interface MindMapViewerInnerProps {
 
 function MindMapViewerInner({ tree, onReset }: MindMapViewerInnerProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() => {
     // Start with all nodes expanded
     return new Set(getAllNodeIds(tree.nodes));
   });
   const [isExporting, setIsExporting] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+      // Fit view after fullscreen change with a small delay for layout to settle
+      setTimeout(() => fitView({ padding: 0.2 }), 100);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [fitView]);
+
+  const handleFullScreen = useCallback(async () => {
+    if (!fullscreenContainerRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await fullscreenContainerRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  }, []);
 
   const { nodes: initialNodes, edges: initialEdges } = useMemo(
     () => treeToFlow(tree.nodes, expandedNodes),
@@ -123,7 +151,7 @@ function MindMapViewerInner({ tree, onReset }: MindMapViewerInnerProps) {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div ref={fullscreenContainerRef} className={`flex flex-col h-full ${isFullScreen ? "bg-background" : ""}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div>
@@ -153,11 +181,13 @@ function MindMapViewerInner({ tree, onReset }: MindMapViewerInnerProps) {
         <MindMapToolbar
           onZoomIn={() => zoomIn()}
           onZoomOut={() => zoomOut()}
-          onFitView={() => fitView()}
+          onFitView={() => fitView({ padding: 0.2 })}
+          onFullScreen={handleFullScreen}
           onExpandAll={handleExpandAll}
           onCollapseAll={handleCollapseAll}
           onExport={handleExport}
           isExporting={isExporting}
+          isFullScreen={isFullScreen}
         />
       </div>
 
@@ -186,12 +216,14 @@ function MindMapViewerInner({ tree, onReset }: MindMapViewerInnerProps) {
         </ReactFlow>
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t flex justify-center">
-        <Button variant="outline" onClick={onReset}>
-          Generate Another
-        </Button>
-      </div>
+      {/* Footer - hide in fullscreen */}
+      {!isFullScreen && (
+        <div className="p-4 border-t flex justify-center">
+          <Button variant="outline" onClick={onReset}>
+            Generate Another
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
