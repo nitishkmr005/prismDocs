@@ -46,3 +46,4 @@ class Audience(str, Enum):
     EXECUTIVE = "executive"  # Leadership/stakeholders - high-level, business focus
     CLIENT = "client"  # External client-facing - polished, professional branding
     EDUCATIONAL = "educational"  # Training material - explanatory, step-by-step
+    CREATOR = "creator"  # Content creators - blog posts, social media, marketing

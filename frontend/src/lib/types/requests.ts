@@ -4,7 +4,7 @@ export type OutputFormat = "pdf" | "pptx" | "markdown" | "pdf_from_pptx";
 
 export type Provider = "gemini" | "google" | "openai" | "anthropic";
 
-export type Audience = "technical" | "executive" | "client" | "educational";
+export type Audience = "technical" | "executive" | "client" | "educational" | "creator";
 
 export type ImageStyle =
   | "auto"

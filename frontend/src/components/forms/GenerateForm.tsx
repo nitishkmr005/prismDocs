@@ -336,25 +336,61 @@ export function GenerateForm({
 
       <Card>
         <CardHeader>
+          <CardTitle>Output Format</CardTitle>
+          <CardDescription>Choose your preferred document format</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {outputOptions.map((option) => {
+              const isSelected = outputFormat === option.value;
+              const formatConfig: Record<string, { icon: string; color: string; bgColor: string; borderColor: string }> = {
+                pptx: { icon: "📊", color: "text-orange-600", bgColor: "bg-orange-50 dark:bg-orange-950/30", borderColor: "border-orange-300 dark:border-orange-700" },
+                pdf_from_pptx: { icon: "📑", color: "text-blue-600", bgColor: "bg-blue-50 dark:bg-blue-950/30", borderColor: "border-blue-300 dark:border-blue-700" },
+                pdf: { icon: "📄", color: "text-red-600", bgColor: "bg-red-50 dark:bg-red-950/30", borderColor: "border-red-300 dark:border-red-700" },
+                markdown: { icon: "📝", color: "text-violet-600", bgColor: "bg-violet-50 dark:bg-violet-950/30", borderColor: "border-violet-300 dark:border-violet-700" },
+              };
+              const config = formatConfig[option.value] || { icon: "📄", color: "text-gray-600", bgColor: "bg-gray-50", borderColor: "border-gray-300" };
+              
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setOutputFormat(option.value)}
+                  className={`group relative flex flex-col items-center text-center p-4 rounded-xl border-2 transition-all duration-200 ${
+                    isSelected 
+                      ? `${config.bgColor} ${config.borderColor} ring-2 ring-offset-2 ring-${option.value === 'pptx' ? 'orange' : option.value === 'pdf' ? 'red' : option.value === 'markdown' ? 'violet' : 'blue'}-500/50` 
+                      : 'bg-card border-border hover:border-muted-foreground/30 hover:bg-muted/30'
+                  }`}
+                >
+                  {option.value === "pptx" && (
+                    <span className="absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-sm">
+                      RECOMMENDED
+                    </span>
+                  )}
+                  <span className="text-2xl mb-2">{config.icon}</span>
+                  <span className={`text-sm font-semibold ${isSelected ? config.color : 'text-foreground'}`}>
+                    {option.label.replace(/^[📊📑📄📝]\s*/, '')}
+                  </span>
+                  {isSelected && (
+                    <div className="absolute top-2 left-2">
+                      <svg className={`w-4 h-4 ${config.color}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Options</CardTitle>
           <CardDescription>Configure generation settings</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="output-format">Output Format</Label>
-            <Select value={outputFormat} onValueChange={(v) => setOutputFormat(v as OutputFormat)}>
-              <SelectTrigger id="output-format">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {outputOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="provider">AI Provider</Label>
@@ -397,6 +433,7 @@ export function GenerateForm({
                 <SelectItem value="executive">Executive</SelectItem>
                 <SelectItem value="client">Client</SelectItem>
                 <SelectItem value="educational">Educational</SelectItem>
+                <SelectItem value="creator">Content Creator</SelectItem>
               </SelectContent>
             </Select>
           </div>

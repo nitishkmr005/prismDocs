@@ -78,7 +78,7 @@ const features: Feature[] = [
     bgColor:
       "bg-gradient-to-br from-cyan-100 via-indigo-100 to-violet-100 dark:from-cyan-900/40 dark:via-indigo-900/40 dark:to-violet-900/40",
     shadowColor: "hover:shadow-indigo-500/20",
-    defaultOutputFormat: "pdf",
+    defaultOutputFormat: "pptx",
     outputOptions: [
       { value: "pptx", label: "📊 Presentation (PPTX)" },
       { value: "pdf_from_pptx", label: "📑 Slide Deck (PDF)" },
@@ -1380,49 +1380,158 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
 
   // Show feature tiles
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen">
       {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       
-      <div className="mx-auto max-w-5xl space-y-8">
-        <div className="text-center space-y-3">
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-            What would you like to create?
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Choose a format and we'll guide you through the process
-          </p>
-          
-          {/* Sign-in prompt for non-authenticated users */}
-          {!authLoading && !isAuthenticated && (
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span className="text-sm font-medium">
-                Please{" "}
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="underline hover:no-underline font-semibold"
-                >
-                  sign in
-                </button>
-                {" "}to start generating documents
-              </span>
-            </div>
-          )}
+      {/* Hero Section with Animated Background */}
+      <section className="relative overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-violet-50/80 via-indigo-50/40 to-cyan-50/60 dark:from-violet-950/30 dark:via-indigo-950/20 dark:to-cyan-950/30" />
+          <div className="absolute top-10 -left-20 w-72 h-72 bg-gradient-to-br from-violet-300/20 to-transparent rounded-full blur-3xl animate-blob" />
+          <div className="absolute top-20 right-10 w-64 h-64 bg-gradient-to-br from-cyan-300/20 to-transparent rounded-full blur-3xl animate-blob animation-delay-2000" />
+          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-gradient-to-br from-fuchsia-300/15 to-transparent rounded-full blur-3xl animate-blob animation-delay-4000" />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
-            <FeatureTile
-              key={feature.id}
-              feature={feature}
-              onClick={() => handleFeatureSelect(feature)}
-            />
-          ))}
+        <div className="container mx-auto px-4 py-12 md:py-16">
+          <div className="mx-auto max-w-5xl space-y-8">
+            {/* Hero Header */}
+            <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-medium bg-white/60 dark:bg-black/30 backdrop-blur-md border-violet-200/50 dark:border-violet-800/50 shadow-lg shadow-violet-500/10">
+                <span className="relative flex h-2 w-2 mr-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+                </span>
+                <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent font-semibold">
+                  AI-Powered Document Studio
+                </span>
+              </div>
+              
+              <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
+                What would you like to{" "}
+                <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 bg-clip-text text-transparent animate-gradient">
+                  create?
+                </span>
+              </h1>
+              <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
+                Choose a generation mode and we&apos;ll guide you through the process
+              </p>
+              
+              {/* Sign-in prompt for non-authenticated users */}
+              {!authLoading && !isAuthenticated && (
+                <div className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 backdrop-blur-sm border border-amber-200/50 dark:border-amber-800/50 text-amber-800 dark:text-amber-200 shadow-lg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    Please{" "}
+                    <button
+                      onClick={() => setShowAuthModal(true)}
+                      className="underline hover:no-underline font-semibold"
+                    >
+                      sign in
+                    </button>
+                    {" "}to start generating documents
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Quick Start Guide Section */}
+      <section className="py-8 bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900/30 dark:to-transparent border-y border-border/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold">Quick Start Guide</h2>
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-4">
+              {[
+                {
+                  step: "1",
+                  title: "Content Generation",
+                  desc: "Upload PDFs, URLs, or text → Choose output format (PPT, PDF, Markdown) → Get professional documents",
+                  color: "from-indigo-500 to-violet-500",
+                },
+                {
+                  step: "2",
+                  title: "Image Studio",
+                  desc: "Enter a prompt → Select style preset → Generate & refine AI images with multiple formats",
+                  color: "from-fuchsia-500 to-rose-500",
+                },
+                {
+                  step: "3",
+                  title: "Mind Map Generator",
+                  desc: "Add source content → AI extracts key concepts → Get interactive mind maps you can export",
+                  color: "from-purple-500 to-indigo-500",
+                },
+                {
+                  step: "4",
+                  title: "Idea Canvas",
+                  desc: "Enter your idea → Answer guided Q&A → Get implementation specs with mind map",
+                  color: "from-amber-500 to-orange-500",
+                },
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="group relative p-4 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-sm border border-white/50 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300"
+                >
+                  <div className={`absolute -top-3 -left-2 w-7 h-7 rounded-full bg-gradient-to-br ${item.color} flex items-center justify-center text-white text-xs font-bold shadow-lg`}>
+                    {item.step}
+                  </div>
+                  <h3 className="font-semibold text-sm mb-2 mt-1">{item.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Tiles Section */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {features.filter(f => !f.comingSoon).map((feature) => (
+                <FeatureTile
+                  key={feature.id}
+                  feature={feature}
+                  onClick={() => handleFeatureSelect(feature)}
+                />
+              ))}
+            </div>
+
+            {/* Coming Soon Features */}
+            <div className="mt-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                <span className="text-sm font-medium text-muted-foreground">Coming Soon</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {features.filter(f => f.comingSoon).map((feature) => (
+                  <FeatureTile
+                    key={feature.id}
+                    feature={feature}
+                    onClick={() => handleFeatureSelect(feature)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -25,6 +25,7 @@ class Audience(str, Enum):
     EXECUTIVE = "executive"
     CLIENT = "client"
     EDUCATIONAL = "educational"
+    CREATOR = "creator"
 
 
 class ImageStyle(str, Enum):

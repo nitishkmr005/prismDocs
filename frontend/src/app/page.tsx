@@ -422,10 +422,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
             {[
               { icon: "🔐", title: "BYO API Keys", desc: "Your data stays private. Use your own LLM API keys.", gradient: "from-emerald-500 to-teal-600", shadow: "emerald" },
-              { icon: "⚡", title: "Fast Generation", desc: "Documents in seconds, not minutes.", gradient: "from-amber-500 to-orange-600", shadow: "amber" },
               { icon: "🎨", title: "AI Images", desc: "Auto-generated visuals that match your content.", gradient: "from-violet-500 to-purple-600", shadow: "violet" },
               { icon: "🔄", title: "Multi-format", desc: "PDF, PPTX, Markdown, Mind Maps & more.", gradient: "from-blue-500 to-indigo-600", shadow: "blue" },
             ].map((item) => (
