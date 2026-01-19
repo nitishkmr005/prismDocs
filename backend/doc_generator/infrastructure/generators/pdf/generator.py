@@ -541,6 +541,14 @@ class PDFGenerator:
 
     def _looks_like_placeholder(self, title: str) -> bool:
         """
+        Check if title looks like a placeholder/temp file name.
+
+        Detects patterns like:
+        - temp_input_abc123
+        - Temp Input 4438De0B96A248E4Aca780...
+        - file paths
+        - filenames with extensions
+
         Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         if "/" in title or "\\" in title:
@@ -548,6 +556,12 @@ class PDFGenerator:
         if re.search(r"\.(pdf|docx|pptx|md|txt)$", title, re.IGNORECASE):
             return True
         if "_" in title and " " not in title:
+            return True
+        # Detect temp input patterns (with or without underscore)
+        if re.search(r"temp.?input", title, re.IGNORECASE):
+            return True
+        # Detect long hex/UUID strings (16+ hex chars)
+        if re.search(r"[0-9a-f]{16,}", title, re.IGNORECASE):
             return True
         return False
 

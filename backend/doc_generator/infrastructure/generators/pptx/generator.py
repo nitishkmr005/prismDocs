@@ -41,7 +41,8 @@ class PPTXGenerator:
         """
         self.settings = get_settings()
         self._image_cache: Path | None = None
-        self._max_bullets_per_slide = 4
+        self._max_bullets_per_slide = 5  # Max bullets per content slide
+        self._min_bullets_continuation = 3  # Minimum for continuation slides
 
     def _generate_mermaid_image(self, mermaid_code: str) -> Path | None:
         """
@@ -513,23 +514,35 @@ class PPTXGenerator:
         self, prs, slides: list[dict], sections: list[dict], section_images: dict
     ) -> None:
         """
+        Add slides for each section, using LLM-enhanced bullets when available.
+
+        Falls back to section content if LLM slide matching fails.
+
         Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
+        # Build slide lookup by normalized title (with and without numbers)
         slide_map = {}
         for slide in slides:
             section_title = slide.get("section_title", slide.get("title", ""))
             if section_title:
+                # Add both normalized and number-stripped versions
                 slide_map[self._normalize_title(section_title)] = slide
+                slide_map[self._normalize_section_title(section_title)] = slide
+
+        logger.debug(f"LLM slide map keys: {list(slide_map.keys())[:5]}...")
+        slides_added = 0
 
         for section in sections:
             section_title = section.get("title", "")
             if not section_title:
                 continue
-            normalized = self._normalize_title(section_title)
-            slide = slide_map.get(normalized)
-            if not slide:
-                continue
 
+            # Try to find matching LLM slide (check both normalized versions)
+            normalized = self._normalize_title(section_title)
+            normalized_no_num = self._normalize_section_title(section_title)
+            slide = slide_map.get(normalized) or slide_map.get(normalized_no_num)
+
+            # Handle section image first
             img_info = section_images.get(section.get("section_id"))
             if img_info:
                 img_path = Path(img_info.get("path", ""))
@@ -542,12 +555,29 @@ class PPTXGenerator:
                         f"{image_type} for {section_title}",
                     )
 
-            bullets = slide.get("bullets", [])
-            speaker_notes = slide.get("speaker_notes", "")
+            # Get bullets from LLM slide or extract from section content
+            bullets = []
+            speaker_notes = ""
+
+            if slide:
+                bullets = slide.get("bullets", [])
+                speaker_notes = slide.get("speaker_notes", "")
+
+            # Fallback: extract bullets from section content if LLM didn't provide them
+            if not bullets:
+                section_content = section.get("content", "")
+                if section_content:
+                    bullets = self._extract_bullets_from_content(section_content)
+
             if bullets:
                 self._add_bullet_slide_series(
                     prs, section_title, bullets, speaker_notes=speaker_notes
                 )
+                slides_added += 1
+            else:
+                logger.warning(f"No content for section: {section_title}")
+
+        logger.info(f"Added {slides_added} content slides from sections")
 
     def _normalize_title(self, title: str) -> str:
         """
@@ -561,8 +591,48 @@ class PPTXGenerator:
         Removes leading numbers like "1." from "1. Introduction".
         """
         # Remove leading number patterns like "1.", "1)", "1:", "1 "
-        cleaned = re.sub(r"^\d+[\.:)\s]+\s*", "", (title or "").strip())
+        cleaned = re.sub(r"^\d+[\.:\)\s]+\s*", "", (title or "").strip())
         return re.sub(r"\s+", " ", cleaned).strip().lower()
+
+    def _extract_bullets_from_content(self, content: str) -> list[str]:
+        """
+        Extract bullet points from section content.
+
+        Handles markdown bullets, numbered lists, and paragraphs.
+
+        Args:
+            content: Raw section content
+
+        Returns:
+            List of bullet point strings
+        """
+        bullets = []
+
+        for line in content.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            # Skip sub-headings
+            if line.startswith("#"):
+                continue
+
+            # Already a bullet/list item
+            if line.startswith(("-", "*", "•")) or re.match(r"^\d+\.", line):
+                clean = re.sub(r"^[-*•]\s*", "", line)
+                clean = re.sub(r"^\d+\.\s*", "", clean)
+                if clean:
+                    bullets.append(clean.strip())
+            # Convert short paragraphs to bullets
+            elif len(line) > 20 and len(line) < 300:
+                bullets.append(line)
+
+        # If no bullets found, split long content into sentences
+        if not bullets and content.strip():
+            sentences = re.split(r"(?<=[.!?])\s+", content.strip())
+            bullets = [s.strip() for s in sentences if len(s.strip()) > 20][:6]
+
+        return bullets
 
     def _resolve_section_id(self, title: str, next_id: int) -> tuple[int, int]:
         """
@@ -624,6 +694,14 @@ class PPTXGenerator:
 
     def _looks_like_placeholder(self, title: str) -> bool:
         """
+        Check if title looks like a placeholder/temp file name.
+
+        Detects patterns like:
+        - temp_input_abc123
+        - Temp Input 4438De0B96A248E4Aca780...
+        - file paths
+        - filenames with extensions
+
         Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         if "/" in title or "\\" in title:
@@ -631,6 +709,12 @@ class PPTXGenerator:
         if re.search(r"\.(pdf|docx|pptx|md|txt)$", title, re.IGNORECASE):
             return True
         if "_" in title and " " not in title:
+            return True
+        # Detect temp input patterns (with or without underscore)
+        if re.search(r"temp.?input", title, re.IGNORECASE):
+            return True
+        # Detect long hex/UUID strings (16+ hex chars)
+        if re.search(r"[0-9a-f]{16,}", title, re.IGNORECASE):
             return True
         return False
 
@@ -670,11 +754,27 @@ class PPTXGenerator:
 
     def _chunk_items(self, items: list[str], chunk_size: int) -> list[list[str]]:
         """
+        Split items into chunks with intelligent handling of orphan items.
+
+        Avoids creating continuation slides with just 1-2 items by:
+        - Merging small final chunks into the previous slide
+        - Ensuring minimum items on continuation slides
+
         Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         if not items:
             return []
-        return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+        # Create initial chunks
+        chunks = [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+        # If we have multiple chunks and the last one is too small, merge it
+        if len(chunks) > 1 and len(chunks[-1]) < self._min_bullets_continuation:
+            # Merge last chunk into previous one
+            chunks[-2].extend(chunks[-1])
+            chunks.pop()
+
+        return chunks
 
     def _expand_bullets(self, items: list[str]) -> list[str]:
         """
@@ -696,9 +796,15 @@ class PPTXGenerator:
 
     def _split_sentences(self, text: str) -> list[str]:
         """
+        Split long text into sentences for slides.
+
+        Uses a higher threshold (180 chars) to keep content together
+        and avoid overly fragmented bullet points.
+
         Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
-        if len(text) < 120:
+        # Higher threshold for executive presentations - keep content together
+        if len(text) < 180:
             return [text]
         parts = [
             part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()
