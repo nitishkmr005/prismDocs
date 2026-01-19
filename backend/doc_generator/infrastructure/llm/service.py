@@ -31,6 +31,7 @@ from ...domain.prompts.text.llm_service_prompts import (
 try:
     from google import genai
     from google.genai import types
+
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
@@ -39,6 +40,7 @@ except ImportError:
 
 try:
     from openai import OpenAI
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -46,6 +48,7 @@ except ImportError:
 
 try:
     from anthropic import Anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
@@ -81,10 +84,14 @@ class LLMService:
         Invoked by: (no references found)
         """
         # Try to determine which API to use
-        self.claude_api_key = api_key or os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
+        self.claude_api_key = (
+            api_key or os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
+        )
         self.openai_api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.gemini_api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        
+        self.gemini_api_key = (
+            api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        )
+
         self.model = model
         self.client = None
         self.provider = None
@@ -102,7 +109,9 @@ class LLMService:
                 self.provider = "gemini"
                 logger.info(f"LLM service initialized with Gemini: {model}")
             else:
-                logger.warning("Gemini requested but not available - LLM features disabled")
+                logger.warning(
+                    "Gemini requested but not available - LLM features disabled"
+                )
         elif provider == "openai" and self.openai_api_key and OPENAI_AVAILABLE:
             self.client = OpenAI(api_key=self.openai_api_key)
             self.provider = "openai"
@@ -136,25 +145,25 @@ class LLMService:
         max_tokens: int,
         temperature: float,
         json_mode: bool = False,
-        step: str = "llm_call"
+        step: str = "llm_call",
     ) -> str:
         """
         Call LLM provider (OpenAI or Claude).
-        
+
         Args:
             system_msg: System message
             user_msg: User message
             max_tokens: Maximum tokens
             temperature: Temperature
             json_mode: Whether to use JSON mode
-            
+
         Returns:
             Response text
         Invoked by: src/doc_generator/infrastructure/llm/content_generator.py, src/doc_generator/infrastructure/llm/service.py
         """
         if not self.is_available():
             return ""
-            
+
         try:
             LLMService._total_calls += 1
             if self.model:
@@ -162,9 +171,7 @@ class LLMService:
             if self.provider:
                 LLMService._providers_used.add(self.provider)
             logger.opt(colors=True).info(
-                "<cyan>LLM call</cyan> provider={} model={}",
-                self.provider,
-                self.model
+                "<cyan>LLM call</cyan> provider={} model={}", self.provider, self.model
             )
             start_time = time.perf_counter()
             input_tokens = None
@@ -182,27 +189,28 @@ class LLMService:
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json"
-                        )
+                        ),
                     )
                 else:
                     response = self.client.models.generate_content(
-                        model=self.model,
-                        contents=prompt
+                        model=self.model, contents=prompt
                     )
                 usage = getattr(response, "usage_metadata", None)
                 if usage:
                     input_tokens = getattr(usage, "prompt_token_count", None)
                     output_tokens = getattr(usage, "candidates_token_count", None)
                 duration_ms = int((time.perf_counter() - start_time) * 1000)
-                LLMService._call_details.append({
-                    "kind": "llm",
-                    "step": step,
-                    "provider": self.provider,
-                    "model": self.model,
-                    "duration_ms": duration_ms,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                })
+                LLMService._call_details.append(
+                    {
+                        "kind": "llm",
+                        "step": step,
+                        "provider": self.provider,
+                        "model": self.model,
+                        "duration_ms": duration_ms,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                    }
+                )
                 response_text = (response.text or "").strip()
                 log_llm_call(
                     name=step,
@@ -221,18 +229,20 @@ class LLMService:
                     max_tokens=max_tokens,
                     temperature=temperature,
                     system=system_msg,
-                    messages=[{"role": "user", "content": user_msg}]
+                    messages=[{"role": "user", "content": user_msg}],
                 )
                 duration_ms = int((time.perf_counter() - start_time) * 1000)
-                LLMService._call_details.append({
-                    "kind": "llm",
-                    "step": step,
-                    "provider": self.provider,
-                    "model": self.model,
-                    "duration_ms": duration_ms,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                })
+                LLMService._call_details.append(
+                    {
+                        "kind": "llm",
+                        "step": step,
+                        "provider": self.provider,
+                        "model": self.model,
+                        "duration_ms": duration_ms,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                    }
+                )
                 response_text = response.content[0].text
                 log_llm_call(
                     name=step,
@@ -250,10 +260,10 @@ class LLMService:
                     "model": self.model,
                     "messages": [
                         {"role": "system", "content": system_msg},
-                        {"role": "user", "content": user_msg}
+                        {"role": "user", "content": user_msg},
                     ],
                     "temperature": temperature,
-                    "max_tokens": max_tokens
+                    "max_tokens": max_tokens,
                 }
                 if json_mode:
                     kwargs["response_format"] = {"type": "json_object"}
@@ -263,15 +273,17 @@ class LLMService:
                     input_tokens = getattr(usage, "prompt_tokens", None)
                     output_tokens = getattr(usage, "completion_tokens", None)
                 duration_ms = int((time.perf_counter() - start_time) * 1000)
-                LLMService._call_details.append({
-                    "kind": "llm",
-                    "step": step,
-                    "provider": self.provider,
-                    "model": self.model,
-                    "duration_ms": duration_ms,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                })
+                LLMService._call_details.append(
+                    {
+                        "kind": "llm",
+                        "step": step,
+                        "provider": self.provider,
+                        "model": self.model,
+                        "duration_ms": duration_ms,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                    }
+                )
                 response_text = response.choices[0].message.content.strip()
                 log_llm_call(
                     name=step,
@@ -285,7 +297,61 @@ class LLMService:
                 )
                 return response_text
         except Exception as e:
-            logger.error(f"LLM call failed: {e}")
+            error_str = str(e)
+            # Check if this is a Gemini 503 overload error - try fallback models
+            if (
+                self.provider == "gemini"
+                and "503" in error_str
+                and "overloaded" in error_str.lower()
+            ):
+                fallback_models = [
+                    "gemini-2.5-pro",
+                    "gemini-2.0-flash",
+                    "gemini-1.5-flash",
+                ]
+                # Remove current model from fallback list if present
+                fallback_models = [m for m in fallback_models if m != self.model]
+
+                for fallback_model in fallback_models:
+                    try:
+                        logger.warning(
+                            f"Model {self.model} overloaded, trying fallback: {fallback_model}"
+                        )
+                        prompt = user_msg
+                        if system_msg:
+                            prompt = f"System: {system_msg}\n\nUser: {user_msg}"
+                        if json_mode:
+                            prompt += "\n\nRespond with valid JSON only."
+
+                        if json_mode and types is not None:
+                            response = self.client.models.generate_content(
+                                model=fallback_model,
+                                contents=prompt,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json"
+                                ),
+                            )
+                        else:
+                            response = self.client.models.generate_content(
+                                model=fallback_model, contents=prompt
+                            )
+
+                        response_text = (response.text or "").strip()
+                        if response_text:
+                            logger.info(f"Fallback model {fallback_model} succeeded")
+                            LLMService._models_used.add(fallback_model)
+                            return response_text
+                    except Exception as fallback_error:
+                        logger.warning(
+                            f"Fallback model {fallback_model} also failed: {fallback_error}"
+                        )
+                        continue
+
+                logger.error(
+                    f"All Gemini models failed (overloaded). Original error: {e}"
+                )
+            else:
+                logger.error(f"LLM call failed: {e}")
             return ""
 
     def _safe_json_load(self, text: str) -> Optional[object]:
@@ -317,7 +383,7 @@ class LLMService:
                     continue
                 stack.pop()
                 if not stack:
-                    candidate = text[start_idx:i + 1]
+                    candidate = text[start_idx : i + 1]
                     try:
                         return json.loads(candidate)
                     except json.JSONDecodeError:
@@ -342,7 +408,9 @@ class LLMService:
         """
         return list(cls._call_details)
 
-    def generate_executive_summary(self, content: str, max_points: Optional[int] = None) -> str:
+    def generate_executive_summary(
+        self, content: str, max_points: Optional[int] = None
+    ) -> str:
         """
         Generate executive summary from content.
 
@@ -367,7 +435,7 @@ class LLMService:
                 user_msg,
                 self.max_tokens_summary,
                 self.temperature_summary,
-                step="executive_summary"
+                step="executive_summary",
             )
             logger.debug(f"Generated executive summary: {len(summary)} chars")
             return summary
@@ -375,7 +443,9 @@ class LLMService:
             logger.error(f"Failed to generate executive summary: {e}")
             return ""
 
-    def generate_slide_structure(self, content: str, max_slides: Optional[int] = None) -> list[dict]:
+    def generate_slide_structure(
+        self, content: str, max_slides: Optional[int] = None
+    ) -> list[dict]:
         """
         Generate optimized slide structure from content.
 
@@ -401,7 +471,7 @@ class LLMService:
                 self.max_tokens_slides,
                 self.temperature_slides,
                 json_mode=True,
-                step="slide_structure"
+                step="slide_structure",
             )
             logger.debug(f"Slide structure raw response: {result[:200]}...")
 
@@ -413,7 +483,7 @@ class LLMService:
                     self.max_tokens_slides,
                     self.temperature_slides,
                     json_mode=True,
-                    step="slide_structure:retry"
+                    step="slide_structure:retry",
                 )
                 data = self._safe_json_load(retry)
             if data is None:
@@ -421,7 +491,9 @@ class LLMService:
 
             # Handle various response formats
             if isinstance(data, dict):
-                slides = data.get("slides", data.get("presentation", data.get("content", [])))
+                slides = data.get(
+                    "slides", data.get("presentation", data.get("content", []))
+                )
                 if not slides and len(data) == 1:
                     slides = list(data.values())[0]
             elif isinstance(data, list):
@@ -433,11 +505,17 @@ class LLMService:
             valid_slides = []
             for slide in slides:
                 if isinstance(slide, dict) and slide.get("title"):
-                    valid_slides.append({
-                        "title": slide.get("title", ""),
-                        "bullets": slide.get("bullets", slide.get("content", slide.get("points", []))),
-                        "speaker_notes": slide.get("speaker_notes", slide.get("notes", ""))
-                    })
+                    valid_slides.append(
+                        {
+                            "title": slide.get("title", ""),
+                            "bullets": slide.get(
+                                "bullets", slide.get("content", slide.get("points", []))
+                            ),
+                            "speaker_notes": slide.get(
+                                "speaker_notes", slide.get("notes", "")
+                            ),
+                        }
+                    )
 
             logger.debug(f"Generated slide structure: {len(valid_slides)} slides")
             return valid_slides
@@ -446,9 +524,7 @@ class LLMService:
             return []
 
     def generate_slide_structure_from_sections(
-        self,
-        sections: list[dict],
-        max_slides: Optional[int] = None
+        self, sections: list[dict], max_slides: Optional[int] = None
     ) -> list[dict]:
         """
         Generate slide structure aligned to explicit sections.
@@ -475,7 +551,7 @@ class LLMService:
                 self.max_tokens_slides,
                 self.temperature_slides,
                 json_mode=True,
-                step="section_slide_structure"
+                step="section_slide_structure",
             )
             data = self._safe_json_load(result)
             if data is None:
@@ -485,7 +561,7 @@ class LLMService:
                     self.max_tokens_slides,
                     self.temperature_slides,
                     json_mode=True,
-                    step="section_slide_structure:retry"
+                    step="section_slide_structure:retry",
                 )
                 data = self._safe_json_load(retry)
             if data is None:
@@ -500,14 +576,24 @@ class LLMService:
             valid_slides = []
             for slide in slides:
                 if isinstance(slide, dict) and slide.get("title"):
-                    valid_slides.append({
-                        "section_title": slide.get("section_title", slide.get("title", "")),
-                        "title": slide.get("title", ""),
-                        "bullets": slide.get("bullets", slide.get("content", slide.get("points", []))),
-                        "speaker_notes": slide.get("speaker_notes", slide.get("notes", ""))
-                    })
+                    valid_slides.append(
+                        {
+                            "section_title": slide.get(
+                                "section_title", slide.get("title", "")
+                            ),
+                            "title": slide.get("title", ""),
+                            "bullets": slide.get(
+                                "bullets", slide.get("content", slide.get("points", []))
+                            ),
+                            "speaker_notes": slide.get(
+                                "speaker_notes", slide.get("notes", "")
+                            ),
+                        }
+                    )
 
-            logger.debug(f"Generated section slide structure: {len(valid_slides)} slides")
+            logger.debug(
+                f"Generated section slide structure: {len(valid_slides)} slides"
+            )
             return valid_slides
         except Exception as e:
             logger.error(f"Failed to generate section slide structure: {e}")
@@ -531,8 +617,14 @@ class LLMService:
 
         try:
             system_msg = enhance_bullets_system_prompt()
-            result = self._call_llm(system_msg, prompt, 300, 0.3, step="enhance_bullets")
-            enhanced = [line.lstrip("- ").strip() for line in result.split("\n") if line.strip().startswith("-")]
+            result = self._call_llm(
+                system_msg, prompt, 300, 0.3, step="enhance_bullets"
+            )
+            enhanced = [
+                line.lstrip("- ").strip()
+                for line in result.split("\n")
+                if line.strip().startswith("-")
+            ]
             return enhanced if enhanced else bullets
         except Exception as e:
             logger.error(f"Failed to enhance bullets: {e}")
@@ -594,7 +686,7 @@ class LLMService:
                 2000,
                 0.4,
                 json_mode=True,
-                step="visualization_suggestions"
+                step="visualization_suggestions",
             )
             logger.debug(f"Visualization suggestions raw response: {result[:300]}...")
             data = self._safe_json_load(result)
@@ -605,7 +697,7 @@ class LLMService:
                     2000,
                     0.4,
                     json_mode=True,
-                    step="visualization_suggestions:retry"
+                    step="visualization_suggestions:retry",
                 )
                 data = self._safe_json_load(retry)
             if data is None:
@@ -623,7 +715,13 @@ class LLMService:
 
             # Validate and clean visualizations
             valid_visuals = []
-            valid_types = {"architecture", "flowchart", "comparison_visual", "concept_map", "mind_map"}
+            valid_types = {
+                "architecture",
+                "flowchart",
+                "comparison_visual",
+                "concept_map",
+                "mind_map",
+            }
 
             for visual in visuals[:max_visuals]:
                 if not isinstance(visual, dict):
@@ -637,11 +735,15 @@ class LLMService:
                 if not vis_data:
                     continue
 
-                valid_visuals.append({
-                    "type": vis_type,
-                    "title": visual.get("title", f"{vis_type.replace('_', ' ').title()} Diagram"),
-                    "data": vis_data
-                })
+                valid_visuals.append(
+                    {
+                        "type": vis_type,
+                        "title": visual.get(
+                            "title", f"{vis_type.replace('_', ' ').title()} Diagram"
+                        ),
+                        "data": vis_data,
+                    }
+                )
 
             logger.info(f"Suggested {len(valid_visuals)} visualizations")
             return valid_visuals
