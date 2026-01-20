@@ -186,9 +186,9 @@
 │  📄 PDF Documents   │       │  1️⃣  Detect Format     │       │  📕 PDF Reports     │
 │  📝 Markdown Files  │       │  2️⃣  Parse Content     │       │  📊 PPTX Slides     │
 │  🌐 Web URLs        │       │  3️⃣  Transform (LLM)   │       │  📝 Markdown Docs   │
-│  📊 DOCX/XLSX       │       │  4️⃣  Generate Images   │       │  🧠 Mind Maps       │
-│  🖼️  Images (OCR)   │       │  5️⃣  Describe Images   │       │  🖼️  Edited Images  │
-│  📋 Plain Text      │       │  6️⃣  Generate Output   │       │  🎙️  Podcasts*      │
+│  📊 DOCX            │       │  4️⃣  Generate Images   │       │  🧠 Mind Maps       │
+│  🖼️ Images (OCR)    │       │  5️⃣  Describe Images   │       │  🖼️  Edited Images  │
+│  📋 Plain Text      │       │  6️⃣  Generate Output   │       │  🎙️  Podcasts       │
 │                     │       │  7️⃣  Validate Result   │       │                     │
 │                     │       │   🔄 Auto-retry (3x)   │       │                     │
 └─────────────────────┘       └────────────────────────┘       └─────────────────────┘
@@ -279,7 +279,7 @@ Ingest and normalize content from diverse sources with intelligent extraction:
 | **📝 Markdown**  | Structured documentation                 | Frontmatter, heading hierarchy, code blocks                 |
 | **🧠 Mind Maps** | Visual concept hierarchies               | Interactive diagrams with PNG/SVG/JSON export               |
 | **🖼️ Images**    | AI-generated/edited visuals              | Context-aware diagrams, infographics, charts                |
-| **🎙️ Podcasts**  | Audio content (coming soon)              | Multi-voice MP3 generation                                  |
+| **🎙️ Podcasts**  | Audio content (Beta)                     | Multi-voice MP3 generation                                  |
 
 ### ⚡ Production-Ready Features
 
@@ -580,15 +580,15 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 
 ### 🔜 Coming Soon Highlights
 
-| Feature                       | Description                                                         | Status         |
-| ----------------------------- | ------------------------------------------------------------------- | -------------- |
-| 🎙️ **Podcast MP3 Generation** | Convert documents to multi-voice podcasts with ElevenLabs/Azure TTS | 🚧 In Progress |
-| 🧠 **Mind Maps**              | Auto-generate visual concept hierarchies from documents             | ✅ Available   |
-| 📋 **Template Library**       | 50+ pre-built templates (resumes, arXiv papers, pitch decks)        | 📋 Planned     |
-| 👁️ **Real-time Preview**      | See your document as it generates                                   | 📋 Planned     |
-| 🔐 **API Key Vault**          | Securely store and manage multiple LLM provider keys                | 📋 Planned     |
-| 📦 **PyPI Package**           | `pip install prismdocs` for programmatic access                     | 📋 Planned     |
-| 🏢 **Enterprise Features**    | SSO, team workspaces, usage analytics                               | 📋 Planned     |
+| Feature                       | Description                                                  | Status       |
+| ----------------------------- | ------------------------------------------------------------ | ------------ |
+| 🎙️ **Podcast MP3 Generation** | Convert documents to multi-voice podcasts with Gemini Audio  | ✅ Beta      |
+| 🧠 **Mind Maps**              | Auto-generate visual concept hierarchies from documents      | ✅ Available |
+| 📋 **Template Library**       | 50+ pre-built templates (resumes, arXiv papers, pitch decks) | 📋 Planned   |
+| 👁️ **Real-time Preview**      | See your document as it generates                            | 📋 Planned   |
+| 🔐 **API Key Vault**          | Securely store and manage multiple LLM provider keys         | 📋 Planned   |
+| 📦 **PyPI Package**           | `pip install prismdocs` for programmatic access              | 📋 Planned   |
+| 🏢 **Enterprise Features**    | SSO, team workspaces, usage analytics                        | 📋 Planned   |
 
 ### 🎯 Feature Categories
 
@@ -597,7 +597,7 @@ Legend: ✅ Complete  ⏳ In Progress  📋 Planned
 
 **Content & Media:**
 
-- ⏳ **Podcast MP3 generation** - Multi-voice support with ElevenLabs/Azure TTS
+- ✅ **Podcast MP3 generation** - Multi-voice support with Gemini Audio
 - ✅ **Mind maps** - Interactive viewer with PNG/SVG/JSON export
 - 📋 **FAQ cards** - Structured Q&A with auto-formatting
 - 📋 **SVG diagram generation** - Technical diagrams from text
