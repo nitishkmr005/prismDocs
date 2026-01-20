@@ -9,6 +9,7 @@ interface ScrollingImageProps {
   aspectRatio?: "portrait" | "landscape" | "square" | "video";
   className?: string;
   fit?: "contain" | "cover";
+  fixedHeight?: boolean;
 }
 
 export function ScrollingImage({ 
@@ -17,14 +18,17 @@ export function ScrollingImage({
   aspectRatio = "portrait",
   className,
   fit = "contain",
+  fixedHeight = false,
 }: ScrollingImageProps) {
   // Aspect ratio map
-  const aspectClass = {
-    portrait: "aspect-[3/4]",
-    landscape: "aspect-video",
-    square: "aspect-square",
-    video: "aspect-video",
-  }[aspectRatio];
+  const aspectClass = fixedHeight
+    ? ""
+    : {
+        portrait: "aspect-[3/4]",
+        landscape: "aspect-video",
+        square: "aspect-square",
+        video: "aspect-video",
+      }[aspectRatio];
 
   return (
     <div 

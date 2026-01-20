@@ -244,11 +244,7 @@ export default function HomePage() {
     amber: "border-amber-500/40 bg-amber-50/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
   } as const;
 
-  const galleryAspectStyles = {
-    portrait: "aspect-[3/4]",
-    landscape: "aspect-video",
-    square: "aspect-square",
-  } as const;
+  const galleryMediaHeight = "h-64 sm:h-72 lg:h-80";
 
   type GalleryItem = {
     id: string;
@@ -264,6 +260,7 @@ export default function HomePage() {
     fit?: "contain" | "cover";
     showPlay?: boolean;
     containerClassName?: string;
+    audioSrc?: string;
   };
 
   const galleryItems: GalleryItem[] = [
@@ -316,6 +313,7 @@ export default function HomePage() {
       fit: "contain",
       containerClassName: "bg-slate-900",
       showPlay: true,
+      audioSrc: "/audio/Podcast.wav",
     },
     {
       id: "mindmap",
@@ -633,10 +631,11 @@ export default function HomePage() {
                           src={item.src} 
                           alt={item.alt}
                           aspectRatio={item.aspect}
-                          className={item.className}
+                          className={`${galleryMediaHeight} ${item.className ?? ""}`}
+                          fixedHeight
                         />
                       ) : (
-                        <div className={`relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-900 ${galleryAspectStyles[item.aspect]} ${item.containerClassName ?? ""}`}>
+                        <div className={`relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-900 ${galleryMediaHeight} ${item.containerClassName ?? ""}`}>
                           <Image 
                             src={item.src} 
                             alt={item.alt} 
@@ -651,12 +650,17 @@ export default function HomePage() {
                         </div>
                       )}
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
+                      {item.audioSrc && (
+                        <audio controls preload="none" className="w-full">
+                          <source src={item.audioSrc} type="audio/wav" />
+                          Your browser does not support the audio element.
+                        </audio>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white dark:from-slate-900/60 to-transparent" />
             <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white dark:from-slate-900/60 to-transparent" />
           </div>
           <p className="mt-4 text-center text-sm text-muted-foreground">Swipe or scroll to explore the gallery.</p>
