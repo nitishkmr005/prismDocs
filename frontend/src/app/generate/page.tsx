@@ -711,10 +711,10 @@ export default function GeneratePage() {
       </header>
 
       {/* Main Studio Layout - Responsive with stacked mobile, side-by-side desktop */}
-      <main className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] px-4 py-4 lg:px-12 xl:px-20 overflow-auto lg:overflow-hidden">
+      <main className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] px-4 py-4 lg:px-12 xl:px-20 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
         <div className="h-full max-w-screen-2xl mx-auto grid gap-4 grid-cols-1 lg:grid-cols-2 items-start">
           {/* Left Panel - Inputs with Collapsible Sections */}
-          <div className="min-h-[400px] lg:h-full max-h-[600px] lg:max-h-none border border-border/30 rounded-2xl bg-white/60 dark:bg-slate-900/60 overflow-y-auto scroll-smooth p-2 space-y-2">
+          <div className="lg:h-full border border-border/30 rounded-2xl bg-white/60 dark:bg-slate-900/60 lg:overflow-y-auto lg:scroll-smooth p-2 space-y-2">
             {/* Sources Section */}
             <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
               <button
@@ -849,8 +849,11 @@ export default function GeneratePage() {
               </div>
             </div>
 
+            {/* Spacer to prevent content from being hidden behind sticky button */}
+            <div className="h-16" />
+
             {/* Generate Button - Now sticky at bottom */}
-            <div className="sticky bottom-0 pt-2 pb-1 bg-gradient-to-t from-white/80 dark:from-slate-900/80 to-transparent">
+            <div className="sticky bottom-0 pt-2 pb-1 bg-gradient-to-t from-white/90 dark:from-slate-900/90 via-white/80 dark:via-slate-900/80 to-transparent">
               <Button
                 size="lg"
                 className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
@@ -876,7 +879,7 @@ export default function GeneratePage() {
 
 
           {/* Right Panel - Output (responsive height) */}
-          <div className="min-h-[400px] lg:h-full max-h-[500px] lg:max-h-none overflow-hidden p-4 rounded-2xl border border-border/30 bg-white/60 dark:bg-slate-900/60">
+          <div className="min-h-[400px] lg:h-full overflow-hidden p-4 rounded-2xl border border-border/30 bg-white/60 dark:bg-slate-900/60">
             <div className="h-full">
               {isMindMap && mindMapState === "generating" ? (
                 <div className="flex items-center justify-center h-full rounded-xl border bg-card">
