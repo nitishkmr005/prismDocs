@@ -93,6 +93,39 @@ _Perfect for: Visuals & Diagrams_
 
 ---
 
+## 📂 Sample Outputs
+
+See examples of what PrismDocs can generate:
+
+### 📄 Articles & Reports
+
+|                                                     PDF Report                                                     |                                                           Markdown Doc                                                           |
+| :----------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------: |
+| [![PDF](sampleOutputs/Screenshots/Article%5BPDF%5D.png)](sampleOutputs/Generated%20Documents/Article%5BPDF%5D.pdf) | [![Markdown](sampleOutputs/Screenshots/Article%5BMarkdown%5D.png)](sampleOutputs/Generated%20Documents/Article%5BMarkdown%5D.md) |
+|                      [Download PDF](sampleOutputs/Generated%20Documents/Article%5BPDF%5D.pdf)                      |                          [View Markdown](sampleOutputs/Generated%20Documents/Article%5BMarkdown%5D.md)                           |
+
+### 📊 Presentations
+
+|                                                Slides (PDF Preview)                                                 |                             PowerPoint (PPTX)                              |
+| :-----------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------: |
+| [![Slides](sampleOutputs/Screenshots/Slides%5BPDF%5D.png)](sampleOutputs/Generated%20Documents/Slides%5BPDF%5D.pdf) |                          _Fully Editable Slides_                           |
+|                       [Download PDF](sampleOutputs/Generated%20Documents/Slides%5BPDF%5D.pdf)                       | [Download PPTX](sampleOutputs/Generated%20Documents/Slides%5BPPTX%5D.pptx) |
+
+### 🎙️ Audio & Visuals
+
+|                                            Podcast (Beta)                                            |                                              Mind Maps                                               |
+| :--------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------: |
+| [![Podcast](sampleOutputs/Screenshots/Podcast.png)](sampleOutputs/Generated%20Documents/Podcast.wav) | [![Mindmap](sampleOutputs/Screenshots/Mindmap.png)](sampleOutputs/Generated%20Documents/Mindmap.png) |
+|                   [Listen (WAV)](sampleOutputs/Generated%20Documents/Podcast.wav)                    |                    [View Image](sampleOutputs/Generated%20Documents/Mindmap.png)                     |
+
+### 🎨 Image Generation & Editing
+
+|                         Original AI Generation                          |                                   AI Editing (Inpainting)                                    |
+| :---------------------------------------------------------------------: | :------------------------------------------------------------------------------------------: |
+| ![Original](sampleOutputs/Screenshots/Original%20Generated%20Image.png) | ![Edited](sampleOutputs/Screenshots/Image%20Editing%20By%20Selecting%20area%20to%20edit.png) |
+
+---
+
 ## ⚡ Get Started
 
 You can try the live beta version immediately:
