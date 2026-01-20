@@ -740,7 +740,7 @@ export default function GeneratePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.sources ? "max-h-[300px]" : "max-h-0"}`}>
+              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.sources ? "max-h-[9999px]" : "max-h-0"}`}>
                 <div className="px-3 pb-3">
                   <SourceInput
                     onSourcesChange={() => {}}
@@ -777,7 +777,7 @@ export default function GeneratePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.outputType ? "max-h-[250px]" : "max-h-0"}`}>
+              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.outputType ? "max-h-[9999px]" : "max-h-0"}`}>
                 <div className="px-3 pb-3">
                   <OutputTypeSelector
                     selectedType={outputType}
@@ -811,7 +811,7 @@ export default function GeneratePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.options ? "max-h-[600px]" : "max-h-0"}`}>
+              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.options ? "max-h-[9999px]" : "max-h-0"}`}>
                 <div className="px-3 pb-3">
                   <DynamicOptions
                     outputType={outputType}
