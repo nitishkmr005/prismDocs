@@ -288,20 +288,6 @@ export default function GeneratePage() {
     }
   }, [showApiKeyModal, hasImageKey, outputType]);
 
-  // Handle generate button click - check API keys first
-  const handleGenerateClick = useCallback(() => {
-    if (!canGenerate) return;
-    
-    // Check if we have required API keys - if not, show the modal
-    if (!hasRequiredApiKeys) {
-      setShowApiKeyModal(true);
-      return;
-    }
-    
-    // API keys are set, proceed with generation
-    handleGenerate();
-  }, [canGenerate, hasRequiredApiKeys, setShowApiKeyModal]);
-
   // Handle generation
   const handleGenerate = useCallback(async () => {
     if (!canGenerate || !hasRequiredApiKeys) return;
@@ -511,6 +497,7 @@ export default function GeneratePage() {
     }
   }, [
     canGenerate,
+    hasRequiredApiKeys,
     buildSources,
     isContentType,
     isMindMap,
@@ -525,14 +512,30 @@ export default function GeneratePage() {
     contentApiKey,
     effectiveImageKey,
     mindMapMode,
-    imagePrompt,
     imageCategory,
     selectedStyleId,
     imageOutputFormat,
     generate,
     generateMindMap,
+    textContent,
+    uploadedFiles,
+    urls,
     user?.id,
   ]);
+
+  // Handle generate button click - check API keys first
+  const handleGenerateClick = useCallback(() => {
+    if (!canGenerate) return;
+    
+    // Check if we have required API keys - if not, show the modal
+    if (!hasRequiredApiKeys) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    
+    // API keys are set, proceed with generation
+    handleGenerate();
+  }, [canGenerate, hasRequiredApiKeys, handleGenerate]);
 
   // Reset handler
   const handleReset = useCallback(() => {
