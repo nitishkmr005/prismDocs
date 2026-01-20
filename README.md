@@ -22,7 +22,7 @@
 
 ## 🌟 What is PrismDocs?
 
-PrismDocs is an AI-powered platform that turns your raw content—PDFs, URLs, notes, or images—into polished, professional documents in seconds. Whether you need a pitch deck from meeting notes or a podcast from a research paper, PrismDocs handles the transformation for you.
+PrismDocs is an AI-powered platform that turns your raw content—PDFs, URLs, notes, or images—into polished, professional documents. Whether you need a pitch deck from meeting notes or a podcast from a research paper, PrismDocs handles the transformation for you.
 
 ---
 
@@ -44,7 +44,7 @@ Choose what you want to create:
 
 - **📕 Reports (PDF)**: Professional, formatted documents with table of contents.
 - **📊 Presentations (PPTX)**: Ready-to-present slide decks with 16:9 layouts.
-- **🎙️ Podcasts (Beta)**: Multi-speaker audio conversations based on your content.
+- **🎙️ Podcasts**: Multi-speaker audio conversations based on your content.
 - **🧠 Mind Maps**: Visual hierarchies to brainstorm or summarize complex topics.
 - **📝 Markdown**: Clean, structured text for documentation.
 
@@ -121,9 +121,9 @@ See examples of what PrismDocs can generate:
 
 ### 🎨 Image Generation & Editing
 
-|                         Original AI Generation                          |                         AI Editing (Result)                         |                                  AI Editing (Inpainting UI)                                  |
-| :---------------------------------------------------------------------: | :-----------------------------------------------------------------: | :------------------------------------------------------------------------------------------: |
-| ![Original](sampleOutputs/Screenshots/Original%20Generated%20Image.png) | ![Final Edited Image](sampleOutputs/Screenshots/Edited%20Image.png) | ![Edited](sampleOutputs/Screenshots/Image%20Editing%20By%20Selecting%20area%20to%20edit.png) |
+|                         Original AI Generation                          |                                  AI Editing (Inpainting UI)                                  |                         AI Editing (Result)                         |
+| :---------------------------------------------------------------------: | :------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------: |
+| ![Original](sampleOutputs/Screenshots/Original%20Generated%20Image.png) | ![Edited](sampleOutputs/Screenshots/Image%20Editing%20By%20Selecting%20area%20to%20edit.png) | ![Final Edited Image](sampleOutputs/Screenshots/Edited%20Image.png) |
 
 ---
 
