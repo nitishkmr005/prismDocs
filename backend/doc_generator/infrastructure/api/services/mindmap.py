@@ -51,6 +51,14 @@ class MindMapService:
         Yields:
             Progress events, then completion or error event
         """
+        # Fallback models for retry when JSON parsing fails (best to fastest)
+        GEMINI_FALLBACK_MODELS = [
+            "gemini-3-pro-preview",
+            "gemini-3-flash-preview",
+            "gemini-2.5-pro",
+            "gemini-2.5-flash",
+        ]
+
         try:
             # Phase 1: Extracting content
             yield MindMapProgressEvent(
@@ -80,45 +88,89 @@ class MindMapService:
                 provider_name = "gemini"
             self._configure_api_key(provider_name, api_key)
 
-            llm_service = LLMService(
-                provider=provider_name,
-                model=request.model,
-            )
+            # Build list of models to try (current model first, then fallbacks for Gemini)
+            models_to_try = [request.model]
+            if provider_name == "gemini":
+                # Add fallback models that aren't the same as the current model
+                for fallback in GEMINI_FALLBACK_MODELS:
+                    if fallback != request.model and fallback not in models_to_try:
+                        models_to_try.append(fallback)
 
-            if not llm_service.is_available():
+            tree = None
+            last_error = None
+
+            for attempt, model in enumerate(models_to_try):
+                try:
+                    llm_service = LLMService(
+                        provider=provider_name,
+                        model=model,
+                    )
+
+                    if not llm_service.is_available():
+                        logger.warning(f"Model {model} not available, trying next...")
+                        continue
+
+                    if attempt == 0:
+                        yield MindMapProgressEvent(
+                            stage="analyzing",
+                            percent=50,
+                            message=f"Using {model} to generate...",
+                        )
+                    else:
+                        yield MindMapProgressEvent(
+                            stage="generating",
+                            percent=55 + (attempt * 10),
+                            message=f"Retrying with {model}...",
+                        )
+
+                    # Phase 3: Generating mind map
+                    yield MindMapProgressEvent(
+                        stage="generating",
+                        percent=60 + (attempt * 5),
+                        message="Generating mind map structure...",
+                    )
+
+                    # Call LLM to generate mind map
+                    mind_map_json = await self._generate_mindmap(
+                        llm_service=llm_service,
+                        content=content,
+                        mode=request.mode.value,
+                        source_count=source_count,
+                    )
+
+                    yield MindMapProgressEvent(
+                        stage="generating",
+                        percent=90,
+                        message="Parsing response...",
+                    )
+
+                    # Parse and validate the response
+                    tree = self._parse_response(
+                        mind_map_json, request.mode, source_count
+                    )
+
+                    # If we get here, parsing succeeded
+                    logger.info(f"Mind map generated successfully with model: {model}")
+                    break
+
+                except (json.JSONDecodeError, ValueError) as e:
+                    last_error = e
+                    if attempt < len(models_to_try) - 1:
+                        logger.warning(
+                            f"JSON parsing failed with {model}: {e}. Retrying with next model..."
+                        )
+                    else:
+                        logger.error(
+                            f"JSON parsing failed with all models. Last error: {e}"
+                        )
+                except Exception as e:
+                    # Non-JSON errors should not trigger model fallback
+                    raise e
+
+            if tree is None:
                 raise ValueError(
-                    f"LLM service not available for provider: {provider_name}"
+                    f"Failed to generate valid mind map JSON after trying {len(models_to_try)} models. Last error: {last_error}"
                 )
-
-            yield MindMapProgressEvent(
-                stage="analyzing",
-                percent=50,
-                message="LLM configured, preparing to generate...",
-            )
-
-            # Phase 3: Generating mind map
-            yield MindMapProgressEvent(
-                stage="generating",
-                percent=60,
-                message="Generating mind map structure...",
-            )
-
-            # Call LLM to generate mind map
-            mind_map_json = await self._generate_mindmap(
-                llm_service=llm_service,
-                content=content,
-                mode=request.mode.value,
-                source_count=source_count,
-            )
-
-            yield MindMapProgressEvent(
-                stage="generating",
-                percent=90,
-                message="Parsing response...",
-            )
-
-            # Parse and validate the response
-            tree = self._parse_response(mind_map_json, request.mode, source_count)
 
             yield MindMapProgressEvent(
                 stage="complete",
@@ -278,7 +330,6 @@ class MindMapService:
             label=str(node_data.get("label", ""))[:100],  # Limit label length
             children=children,
         )
-
 
     def _extract_json(self, text: str) -> dict | None:
         """Try to extract JSON object from text."""

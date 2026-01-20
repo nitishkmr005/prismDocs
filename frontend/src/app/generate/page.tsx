@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useMindMapGeneration } from "@/hooks/useMindMapGeneration";
+import { usePodcastGeneration } from "@/hooks/usePodcastGeneration";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UploadedFile } from "@/hooks/useUpload";
@@ -30,6 +31,7 @@ import {
 } from "@/lib/types/requests";
 import { MindMapMode } from "@/lib/types/mindmap";
 import type { OutputFormat as ImageOutputFormat } from "@/lib/types/image";
+import { PodcastStyle, SpeakerConfig, DEFAULT_SPEAKERS } from "@/lib/types/podcast";
 
 // Map studio output types to API output formats
 function getApiOutputFormat(studioType: StudioOutputType): OutputFormat {
@@ -173,6 +175,11 @@ export default function GeneratePage() {
   const [generatedImageData, setGeneratedImageData] = useState<string | null>(null);
   const [generatedImageFormat, setGeneratedImageFormat] = useState<"png" | "svg">("png");
 
+  // Podcast generation specific state
+  const [podcastStyle, setPodcastStyle] = useState<PodcastStyle>("conversational");
+  const [podcastSpeakers, setPodcastSpeakers] = useState<SpeakerConfig[]>(DEFAULT_SPEAKERS);
+  const [podcastDuration, setPodcastDuration] = useState(3);
+
   // Generation hooks
   const {
     state: generationState,
@@ -195,6 +202,15 @@ export default function GeneratePage() {
     generate: generateMindMap,
     reset: resetMindMap,
   } = useMindMapGeneration();
+
+  const {
+    state: podcastState,
+    progress: podcastProgress,
+    result: podcastResult,
+    error: podcastError,
+    generate: generatePodcast,
+    reset: resetPodcast,
+  } = usePodcastGeneration();
 
   // Update content model when provider changes
   useEffect(() => {
@@ -230,13 +246,14 @@ export default function GeneratePage() {
   const isContentType = ["article_pdf", "article_markdown", "slide_deck_pdf", "presentation_pptx"].includes(outputType);
   const isImageType = outputType === "image_generate";
   const isMindMap = outputType === "mindmap";
+  const isPodcast = outputType === "podcast";
   const requiresImageKey = isImageType || (isContentType && enableImageGeneration);
 
   const hasRequiredApiKeys = (() => {
     if (isContentType) {
       return hasContentKey && (!enableImageGeneration || hasImageKey);
     }
-    if (isMindMap) {
+    if (isMindMap || isPodcast) {
       return hasContentKey;
     }
     if (isImageType) {
@@ -496,6 +513,19 @@ export default function GeneratePage() {
         contentApiKey,
         user?.id
       );
+    } else if (isPodcast) {
+      generatePodcast(
+        {
+          sources,
+          style: podcastStyle,
+          provider,
+          model: contentModel,
+          speakers: podcastSpeakers,
+          duration_minutes: podcastDuration,
+        },
+        contentApiKey,
+        user?.id
+      );
     }
   }, [
     canGenerate,
@@ -503,6 +533,7 @@ export default function GeneratePage() {
     buildSources,
     isContentType,
     isMindMap,
+    isPodcast,
     isImageType,
     outputType,
     provider,
@@ -517,8 +548,12 @@ export default function GeneratePage() {
     imageCategory,
     selectedStyleId,
     imageOutputFormat,
+    podcastStyle,
+    podcastSpeakers,
+    podcastDuration,
     generate,
     generateMindMap,
+    generatePodcast,
     textContent,
     uploadedFiles,
     urls,
@@ -543,10 +578,11 @@ export default function GeneratePage() {
   const handleReset = useCallback(() => {
     resetGeneration();
     resetMindMap();
+    resetPodcast();
     setImageGenState("idle");
     setImageGenError(null);
     setGeneratedImageData(null);
-  }, [resetGeneration, resetMindMap]);
+  }, [resetGeneration, resetMindMap, resetPodcast]);
 
   // Download handler
   const handleDownload = useCallback(() => {
@@ -574,6 +610,12 @@ export default function GeneratePage() {
       if (mindMapState === "complete") return "success";
       return "idle";
     }
+    if (isPodcast) {
+      if (podcastState === "generating") return "generating";
+      if (podcastState === "error") return "error";
+      if (podcastState === "complete") return "success";
+      return "idle";
+    }
     // Map hook state to panel state
     if (generationState === "generating") return "generating";
     if (generationState === "error") return "error";
@@ -584,6 +626,7 @@ export default function GeneratePage() {
   const getCurrentProgress = (): number => {
     if (isImageType) return imageGenState === "generating" ? 50 : (imageGenState === "success" ? 100 : 0);
     if (isMindMap) return mindMapProgress.percent;
+    if (isPodcast) return podcastProgress.percent;
     return generationProgress;
   };
 
@@ -595,12 +638,14 @@ export default function GeneratePage() {
       return "";
     }
     if (isMindMap) return mindMapProgress.message || "Processing...";
+    if (isPodcast) return podcastProgress.message || "Processing...";
     return generationStatus;
   };
 
   const getCurrentError = (): string | null => {
     if (isImageType) return imageGenError;
     if (isMindMap) return mindMapError;
+    if (isPodcast) return podcastError;
     return generationError;
   };
 
@@ -836,6 +881,9 @@ export default function GeneratePage() {
                     imageCategory={imageCategory}
                     selectedStyleId={selectedStyleId}
                     imageOutputFormat={imageOutputFormat}
+                    podcastStyle={podcastStyle}
+                    podcastSpeakers={podcastSpeakers}
+                    podcastDuration={podcastDuration}
                     onProviderChange={setProvider}
                     onContentModelChange={setContentModel}
                     onImageModelChange={setImageModel}
@@ -849,6 +897,9 @@ export default function GeneratePage() {
                     onImageCategoryChange={setImageCategory}
                     onSelectedStyleIdChange={setSelectedStyleId}
                     onImageOutputFormatChange={setImageOutputFormat}
+                    onPodcastStyleChange={setPodcastStyle}
+                    onPodcastSpeakersChange={setPodcastSpeakers}
+                    onPodcastDurationChange={setPodcastDuration}
                   />
                 </div>
               </div>
@@ -905,6 +956,7 @@ export default function GeneratePage() {
                   markdownContent={markdownContent}
                   downloadUrl={downloadUrl}
                   mindMapTree={mindMapTree}
+                  podcastResult={podcastResult}
                   metadata={metadata}
                   imageData={generatedImageData}
                   imageFormat={generatedImageFormat}

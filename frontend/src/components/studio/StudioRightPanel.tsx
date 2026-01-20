@@ -14,6 +14,7 @@ import { editImage } from "@/lib/api/image";
 import type { Region } from "@/lib/types/image";
 import type { StyleCategory } from "@/data/imageStyles";
 import { StudioOutputType } from "./OutputTypeSelector";
+import { PodcastResult } from "@/hooks/usePodcastGeneration";
 
 type GenerationState = "idle" | "generating" | "success" | "error";
 
@@ -32,6 +33,8 @@ interface StudioRightPanelProps {
   imageFormat?: "png" | "svg";
   // Mind map outputs
   mindMapTree?: MindMapTree | null;
+  // Podcast outputs
+  podcastResult?: PodcastResult | null;
   // Metadata
   metadata?: {
     title?: string;
@@ -59,6 +62,7 @@ export function StudioRightPanel({
   imageData,
   imageFormat,
   mindMapTree,
+  podcastResult,
   metadata,
   onReset,
   onDownload,
@@ -243,6 +247,8 @@ export function StudioRightPanel({
           return { icon: "🧠", title: "Ready to Create Mind Map", desc: "Add your content and generate an interactive mind map visualization" };
         case "image_generate":
           return { icon: "🎨", title: "Ready to Generate Image", desc: "Describe your image, select a style, and generate stunning visuals" };
+        case "podcast":
+          return { icon: "🎙️", title: "Ready to Create Podcast", desc: "Transform your content into an engaging audio podcast with AI voices" };
         default:
           return { icon: "✨", title: "Ready to Generate", desc: "Configure your options and click Generate to create your content" };
       }
@@ -277,6 +283,12 @@ export function StudioRightPanel({
             "Use the Text tab for a direct prompt.",
             "Upload PDFs/URLs to extract key visual ideas.",
             "SVG works best for diagram-style images.",
+          ];
+        case "podcast":
+          return [
+            "Add sources to transform into audio.",
+            "Pick a podcast style that fits your content.",
+            "Customize speaker names and voices.",
           ];
         default:
           return [
@@ -390,6 +402,100 @@ export function StudioRightPanel({
       return (
         <div className="h-full">
           <MindMapViewer tree={mindMapTree} onReset={onReset} />
+        </div>
+      );
+    }
+
+    // Podcast
+    if (outputType === "podcast" && podcastResult) {
+      const formatDuration = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      };
+
+      const handleDownloadAudio = () => {
+        const link = document.createElement("a");
+        link.href = `data:audio/wav;base64,${podcastResult.audioBase64}`;
+        link.download = `${podcastResult.title.replace(/[^a-zA-Z0-9]/g, '_')}.wav`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      return (
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="px-4 py-3 border-b bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+                <span className="text-2xl">🎙️</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg truncate">{podcastResult.title}</h3>
+                <p className="text-sm text-muted-foreground truncate">{podcastResult.description}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                  {formatDuration(podcastResult.durationSeconds)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Audio Player */}
+          <div className="px-4 py-4 border-b bg-muted/20">
+            <audio
+              controls
+              className="w-full h-12"
+              src={`data:audio/wav;base64,${podcastResult.audioBase64}`}
+            >
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+
+          {/* Script/Transcript */}
+          <div className="flex-1 overflow-auto p-4">
+            <h4 className="text-sm font-semibold mb-3 text-muted-foreground">Transcript</h4>
+            <div className="space-y-3">
+              {podcastResult.script.map((entry, index) => (
+                <div key={index} className="flex gap-3">
+                  <div className="flex-shrink-0">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-sm font-medium">
+                      {entry.speaker.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-primary">{entry.speaker}</span>
+                    <p className="text-sm text-foreground mt-0.5 leading-relaxed">
+                      {entry.text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="p-4 border-t flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleDownloadAudio}>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Audio
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onReset}>
+                Generate Another
+              </Button>
+            </div>
+            {userId && (
+              <FeedbackButtons
+                contentType="podcast"
+                userId={userId}
+              />
+            )}
+          </div>
         </div>
       );
     }

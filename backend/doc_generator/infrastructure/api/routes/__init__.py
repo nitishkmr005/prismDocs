@@ -7,6 +7,7 @@ from .health import router as health_router
 from .idea_canvas import router as idea_canvas_router
 from .image import router as image_router
 from .mindmap import router as mindmap_router
+from .podcast import router as podcast_router
 from .upload import router as upload_router
 
 __all__ = [
@@ -18,6 +19,5 @@ __all__ = [
     "image_router",
     "mindmap_router",
     "idea_canvas_router",
+    "podcast_router",
 ]
-
-

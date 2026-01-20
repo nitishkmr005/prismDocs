@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
-  contentType: "document" | "image" | "mindmap";
+  contentType: "document" | "image" | "mindmap" | "podcast";
   outputFormat?: string;
   userId?: string;
   metadata?: Record<string, any>;

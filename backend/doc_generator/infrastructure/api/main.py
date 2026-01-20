@@ -33,6 +33,7 @@ def _init_heavy_routes(app: FastAPI) -> None:
         idea_canvas_router,
         image_router,
         mindmap_router,
+        podcast_router,
         upload_router,
     )
 
@@ -44,6 +45,7 @@ def _init_heavy_routes(app: FastAPI) -> None:
     app.include_router(image_router, prefix="/api")
     app.include_router(mindmap_router, prefix="/api")
     app.include_router(idea_canvas_router, prefix="/api")
+    app.include_router(podcast_router, prefix="/api")
 
     _routes_initialized = True
 

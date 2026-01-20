@@ -15,6 +15,14 @@ import { StudioOutputType } from "./OutputTypeSelector";
 import { Provider, Audience, ImageStyle } from "@/lib/types/requests";
 import { MindMapMode } from "@/lib/types/mindmap";
 import { CATEGORIES, getStylesByCategory, StyleCategory } from "@/data/imageStyles";
+import { 
+  PodcastStyle, 
+  SpeakerConfig, 
+  VoiceName,
+  PODCAST_STYLE_OPTIONS, 
+  VOICE_OPTIONS,
+  DEFAULT_SPEAKERS 
+} from "@/lib/types/podcast";
 
 interface ModelOption {
   value: string;
@@ -133,6 +141,10 @@ interface DynamicOptionsProps {
   imageCategory?: StyleCategory | null;
   selectedStyleId?: string | null;
   imageOutputFormat?: "raster" | "svg";
+  // Podcast specific
+  podcastStyle?: PodcastStyle;
+  podcastSpeakers?: SpeakerConfig[];
+  podcastDuration?: number;
   onProviderChange: (provider: Provider) => void;
   onContentModelChange: (model: string) => void;
   onImageModelChange: (model: string) => void;
@@ -147,6 +159,10 @@ interface DynamicOptionsProps {
   onImageCategoryChange?: (category: StyleCategory | null) => void;
   onSelectedStyleIdChange?: (styleId: string | null) => void;
   onImageOutputFormatChange?: (format: "raster" | "svg") => void;
+  // Podcast callbacks
+  onPodcastStyleChange?: (style: PodcastStyle) => void;
+  onPodcastSpeakersChange?: (speakers: SpeakerConfig[]) => void;
+  onPodcastDurationChange?: (duration: number) => void;
 }
 
 export function DynamicOptions({
@@ -167,6 +183,9 @@ export function DynamicOptions({
   imageCategory,
   selectedStyleId,
   imageOutputFormat,
+  podcastStyle = "conversational",
+  podcastSpeakers = DEFAULT_SPEAKERS,
+  podcastDuration = 3,
   onProviderChange,
   onContentModelChange,
   onImageModelChange,
@@ -179,11 +198,15 @@ export function DynamicOptions({
   onImagePromptChange,
   onImageCategoryChange,
   onSelectedStyleIdChange,
+  onPodcastStyleChange,
+  onPodcastSpeakersChange,
+  onPodcastDurationChange,
   onImageOutputFormatChange,
 }: DynamicOptionsProps) {
   const isContentType = ["article_pdf", "article_markdown", "slide_deck_pdf", "presentation_pptx"].includes(outputType);
   const isImageType = outputType === "image_generate";
   const isMindMap = outputType === "mindmap";
+  const isPodcast = outputType === "podcast";
   const isImageGenLocked = isContentType && !imageGenerationAvailable;
 
   // Determine which API key sections to show
@@ -297,8 +320,8 @@ export function DynamicOptions({
         </div>
       )}
 
-      {/* Provider & Model Selection - for content types, mind map, AND image generation */}
-      {showProviderModel && (isContentType || isMindMap || isImageType) && (
+      {/* Provider & Model Selection - for content types, mind map, image generation, AND podcast */}
+      {showProviderModel && (isContentType || isMindMap || isImageType || isPodcast) && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="provider" className="text-xs">Provider</Label>
@@ -654,6 +677,119 @@ export function DynamicOptions({
             <p className="text-xs text-muted-foreground">
               SVG is only available for technical diagram styles or free text mode.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Podcast Options */}
+      {isPodcast && (
+        <div className="space-y-5">
+          <div className="space-y-1">
+            <div className="text-sm font-semibold">Podcast Settings</div>
+            <p className="text-xs text-muted-foreground">
+              Configure your podcast style, speakers, and duration.
+            </p>
+          </div>
+
+          {/* Podcast Style */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Podcast Style</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {PODCAST_STYLE_OPTIONS.map((opt) => {
+                const isSelected = podcastStyle === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onPodcastStyleChange?.(opt.value)}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                      isSelected
+                        ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
+                        : "border-border hover:border-muted-foreground/40 hover:bg-muted/30"
+                    }`}
+                  >
+                    <span className="text-xl">{opt.icon}</span>
+                    <span className={`text-xs font-medium ${isSelected ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                      {opt.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {PODCAST_STYLE_OPTIONS.find(s => s.value === podcastStyle)?.description}
+            </p>
+          </div>
+
+          {/* Duration Slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Duration</Label>
+              <span className="text-sm font-semibold text-amber-600">{podcastDuration} min</span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={podcastDuration}
+              onChange={(e) => onPodcastDurationChange?.(Number(e.target.value))}
+              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>1 min</span>
+              <span>5 min</span>
+              <span>10 min</span>
+            </div>
+          </div>
+
+          {/* Speaker Configuration */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Speakers</Label>
+            {podcastSpeakers.map((speaker, index) => (
+              <div key={index} className="p-3 rounded-lg border bg-card space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{index === 0 ? "🎙️" : "🎧"}</span>
+                  <span className="text-sm font-medium">{speaker.role === "host" ? "Host" : "Co-host"}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Name</Label>
+                    <Input
+                      value={speaker.name}
+                      onChange={(e) => {
+                        const newSpeakers = [...podcastSpeakers];
+                        newSpeakers[index] = { ...speaker, name: e.target.value };
+                        onPodcastSpeakersChange?.(newSpeakers);
+                      }}
+                      placeholder="Speaker name"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Voice</Label>
+                    <Select
+                      value={speaker.voice}
+                      onValueChange={(v) => {
+                        const newSpeakers = [...podcastSpeakers];
+                        newSpeakers[index] = { ...speaker, voice: v as VoiceName };
+                        onPodcastSpeakersChange?.(newSpeakers);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VOICE_OPTIONS.map((voice) => (
+                          <SelectItem key={voice.value} value={voice.value}>
+                            {voice.label} - {voice.description}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

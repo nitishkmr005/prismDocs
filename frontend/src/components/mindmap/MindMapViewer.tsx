@@ -155,7 +155,7 @@ function MindMapViewerInner({ tree, onReset }: MindMapViewerInnerProps) {
   );
 
   return (
-    <div ref={fullscreenContainerRef} className={`flex flex-col h-full ${isFullScreen ? "bg-background" : ""}`}>
+    <div ref={fullscreenContainerRef} className={`relative flex flex-col h-full ${isFullScreen ? "bg-background" : ""}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div>
