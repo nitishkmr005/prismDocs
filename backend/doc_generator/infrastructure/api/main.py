@@ -25,7 +25,7 @@ def _init_heavy_routes(app: FastAPI) -> None:
 
     setup_logging(verbose=True)
 
-    # Import heavy route modules (these load torch, docling, etc.)
+    # Import heavy route modules (these load large deps, etc.)
     from .routes import (
         cache_router,
         download_router,

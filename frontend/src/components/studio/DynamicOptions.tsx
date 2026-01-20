@@ -125,6 +125,9 @@ interface DynamicOptionsProps {
   enableImageGeneration: boolean;
   contentApiKey: string;
   imageApiKey: string;
+  showApiKeys?: boolean;
+  showProviderModel?: boolean;
+  imageGenerationAvailable?: boolean;
   // Image generation specific
   imagePrompt?: string;
   imageCategory?: StyleCategory | null;
@@ -157,6 +160,9 @@ export function DynamicOptions({
   enableImageGeneration,
   contentApiKey,
   imageApiKey,
+  showApiKeys = true,
+  showProviderModel = true,
+  imageGenerationAvailable = true,
   imagePrompt,
   imageCategory,
   selectedStyleId,
@@ -178,6 +184,7 @@ export function DynamicOptions({
   const isContentType = ["article_pdf", "article_markdown", "slide_deck_pdf", "presentation_pptx"].includes(outputType);
   const isImageType = outputType === "image_generate";
   const isMindMap = outputType === "mindmap";
+  const isImageGenLocked = isContentType && !imageGenerationAvailable;
 
   // Determine which API key sections to show
   // Content API key is always shown at top since it's needed for processing/parsing
@@ -186,109 +193,112 @@ export function DynamicOptions({
 
   // Get styles for selected category
   const availableStyles = imageCategory ? getStylesByCategory(imageCategory) : [];
+  const isFreeTextMode = !imageCategory;
 
   return (
     <div className="space-y-4">
       {/* API Keys Section */}
-      <div className="space-y-3 p-3 rounded-lg bg-muted/30 border border-border/50">
-        <Label className="text-sm font-semibold flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-          </svg>
-          API Keys
-        </Label>
+      {showApiKeys && (
+        <div className="space-y-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            API Keys
+          </Label>
 
-        {showContentApiKey && (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="content-api-key" className="text-xs">
-                Content API Key *
-              </Label>
-              {provider === "gemini" && (
+          {showContentApiKey && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="content-api-key" className="text-xs">
+                  Content API Key *
+                </Label>
+                {provider === "gemini" && (
+                  <a
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                  >
+                    Get Key
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
+                {provider === "openai" && (
+                  <a
+                    href="https://platform.openai.com/api-keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                  >
+                    Get Key
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
+                {provider === "anthropic" && (
+                  <a
+                    href="https://console.anthropic.com/settings/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                  >
+                    Get Key
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+              <Input
+                id="content-api-key"
+                type="password"
+                placeholder={`Enter ${provider === "gemini" ? "Gemini" : provider === "openai" ? "OpenAI" : "Claude"} API key`}
+                value={contentApiKey}
+                onChange={(e) => onContentApiKeyChange(e.target.value)}
+                className="h-8 text-xs"
+                autoComplete="off"
+              />
+            </div>
+          )}
+
+          {showImageApiKey && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="image-api-key" className="text-xs">
+                  Image API Key {isContentType ? "(for images)" : ""} *
+                </Label>
                 <a
                   href="https://aistudio.google.com/apikey"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
                 >
-                  Get Key
+                  Get Gemini Key
                   <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
-              )}
-              {provider === "openai" && (
-                <a
-                  href="https://platform.openai.com/api-keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                >
-                  Get Key
-                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              )}
-              {provider === "anthropic" && (
-                <a
-                  href="https://console.anthropic.com/settings/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                >
-                  Get Key
-                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              )}
+              </div>
+              <Input
+                id="image-api-key"
+                type="password"
+                placeholder="Enter Gemini API key for images"
+                value={imageApiKey}
+                onChange={(e) => onImageApiKeyChange(e.target.value)}
+                className="h-8 text-xs"
+                autoComplete="off"
+              />
             </div>
-            <Input
-              id="content-api-key"
-              type="password"
-              placeholder={`Enter ${provider === "gemini" ? "Gemini" : provider === "openai" ? "OpenAI" : "Claude"} API key`}
-              value={contentApiKey}
-              onChange={(e) => onContentApiKeyChange(e.target.value)}
-              className="h-8 text-xs"
-              autoComplete="off"
-            />
-          </div>
-        )}
-
-        {showImageApiKey && (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="image-api-key" className="text-xs">
-                Image API Key {isContentType ? "(for images)" : ""} *
-              </Label>
-              <a
-                href="https://aistudio.google.com/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-              >
-                Get Gemini Key
-                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-            <Input
-              id="image-api-key"
-              type="password"
-              placeholder="Enter Gemini API key for images"
-              value={imageApiKey}
-              onChange={(e) => onImageApiKeyChange(e.target.value)}
-              className="h-8 text-xs"
-              autoComplete="off"
-            />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Provider & Model Selection - for content types, mind map, AND image generation */}
-      {(isContentType || isMindMap || isImageType) && (
+      {showProviderModel && (isContentType || isMindMap || isImageType) && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="provider" className="text-xs">Provider</Label>
@@ -348,19 +358,30 @@ export function DynamicOptions({
 
       {/* Image Generation Toggle - for content types */}
       {isContentType && (
-        <div className="flex items-center space-x-2 py-1">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2 py-1">
           <Checkbox
             id="enable-images"
             checked={enableImageGeneration}
             onCheckedChange={(checked: boolean) => onEnableImageGenerationChange(checked)}
+            disabled={isImageGenLocked}
           />
-          <Label htmlFor="enable-images" className="text-xs cursor-pointer">
+          <Label
+            htmlFor="enable-images"
+            className={`text-xs cursor-pointer ${isImageGenLocked ? "text-muted-foreground" : ""}`}
+          >
             Enable image generation in document
           </Label>
+          </div>
+          {isImageGenLocked && (
+            <p className="text-xs text-muted-foreground">
+              Add a Gemini image API key to unlock image generation.
+            </p>
+          )}
         </div>
       )}
 
-      {/* Image Style & Model - for content with images enabled (NOT for standalone image generation) */}
+      {/* Image Style - for content with images enabled (NOT for standalone image generation) */}
       {isContentType && enableImageGeneration && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
@@ -377,22 +398,6 @@ export function DynamicOptions({
                 <SelectItem value="educational">Educational</SelectItem>
                 <SelectItem value="diagram">Diagram</SelectItem>
                 <SelectItem value="handwritten">Handwritten</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="image-model" className="text-xs">Image Model</Label>
-            <Select value={imageModel} onValueChange={onImageModelChange}>
-              <SelectTrigger id="image-model" className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {imageModelOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
@@ -451,83 +456,113 @@ export function DynamicOptions({
       {/* Image Generation Options - for image types */}
       {isImageType && (
         <div className="space-y-5">
-          <div className="text-sm font-semibold">Style Options</div>
-
-          {/* Free text mode toggle */}
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={!imageCategory}
-              onChange={() => {
-                if (imageCategory) {
-                  onImageCategoryChange?.(null);
-                  onSelectedStyleIdChange?.(null);
-                }
-              }}
-              className="w-4 h-4 rounded border-border"
-            />
-            <span className="text-sm text-muted-foreground">Free text mode (no style applied)</span>
-          </label>
-
-          {/* Style Category - 4x2 grid with icons */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Style Category</Label>
-            <div className="grid grid-cols-4 gap-2">
-              {CATEGORIES.map((cat) => {
-                const icons: Record<StyleCategory, string> = {
-                  handwritten_and_human: "✍️",
-                  diagram_and_architecture: "🏗️",
-                  developer_and_technical: "💻",
-                  teaching_and_presentation: "📊",
-                  research_and_academic: "🔬",
-                  creative_and_social: "🎨",
-                  product_and_business: "💼",
-                  comparison_and_table: "📋",
-                };
-                const shortNames: Record<StyleCategory, string> = {
-                  handwritten_and_human: "Handwritten",
-                  diagram_and_architecture: "Diagram",
-                  developer_and_technical: "Developer",
-                  teaching_and_presentation: "Teaching",
-                  research_and_academic: "Research",
-                  creative_and_social: "Creative",
-                  product_and_business: "Product",
-                  comparison_and_table: "Comparison",
-                };
-                const isSelected = imageCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      onImageCategoryChange?.(cat.id);
-                      onSelectedStyleIdChange?.(null);
-                    }}
-                    className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
-                      isSelected
-                        ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
-                        : "border-border hover:border-muted-foreground/40 hover:bg-muted/30"
-                    }`}
-                  >
-                    {isSelected && (
-                      <div className="absolute top-1 right-1">
-                        <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <span className="text-xl">{icons[cat.id]}</span>
-                    <span className={`text-xs font-medium ${isSelected ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
-                      {shortNames[cat.id]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="space-y-1">
+            <div className="text-sm font-semibold">Image settings</div>
             <p className="text-xs text-muted-foreground">
-              Click a category to see available styles, or leave unselected for free text mode
+              Use the Sources panel for your prompt or uploads. Choose a style here.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Style mode</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onImageCategoryChange?.(null);
+                  onSelectedStyleIdChange?.(null);
+                }}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isFreeTextMode
+                    ? "bg-foreground text-background"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                Free text
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (imageCategory) return;
+                  const nextCategory = CATEGORIES[0]?.id || null;
+                  onImageCategoryChange?.(nextCategory);
+                  onSelectedStyleIdChange?.(null);
+                }}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  !isFreeTextMode
+                    ? "bg-foreground text-background"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                Style guided
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Free text uses your prompt only. Style guided adds a visual template.
+            </p>
+          </div>
+
+          {/* Style Category - 4x2 grid with icons */}
+          {!isFreeTextMode && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Style category</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {CATEGORIES.map((cat) => {
+                  const icons: Record<StyleCategory, string> = {
+                    handwritten_and_human: "✍️",
+                    diagram_and_architecture: "🏗️",
+                    developer_and_technical: "💻",
+                    teaching_and_presentation: "📊",
+                    research_and_academic: "🔬",
+                    creative_and_social: "🎨",
+                    product_and_business: "💼",
+                    comparison_and_table: "📋",
+                  };
+                  const shortNames: Record<StyleCategory, string> = {
+                    handwritten_and_human: "Handwritten",
+                    diagram_and_architecture: "Diagram",
+                    developer_and_technical: "Developer",
+                    teaching_and_presentation: "Teaching",
+                    research_and_academic: "Research",
+                    creative_and_social: "Creative",
+                    product_and_business: "Product",
+                    comparison_and_table: "Comparison",
+                  };
+                  const isSelected = imageCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        onImageCategoryChange?.(cat.id);
+                        onSelectedStyleIdChange?.(null);
+                      }}
+                      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30"
+                          : "border-border hover:border-muted-foreground/40 hover:bg-muted/30"
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-1 right-1">
+                          <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                      <span className="text-xl">{icons[cat.id]}</span>
+                      <span className={`text-xs font-medium ${isSelected ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                        {shortNames[cat.id]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Pick a category to browse styles for that visual direction.
+              </p>
+            </div>
+          )}
 
           {/* Style Dropdown */}
           {imageCategory && availableStyles.length > 0 && (

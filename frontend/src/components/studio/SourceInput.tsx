@@ -147,7 +147,7 @@ export function SourceInput({
               multiple
               onChange={handleFileChange}
               disabled={uploading}
-              accept=".pdf,.md,.txt,.docx,.pptx,.xlsx,.png,.jpg,.jpeg"
+              accept=".pdf,.md,.txt,.docx,.pptx,.png,.jpg,.jpeg"
               className="hidden"
               id="file-upload"
             />

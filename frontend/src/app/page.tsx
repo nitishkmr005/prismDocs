@@ -1,5 +1,11 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ApiKeysModal } from "@/components/studio/ApiKeysModal";
+import { Provider } from "@/lib/types/requests";
 
 function RefractionIllustration() {
   return (
@@ -169,8 +175,58 @@ function RefractionIllustration() {
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  
+  // API Keys state for modal
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [provider, setProvider] = useState<Provider>("gemini");
+  const [contentModel, setContentModel] = useState("gemini-2.5-flash");
+  const [contentApiKey, setContentApiKey] = useState("");
+  const [imageApiKey, setImageApiKey] = useState("");
+  const [enableImageGeneration, setEnableImageGeneration] = useState(false);
+  
+  const hasContentKey = contentApiKey.trim().length > 0;
+
+  const handleStartGenerating = () => {
+    setShowApiKeyModal(true);
+  };
+
+  const handleModalClose = (open: boolean) => {
+    setShowApiKeyModal(open);
+    // If modal is closing and we have API key, navigate to generate page
+    if (!open && hasContentKey) {
+      // Store keys in sessionStorage for generate page to pick up
+      sessionStorage.setItem('prismdocs_content_api_key', contentApiKey);
+      sessionStorage.setItem('prismdocs_provider', provider);
+      sessionStorage.setItem('prismdocs_content_model', contentModel);
+      if (imageApiKey) {
+        sessionStorage.setItem('prismdocs_image_api_key', imageApiKey);
+      }
+      router.push('/generate');
+    }
+  };
+
   return (
     <div className="relative overflow-hidden">
+      {/* API Keys Modal */}
+      <ApiKeysModal
+        isOpen={showApiKeyModal}
+        onOpenChange={handleModalClose}
+        provider={provider}
+        contentModel={contentModel}
+        onProviderChange={setProvider}
+        onContentModelChange={setContentModel}
+        contentApiKey={contentApiKey}
+        onContentApiKeyChange={setContentApiKey}
+        enableImageGeneration={enableImageGeneration}
+        onEnableImageGenerationChange={setEnableImageGeneration}
+        allowImageGenerationToggle={false}
+        requireImageKey={false}
+        imageApiKey={imageApiKey}
+        onImageApiKeyChange={setImageApiKey}
+        canClose={hasContentKey}
+      />
+
       {/* Animated gradient background for hero */}
       <div className="absolute inset-0 -z-20 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-violet-50/80 via-fuchsia-50/40 to-transparent dark:from-violet-950/30 dark:via-fuchsia-950/20 dark:to-transparent" />
@@ -205,8 +261,12 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row pt-4">
-            <Button asChild size="lg" className="h-14 px-10 text-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 transition-all duration-300 hover:scale-105">
-              <Link href="/generate">Start Generating →</Link>
+            <Button 
+              size="lg" 
+              className="h-14 px-10 text-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 transition-all duration-300 hover:scale-105"
+              onClick={handleStartGenerating}
+            >
+              Start Generating →
             </Button>
             <Button asChild variant="outline" size="lg" className="h-14 px-10 text-lg backdrop-blur-sm bg-white/50 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 transition-all duration-300">
               <a href="https://github.com/nitishkmr005/PrismDocs" target="_blank" rel="noopener noreferrer">

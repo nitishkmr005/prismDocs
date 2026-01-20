@@ -291,7 +291,7 @@ export function GenerateForm({
                 multiple
                 onChange={handleFileChange}
                 disabled={uploading}
-                accept=".pdf,.md,.txt,.docx,.pptx,.xlsx,.png,.jpg,.jpeg"
+                accept=".pdf,.md,.txt,.docx,.pptx,.png,.jpg,.jpeg"
               />
               {uploading && <p className="text-sm text-muted-foreground">Uploading...</p>}
               {uploadError && <p className="text-sm text-red-500">{uploadError}</p>}

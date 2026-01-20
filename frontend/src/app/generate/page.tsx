@@ -11,6 +11,7 @@ import {
   SourceInput,
   OutputTypeSelector,
   DynamicOptions,
+  ApiKeysModal,
   StudioRightPanel,
   contentModelOptions,
 } from "@/components/studio";
@@ -118,6 +119,25 @@ export default function GeneratePage() {
   // Auth state
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+
+  // Collapsible section state for left panel
+  const [expandedSections, setExpandedSections] = useState<{
+    sources: boolean;
+    outputType: boolean;
+    options: boolean;
+  }>({
+    sources: true,
+    outputType: true,
+    options: true,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   // Output type selection
   const [outputType, setOutputType] = useState<StudioOutputType>("presentation_pptx");
@@ -137,10 +157,15 @@ export default function GeneratePage() {
   const [enableImageGeneration, setEnableImageGeneration] = useState(false);
   const [contentApiKey, setContentApiKey] = useState("");
   const [imageApiKey, setImageApiKey] = useState("");
+  const hasContentKey = contentApiKey.trim().length > 0;
+  // For Gemini, use content key for images if no explicit image key is provided
+  const effectiveImageKey = imageApiKey.trim() || (provider === "gemini" ? contentApiKey.trim() : "");
+  const hasImageKey = effectiveImageKey.length > 0;
+
 
   // Image generation specific state
   const [imagePrompt, setImagePrompt] = useState("");
-  const [imageCategory, setImageCategory] = useState<StyleCategory | null>(null);
+  const [imageCategory, setImageCategory] = useState<StyleCategory | null>("diagram_and_architecture");
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [imageOutputFormat, setImageOutputFormat] = useState<ImageOutputFormat>("raster");
   const [imageGenState, setImageGenState] = useState<"idle" | "generating" | "success" | "error">("idle");
@@ -203,26 +228,84 @@ export default function GeneratePage() {
   const isContentType = ["article_pdf", "article_markdown", "slide_deck_pdf", "presentation_pptx"].includes(outputType);
   const isImageType = outputType === "image_generate";
   const isMindMap = outputType === "mindmap";
+  const requiresImageKey = isImageType || (isContentType && enableImageGeneration);
 
   const hasRequiredApiKeys = (() => {
     if (isContentType) {
-      return contentApiKey.trim() && (!enableImageGeneration || imageApiKey.trim());
+      return hasContentKey && (!enableImageGeneration || hasImageKey);
     }
     if (isMindMap) {
-      return contentApiKey.trim();
+      return hasContentKey;
     }
     if (isImageType) {
-      return imageApiKey.trim();
+      const needsContentKey = uploadedFiles.length > 0 || urls.length > 0;
+      return hasImageKey && (!needsContentKey || hasContentKey);
     }
     return true;
   })();
 
   // For image types, we use the same sources (textContent) as other types
-  const canGenerate = hasSources && hasRequiredApiKeys && !authLoading && isAuthenticated;
+  const canGenerate = hasSources && !authLoading && isAuthenticated;
+
+  // Load API keys from sessionStorage (set by home page)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const storedContentKey = sessionStorage.getItem('prismdocs_content_api_key');
+    const storedProvider = sessionStorage.getItem('prismdocs_provider') as Provider | null;
+    const storedModel = sessionStorage.getItem('prismdocs_content_model');
+    const storedImageKey = sessionStorage.getItem('prismdocs_image_api_key');
+    
+    if (storedContentKey) {
+      setContentApiKey(storedContentKey);
+      sessionStorage.removeItem('prismdocs_content_api_key');
+    }
+    if (storedProvider) {
+      setProvider(storedProvider);
+      sessionStorage.removeItem('prismdocs_provider');
+    }
+    if (storedModel) {
+      setContentModel(storedModel);
+      sessionStorage.removeItem('prismdocs_content_model');
+    }
+    if (storedImageKey) {
+      setImageApiKey(storedImageKey);
+      sessionStorage.removeItem('prismdocs_image_api_key');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showApiKeyModal) return;
+    if (!hasImageKey && enableImageGeneration) {
+      setEnableImageGeneration(false);
+    }
+  }, [showApiKeyModal, hasImageKey, enableImageGeneration]);
+
+  useEffect(() => {
+    if (showApiKeyModal) return;
+    if (!hasImageKey && outputType === "image_generate") {
+      setOutputType("presentation_pptx");
+    }
+  }, [showApiKeyModal, hasImageKey, outputType]);
+
+  // Handle generate button click - check API keys first
+  const handleGenerateClick = useCallback(() => {
+    if (!canGenerate) return;
+    
+    // Check if we have required API keys - if not, show the modal
+    if (!hasRequiredApiKeys) {
+      setShowApiKeyModal(true);
+      return;
+    }
+    
+    // API keys are set, proceed with generation
+    handleGenerate();
+  }, [canGenerate, hasRequiredApiKeys, setShowApiKeyModal]);
 
   // Handle generation
   const handleGenerate = useCallback(async () => {
-    if (!canGenerate) return;
+    if (!canGenerate || !hasRequiredApiKeys) return;
+
 
     // Handle image generation
     if (isImageType) {
@@ -245,7 +328,7 @@ export default function GeneratePage() {
           const sources = buildSources();
           
           // Use the image API key (Gemini) for summarization since that's what's available for images
-          const apiKeyForSummarization = contentApiKey || imageApiKey;
+          const apiKeyForSummarization = contentApiKey;
           if (!apiKeyForSummarization) {
             setImageGenError("Please enter a Content API key to process your files.");
             setImageGenState("error");
@@ -256,9 +339,22 @@ export default function GeneratePage() {
           const summaryPromise = new Promise<string>((resolve, reject) => {
             let summaryText = "";
             let resolved = false;
+            let idleTimer: ReturnType<typeof setInterval> | null = null;
+            let hardTimeout: ReturnType<typeof setTimeout> | null = null;
+            const idleTimeoutMs = 120000;
+            const hardTimeoutMs = 300000;
+            let lastEventAt = Date.now();
+
+            const cleanupTimers = () => {
+              if (idleTimer) clearInterval(idleTimer);
+              if (hardTimeout) clearTimeout(hardTimeout);
+              idleTimer = null;
+              hardTimeout = null;
+            };
             
             const handleEvent = (event: MindMapEvent) => {
               if (resolved) return;
+              lastEventAt = Date.now();
               
               console.log("MindMap event received:", JSON.stringify(event).substring(0, 500));
               
@@ -269,6 +365,7 @@ export default function GeneratePage() {
                 summaryText = buildImagePromptFromMindMap(tree, userPrompt);
                 console.log("Extracted summary from tree:", summaryText.substring(0, 200));
                 resolved = true;
+                cleanupTimers();
                 resolve(summaryText);
               } else if (event.type === "progress") {
                 // Progress event - just log it
@@ -276,6 +373,7 @@ export default function GeneratePage() {
               } else if (event.type === "error") {
                 // Error event
                 resolved = true;
+                cleanupTimers();
                 reject(new Error(event.message || "Summarization failed"));
               }
             };
@@ -283,6 +381,7 @@ export default function GeneratePage() {
             const handleError = (err: Error) => {
               if (resolved) return;
               resolved = true;
+              cleanupTimers();
               console.error("MindMap API error:", err);
               reject(err);
             };
@@ -302,17 +401,27 @@ export default function GeneratePage() {
             }).catch((err) => {
               if (!resolved) {
                 resolved = true;
+                cleanupTimers();
                 reject(err);
               }
             });
             
-            // Timeout after 90 seconds
-            setTimeout(() => {
-              if (!resolved) {
+            idleTimer = setInterval(() => {
+              if (resolved) return;
+              if (Date.now() - lastEventAt > idleTimeoutMs) {
                 resolved = true;
+                cleanupTimers();
                 reject(new Error("Summarization timed out. Please try again."));
               }
-            }, 90000);
+            }, 5000);
+
+            hardTimeout = setTimeout(() => {
+              if (!resolved) {
+                resolved = true;
+                cleanupTimers();
+                reject(new Error("Summarization took too long. Please try again."));
+              }
+            }, hardTimeoutMs);
           });
           
           const summarizedContent = await summaryPromise;
@@ -525,10 +634,30 @@ export default function GeneratePage() {
     );
   }
 
+  const keysStatusLabel = hasRequiredApiKeys ? "Keys set" : "Keys required";
+  const keysActionLabel = hasRequiredApiKeys ? "Change" : "Add keys";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 scroll-smooth">
       {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <ApiKeysModal
+        isOpen={showApiKeyModal}
+        onOpenChange={setShowApiKeyModal}
+        provider={provider}
+        contentModel={contentModel}
+        onProviderChange={setProvider}
+        onContentModelChange={setContentModel}
+        contentApiKey={contentApiKey}
+        onContentApiKeyChange={setContentApiKey}
+        enableImageGeneration={enableImageGeneration}
+        onEnableImageGenerationChange={setEnableImageGeneration}
+        allowImageGenerationToggle={isContentType}
+        requireImageKey={requiresImageKey}
+        imageApiKey={imageApiKey}
+        onImageApiKeyChange={setImageApiKey}
+        canClose={hasContentKey}
+      />
 
       {/* Enhanced Header */}
       <header className="border-b border-border/40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 shadow-sm">
@@ -547,6 +676,25 @@ export default function GeneratePage() {
             </a>
           </div>
           <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+              hasRequiredApiKeys
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-amber-200 bg-amber-50 text-amber-700"
+            }`}>
+              <span className={`h-2 w-2 rounded-full ${
+                hasRequiredApiKeys ? "bg-emerald-500" : "bg-amber-500"
+              }`} />
+              <span>{keysStatusLabel}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setShowApiKeyModal(true)}
+              >
+                {keysActionLabel}
+              </Button>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -562,90 +710,173 @@ export default function GeneratePage() {
         </div>
       </header>
 
-      {/* Main Studio Layout - Full screen, equal panels */}
-      <main className="h-[calc(100vh-4rem)]">
-        <div className="h-full grid gap-0 lg:grid-cols-2">
-          {/* Left Panel - Inputs (scrollable) */}
-          <div className="border-r border-border/30 bg-white/60 dark:bg-slate-900/60 overflow-y-auto scroll-smooth p-6 px-8 space-y-5">
-            {/* Source Input */}
-            <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5 shadow-sm hover:shadow-md transition-shadow">
-              <SourceInput
-                onSourcesChange={() => {}}
-                uploadedFiles={uploadedFiles}
-                urls={urls}
-                textContent={textContent}
-                onFilesChange={setUploadedFiles}
-                onUrlsChange={setUrls}
-                onTextChange={setTextContent}
-              />
-            </div>
-
-            {/* Output Type Selector */}
-            <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5 shadow-sm hover:shadow-md transition-shadow">
-              <OutputTypeSelector
-                selectedType={outputType}
-                onTypeChange={setOutputType}
-              />
-            </div>
-
-            {/* Dynamic Options */}
-            <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5 shadow-sm hover:shadow-md transition-shadow">
-              <DynamicOptions
-                outputType={outputType}
-                provider={provider}
-                contentModel={contentModel}
-                imageModel={imageModel}
-                audience={audience}
-                imageStyle={imageStyle}
-                mindMapMode={mindMapMode}
-                enableImageGeneration={enableImageGeneration}
-                contentApiKey={contentApiKey}
-                imageApiKey={imageApiKey}
-                imagePrompt={imagePrompt}
-                imageCategory={imageCategory}
-                selectedStyleId={selectedStyleId}
-                imageOutputFormat={imageOutputFormat}
-                onProviderChange={setProvider}
-                onContentModelChange={setContentModel}
-                onImageModelChange={setImageModel}
-                onAudienceChange={setAudience}
-                onImageStyleChange={setImageStyle}
-                onMindMapModeChange={setMindMapMode}
-                onEnableImageGenerationChange={setEnableImageGeneration}
-                onContentApiKeyChange={setContentApiKey}
-                onImageApiKeyChange={setImageApiKey}
-                onImagePromptChange={setImagePrompt}
-                onImageCategoryChange={setImageCategory}
-                onSelectedStyleIdChange={setSelectedStyleId}
-                onImageOutputFormatChange={setImageOutputFormat}
-              />
-            </div>
-
-            {/* Generate Button */}
-            <Button
-              size="lg"
-              className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-              disabled={!canGenerate || getCurrentState() === "generating"}
-              onClick={handleGenerate}
-            >
-              {getCurrentState() === "generating" ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      {/* Main Studio Layout - Centered with margins on large screens */}
+      <main className="h-[calc(100vh-4rem)] px-6 py-4 lg:px-12 xl:px-20">
+        <div className="h-full max-w-screen-2xl mx-auto grid gap-4 lg:grid-cols-2 items-start">
+          {/* Left Panel - Inputs with Collapsible Sections */}
+          <div className="h-full border border-border/30 rounded-2xl bg-white/60 dark:bg-slate-900/60 overflow-y-auto scroll-smooth p-2 space-y-2">
+            {/* Sources Section */}
+            <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection("sources")}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  Generate
-                </>
-              )}
-            </Button>
+                  <span className="text-sm font-medium">Sources</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({uploadedFiles.length + urls.length + (textContent.trim() ? 1 : 0)})
+                  </span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-muted-foreground transition-transform ${expandedSections.sources ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.sources ? "max-h-[300px]" : "max-h-0"}`}>
+                <div className="px-3 pb-3">
+                  <SourceInput
+                    onSourcesChange={() => {}}
+                    uploadedFiles={uploadedFiles}
+                    urls={urls}
+                    textContent={textContent}
+                    onFilesChange={setUploadedFiles}
+                    onUrlsChange={setUrls}
+                    onTextChange={setTextContent}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Output Type Section */}
+            <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection("outputType")}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                  <span className="text-sm font-medium">Output Type</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-muted-foreground transition-transform ${expandedSections.outputType ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.outputType ? "max-h-[250px]" : "max-h-0"}`}>
+                <div className="px-3 pb-3">
+                  <OutputTypeSelector
+                    selectedType={outputType}
+                    onTypeChange={setOutputType}
+                    imageGenerationAvailable={hasImageKey}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Settings/Options Section */}
+            <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection("options")}
+                className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-sm font-medium">Settings</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-muted-foreground transition-transform ${expandedSections.options ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.options ? "max-h-[600px]" : "max-h-0"}`}>
+                <div className="px-3 pb-3">
+                  <DynamicOptions
+                    outputType={outputType}
+                    provider={provider}
+                    contentModel={contentModel}
+                    imageModel={imageModel}
+                    audience={audience}
+                    imageStyle={imageStyle}
+                    mindMapMode={mindMapMode}
+                    enableImageGeneration={enableImageGeneration}
+                    contentApiKey={contentApiKey}
+                    imageApiKey={imageApiKey}
+                    showApiKeys={false}
+                    showProviderModel={false}
+                    imageGenerationAvailable={hasImageKey}
+                    imagePrompt={imagePrompt}
+                    imageCategory={imageCategory}
+                    selectedStyleId={selectedStyleId}
+                    imageOutputFormat={imageOutputFormat}
+                    onProviderChange={setProvider}
+                    onContentModelChange={setContentModel}
+                    onImageModelChange={setImageModel}
+                    onAudienceChange={setAudience}
+                    onImageStyleChange={setImageStyle}
+                    onMindMapModeChange={setMindMapMode}
+                    onEnableImageGenerationChange={setEnableImageGeneration}
+                    onContentApiKeyChange={setContentApiKey}
+                    onImageApiKeyChange={setImageApiKey}
+                    onImagePromptChange={setImagePrompt}
+                    onImageCategoryChange={setImageCategory}
+                    onSelectedStyleIdChange={setSelectedStyleId}
+                    onImageOutputFormatChange={setImageOutputFormat}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Generate Button - Now sticky at bottom */}
+            <div className="sticky bottom-0 pt-2 pb-1 bg-gradient-to-t from-white/80 dark:from-slate-900/80 to-transparent">
+              <Button
+                size="lg"
+                className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+                disabled={!canGenerate || getCurrentState() === "generating"}
+                onClick={handleGenerateClick}
+              >
+                {getCurrentState() === "generating" ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {hasRequiredApiKeys ? "Generate" : "Configure & Generate"}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
+
           {/* Right Panel - Output (full height) */}
-          <div className="overflow-hidden p-4 px-6">
+          <div className="h-full overflow-hidden p-4 rounded-2xl border border-border/30 bg-white/60 dark:bg-slate-900/60">
             <div className="h-full">
               {isMindMap && mindMapState === "generating" ? (
                 <div className="flex items-center justify-center h-full rounded-xl border bg-card">
@@ -670,7 +901,7 @@ export default function GeneratePage() {
                   onReset={handleReset}
                   onDownload={handleDownload}
                   userId={user?.id}
-                  imageApiKey={imageApiKey}
+                  imageApiKey={effectiveImageKey}
                 />
               )}
             </div>

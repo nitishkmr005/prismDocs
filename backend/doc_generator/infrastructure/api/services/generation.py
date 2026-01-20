@@ -13,6 +13,7 @@ from ....application.graph_workflow import run_workflow
 from ....application.parsers import WebParser, get_parser
 from ....domain.content_types import ContentFormat
 from ....infrastructure.llm import LLMService
+from ....utils.image_understanding import extract_image_content, is_image_file
 from ....infrastructure.logging_config import (
     log_phase,
     log_separator,
@@ -93,7 +94,7 @@ class GenerationService:
                 message="Preparing sources...",
             )
 
-            input_path, file_id = await self._collect_sources(request)
+            input_path, file_id = await self._collect_sources(request, api_key)
             source_count = len(request.sources)
 
             log_success(f"Parsed {source_count} source(s) → {input_path.name}")
@@ -384,7 +385,7 @@ class GenerationService:
             logger.debug(f"Configured {env_var} for provider {provider}")
 
     async def _collect_sources(
-        self, request: GenerateRequest
+        self, request: GenerateRequest, api_key: str
     ) -> tuple[Path, str | None]:
         """Collect content from all sources and return input path.
 
@@ -401,13 +402,24 @@ class GenerationService:
         parsed_blocks = []
         file_id: str | None = None
 
+        provider_name = request.provider.value
+        if provider_name == "google":
+            provider_name = "gemini"
+
         for source in all_sources:
             if isinstance(source, FileSource):
                 file_path = self._resolve_upload_path(source.file_id)
                 if not file_id:
                     file_id = source.file_id
-                parser = get_parser(self._detect_format(file_path))
-                content, metadata = parser.parse(file_path)
+                if file_path.suffix.lower() in {".xlsx", ".xls"}:
+                    raise ValueError("Excel files are not supported.")
+                if is_image_file(file_path):
+                    content, metadata = extract_image_content(
+                        file_path, provider_name, request.model, api_key
+                    )
+                else:
+                    parser = get_parser(self._detect_format(file_path))
+                    content, metadata = parser.parse(file_path)
                 title = metadata.get("title") or Path(file_path).name
                 parsed_blocks.append(
                     {

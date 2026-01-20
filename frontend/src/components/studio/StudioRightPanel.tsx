@@ -67,6 +67,8 @@ export function StudioRightPanel({
 }: StudioRightPanelProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [markdownCopied, setMarkdownCopied] = useState(false);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
+  const [markdownView, setMarkdownView] = useState<"preview" | "raw">("preview");
   
   // Image editing state
   const [isEditingMode, setIsEditingMode] = useState(false);
@@ -77,6 +79,44 @@ export function StudioRightPanel({
   const [editedImageData, setEditedImageData] = useState<string | null>(null);
   const [isApplyingEdit, setIsApplyingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Simple markdown to HTML renderer for basic preview
+  const renderMarkdownAsHtml = (md: string): string => {
+    let html = md
+      // Escape HTML to prevent XSS
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-5 mb-2">$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-6 mb-3">$1</h1>')
+      // Bold and italic
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // Code blocks
+      .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="bg-muted/50 p-3 rounded-lg overflow-x-auto my-3 text-sm"><code>$2</code></pre>')
+      // Inline code
+      .replace(/`([^`]+)`/g, '<code class="bg-muted px-1.5 py-0.5 rounded text-sm">$1</code>')
+      // Unordered lists
+      .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+      .replace(/^• (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+      // Ordered lists
+      .replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>')
+      // Blockquotes
+      .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-2">$1</blockquote>')
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr class="my-4 border-border"/>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
+      // Paragraphs (double newlines)
+      .replace(/\n\n/g, '</p><p class="my-2">')
+      // Single newlines
+      .replace(/\n/g, '<br/>');
+    
+    return `<div class="prose prose-sm dark:prose-invert max-w-none"><p class="my-2">${html}</p></div>`;
+  };
 
   const handleCopyMarkdown = async () => {
     if (!markdownContent) return;
@@ -210,6 +250,45 @@ export function StudioRightPanel({
 
     const { icon, title, desc } = getIdleContent();
 
+    const getIdleTips = () => {
+      switch (outputType) {
+        case "article_pdf":
+        case "article_markdown":
+          return [
+            "Add 1-3 sources or paste a concise draft.",
+            "Set a target audience to shape tone and depth.",
+            "Enable image generation if you want visuals.",
+          ];
+        case "slide_deck_pdf":
+        case "presentation_pptx":
+          return [
+            "Use focused sources for cleaner slides.",
+            "Audience choice helps structure the story.",
+            "Keep inputs short for faster builds.",
+          ];
+        case "mindmap":
+          return [
+            "Pick a generation mode before you start.",
+            "Longer sources produce richer branches.",
+            "Try a single URL or document first.",
+          ];
+        case "image_generate":
+          return [
+            "Use the Text tab for a direct prompt.",
+            "Upload PDFs/URLs to extract key visual ideas.",
+            "SVG works best for diagram-style images.",
+          ];
+        default:
+          return [
+            "Add at least one source to begin.",
+            "Set options on the left before generating.",
+            "Keep inputs concise for faster results.",
+          ];
+      }
+    };
+
+    const idleTips = getIdleTips();
+
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 rounded-xl border border-dashed border-border bg-muted/10">
         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
@@ -221,6 +300,17 @@ export function StudioRightPanel({
         <p className="text-sm text-muted-foreground max-w-xs">
           {desc}
         </p>
+        <div className="mt-6 w-full max-w-sm rounded-lg border border-border/60 bg-background/70 p-4 text-left">
+          <p className="text-xs font-semibold text-muted-foreground">Quick checklist</p>
+          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+            {idleTips.map((tip) => (
+              <li key={tip} className="flex items-start gap-2">
+                <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary/60" />
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     );
   }
@@ -261,8 +351,34 @@ export function StudioRightPanel({
           </svg>
         </div>
         <h3 className="text-lg font-medium text-red-800 dark:text-red-200 mb-2">Generation Failed</h3>
-        <p className="text-sm text-red-600 dark:text-red-300 mb-4 max-w-xs">{error}</p>
-        <Button variant="outline" onClick={onReset}>Try Again</Button>
+        <p className="text-sm text-red-600 dark:text-red-300 mb-3 max-w-xs">
+          {error || "Something went wrong while generating your output."}
+        </p>
+        <div className="w-full max-w-sm rounded-lg border border-red-200/70 dark:border-red-800/60 bg-red-50/60 dark:bg-red-950/30 p-3 text-left">
+          <p className="text-xs font-semibold text-red-700 dark:text-red-200">Try this</p>
+          <ul className="mt-2 space-y-1 text-xs text-red-700/80 dark:text-red-200/80">
+            <li>Check API keys and provider selection.</li>
+            <li>Retry with fewer sources or smaller files.</li>
+            <li>Wait a moment and try again.</li>
+          </ul>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <Button variant="outline" onClick={onReset}>Try Again</Button>
+          {error && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowErrorDetails((prev) => !prev)}
+            >
+              {showErrorDetails ? "Hide details" : "View details"}
+            </Button>
+          )}
+        </div>
+        {showErrorDetails && error && (
+          <pre className="mt-3 w-full max-w-sm rounded-lg border border-red-200/70 dark:border-red-800/60 bg-red-100/50 dark:bg-red-950/40 p-3 text-left text-[11px] text-red-700 dark:text-red-200 whitespace-pre-wrap">
+            {error}
+          </pre>
+        )}
       </div>
     );
   }
@@ -423,12 +539,41 @@ export function StudioRightPanel({
       );
     }
 
-    // Markdown output
+    // Markdown output with tabbed Preview/Raw view
     if (outputType === "article_markdown" && markdownContent) {
       return (
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-            <span className="text-xs font-medium text-muted-foreground">Markdown Preview</span>
+            <div className="flex items-center gap-2">
+              {/* Preview/Raw Toggle */}
+              <div className="flex bg-muted/50 rounded-lg p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMarkdownView("preview")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                    markdownView === "preview"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMarkdownView("raw")}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                    markdownView === "raw"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Raw
+                </button>
+              </div>
+              {metadata?.title && (
+                <span className="text-xs text-muted-foreground">{metadata.title}</span>
+              )}
+            </div>
             <div className="flex gap-2">
               <Button 
                 size="sm" 
@@ -463,9 +608,16 @@ export function StudioRightPanel({
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4">
-            <pre className="text-sm font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
-              {markdownContent}
-            </pre>
+            {markdownView === "preview" ? (
+              <div 
+                className="text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderMarkdownAsHtml(markdownContent) }}
+              />
+            ) : (
+              <pre className="text-sm font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                {markdownContent}
+              </pre>
+            )}
           </div>
           {userId && (
             <div className="p-3 border-t flex justify-end">

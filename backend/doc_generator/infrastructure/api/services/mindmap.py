@@ -13,6 +13,7 @@ from loguru import logger
 from ....application.parsers import WebParser, get_parser
 from ....domain.prompts.mindmap import mindmap_system_prompt, mindmap_user_prompt
 from ....infrastructure.llm import LLMService
+from ....utils.image_understanding import extract_image_content, is_image_file
 from ..schemas.mindmap import (
     MindMapCompleteEvent,
     MindMapErrorEvent,
@@ -58,7 +59,7 @@ class MindMapService:
                 message="Reading sources...",
             )
 
-            content, source_count = await self._extract_content(request)
+            content, source_count = await self._extract_content(request, api_key)
 
             yield MindMapProgressEvent(
                 stage="extracting",
@@ -135,7 +136,9 @@ class MindMapService:
                 code="GENERATION_ERROR",
             )
 
-    async def _extract_content(self, request: MindMapRequest) -> tuple[str, int]:
+    async def _extract_content(
+        self, request: MindMapRequest, api_key: str
+    ) -> tuple[str, int]:
         """Extract and merge content from all sources.
 
         Returns:
@@ -144,17 +147,33 @@ class MindMapService:
         contents: list[str] = []
         loop = asyncio.get_event_loop()
 
+        provider_name = request.provider.value
+        if provider_name == "google":
+            provider_name = "gemini"
+
         for source in request.sources:
             if isinstance(source, FileSource):
                 # Get file from storage
                 file_path = self.storage.get_upload_path(source.file_id)
                 if file_path.exists():
                     # Determine content format from file extension
-                    file_extension = file_path.suffix.lstrip(".").lower()
-                    parser = get_parser(file_extension)
-                    content, _ = await loop.run_in_executor(
-                        self._executor, parser.parse, file_path
-                    )
+                    if file_path.suffix.lower() in {".xlsx", ".xls"}:
+                        raise ValueError("Excel files are not supported.")
+                    if is_image_file(file_path):
+                        content, _ = await loop.run_in_executor(
+                            self._executor,
+                            extract_image_content,
+                            file_path,
+                            provider_name,
+                            request.model,
+                            api_key,
+                        )
+                    else:
+                        file_extension = file_path.suffix.lstrip(".").lower()
+                        parser = get_parser(file_extension)
+                        content, _ = await loop.run_in_executor(
+                            self._executor, parser.parse, file_path
+                        )
                     contents.append(content)
                 else:
                     logger.warning(f"File not found: {source.file_id}")
@@ -259,6 +278,7 @@ class MindMapService:
             label=str(node_data.get("label", ""))[:100],  # Limit label length
             children=children,
         )
+
 
     def _extract_json(self, text: str) -> dict | None:
         """Try to extract JSON object from text."""

@@ -131,7 +131,7 @@ def _post_process_content(content: str) -> str:
 
 def remove_warning_lines(content: str) -> str:
     """
-    Remove warning lines from docling parsing.
+    Remove warning lines from parser output.
 
     Args:
         content: Markdown content

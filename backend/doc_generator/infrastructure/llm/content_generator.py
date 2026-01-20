@@ -116,6 +116,8 @@ class LLMContentGenerator:
         resolved_provider = (provider or self.settings.llm.content_provider or "openai").lower()
         if resolved_provider == "google":
             resolved_provider = "gemini"
+        if resolved_provider == "anthropic":
+            resolved_provider = "claude"
         self.content_provider = resolved_provider
         self.content_model = model or self.settings.llm.content_model or self.settings.llm.model
 
@@ -149,7 +151,7 @@ class LLMContentGenerator:
                 self.content_client = None
             return
 
-        if self.content_provider == "claude":
+        if self.content_provider in {"claude", "anthropic"}:
             if self.claude_api_key and ANTHROPIC_AVAILABLE:
                 self.content_client = Anthropic(api_key=self.claude_api_key)
                 logger.info(f"Content Generator initialized with Claude: {self.content_model}")

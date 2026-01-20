@@ -21,9 +21,6 @@ dependencies = [
     # Logging
     "loguru==0.7.3",
 
-    # Document parsing (IBM Research - advanced PDF/document parsing)
-    "docling==2.66.0",
-
     # Document conversion (Microsoft - convert any doc to markdown)
     "markitdown[all]==0.0.1a2",
 

@@ -94,23 +94,30 @@ const outputTypes: OutputTypeConfig[] = [
 interface OutputTypeSelectorProps {
   selectedType: StudioOutputType;
   onTypeChange: (type: StudioOutputType) => void;
+  imageGenerationAvailable?: boolean;
 }
 
-export function OutputTypeSelector({ selectedType, onTypeChange }: OutputTypeSelectorProps) {
+export function OutputTypeSelector({
+  selectedType,
+  onTypeChange,
+  imageGenerationAvailable = true,
+}: OutputTypeSelectorProps) {
   return (
     <div className="space-y-3">
       <Label className="text-sm font-semibold">Output Type</Label>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5">
         {outputTypes.map((type) => {
           const isSelected = selectedType === type.id;
+          const isImageDisabled = type.id === "image_generate" && !imageGenerationAvailable;
+          const isDisabled = type.comingSoon || isImageDisabled;
           return (
             <button
               key={type.id}
               type="button"
-              onClick={() => !type.comingSoon && onTypeChange(type.id)}
-              disabled={type.comingSoon}
-              className={`relative flex flex-col items-center text-center p-3 rounded-xl border-2 transition-all duration-200 ${
-                type.comingSoon
+              onClick={() => !isDisabled && onTypeChange(type.id)}
+              disabled={isDisabled}
+              className={`relative flex flex-col items-center text-center p-2 rounded-xl border-2 transition-all duration-200 ${
+                isDisabled
                   ? "opacity-50 cursor-not-allowed bg-muted/30 border-border"
                   : isSelected
                   ? `${type.bgColor} ring-2 ring-offset-1 ring-primary/30`
@@ -122,12 +129,17 @@ export function OutputTypeSelector({ selectedType, onTypeChange }: OutputTypeSel
                   Soon
                 </span>
               )}
+              {isImageDisabled && (
+                <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-muted text-muted-foreground">
+                  Key required
+                </span>
+              )}
               {type.id === "presentation_pptx" && !type.comingSoon && (
                 <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white">
                   Best
                 </span>
               )}
-              <span className="text-xl mb-1">{type.icon}</span>
+              <span className="text-lg mb-1">{type.icon}</span>
               <span className={`text-[10px] font-semibold leading-tight ${isSelected ? type.color : "text-foreground"}`}>
                 {type.label}
               </span>

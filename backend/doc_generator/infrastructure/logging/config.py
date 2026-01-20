@@ -134,7 +134,7 @@ def setup_logging(verbose: bool = False, log_file: str | None = None) -> None:
         logger.info(f"Logging to file: {log_file}")
 
     # Suppress verbose logging from third-party libraries
-    for lib in ["docling", "PIL", "pdfminer", "httpx", "httpcore", "urllib3", "google"]:
+    for lib in ["PIL", "pdfminer", "httpx", "httpcore", "urllib3", "google"]:
         logging.getLogger(lib).setLevel(logging.WARNING)
 
     logger.info(f"Logging configured (level={level})")

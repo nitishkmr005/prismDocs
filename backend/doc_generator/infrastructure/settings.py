@@ -139,13 +139,6 @@ class PptxSettings(BaseSettings):
     theme: PptxThemeSettings = Field(default_factory=PptxThemeSettings)
 
 
-class DoclingSettings(BaseSettings):
-    """Docling parser settings."""
-
-    ocr_enabled: bool = True
-    table_structure_extraction: bool = True
-
-
 class WebParserSettings(BaseSettings):
     """Web parser settings."""
 
@@ -157,7 +150,6 @@ class WebParserSettings(BaseSettings):
 class ParserSettings(BaseSettings):
     """Parser configuration settings."""
 
-    docling: DoclingSettings = Field(default_factory=DoclingSettings)
     web: WebParserSettings = Field(default_factory=WebParserSettings)
 
 

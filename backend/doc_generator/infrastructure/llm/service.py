@@ -116,8 +116,7 @@ class LLMService:
             self.client = OpenAI(api_key=self.openai_api_key)
             self.provider = "openai"
             logger.info(f"LLM service initialized with OpenAI: {model}")
-        elif False and self.claude_api_key and ANTHROPIC_AVAILABLE:
-            # Claude support disabled - use OpenAI instead
+        elif provider in ("anthropic", "claude") and self.claude_api_key and ANTHROPIC_AVAILABLE:
             self.client = Anthropic(api_key=self.claude_api_key)
             self.provider = "claude"
             if "gpt" in model.lower():

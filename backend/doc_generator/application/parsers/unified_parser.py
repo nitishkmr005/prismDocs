@@ -1,53 +1,45 @@
 """
-Unified parser using Docling for multiple document formats.
+Unified parser using MarkItDown for multiple document formats.
 
-Handles PDF, DOCX, PPTX, XLSX, and images with advanced OCR support.
-Falls back to lighter parsers (pypdf, python-docx) when Docling is unavailable.
+Handles PDF, DOCX, PPTX, and images with markdown conversion.
+Falls back to lighter parsers (pypdf, python-docx) when MarkItDown is unavailable.
 """
 
-import os
 from pathlib import Path
 from typing import Tuple
 
 from loguru import logger
 
 from ...domain.exceptions import ParseError
-from ...infrastructure.parsers.docling import (
-    convert_document_to_markdown,
-    is_docling_available,
+from ...infrastructure.parsers.markitdown import (
+    convert_to_markdown,
+    is_markitdown_available,
 )
 
 
 class UnifiedParser:
     """
-    Parser for PDF, DOCX, PPTX, images using Docling.
+    Parser for PDF, DOCX, PPTX, images using MarkItDown.
 
-    Uses IBM Research's Docling library for advanced document parsing
-    with OCR, table extraction, and layout analysis.
+    Uses Microsoft's MarkItDown library for document parsing and conversion.
 
-    Falls back to lighter parsers when Docling is not available:
+    Falls back to lighter parsers when MarkItDown is not available:
     - PDF: pypdf
     - DOCX: python-docx
     - PPTX: python-pptx
     """
 
     def __init__(self):
-        """Initialize parser and check Docling availability."""
-        self._docling_available = is_docling_available()
-        self._docling_enabled = os.getenv("DOCLING_ENABLED", "true").lower() == "true"
-
-        if not self._docling_available:
+        """Initialize parser and check MarkItDown availability."""
+        self._markitdown_available = is_markitdown_available()
+        if not self._markitdown_available:
             logger.warning(
-                "Docling not available - will use fallback parsers (pypdf, python-docx)"
-            )
-        elif not self._docling_enabled:
-            logger.info(
-                "Docling disabled via DOCLING_ENABLED=false - using fallback parsers"
+                "MarkItDown not available - will use fallback parsers (pypdf, python-docx)"
             )
 
     def parse(self, input_path: str | Path) -> Tuple[str, dict]:
         """
-        Parse document using Docling or fallback parsers.
+        Parse document using MarkItDown or fallback parsers.
 
         Args:
             input_path: Path to input file
@@ -65,9 +57,9 @@ class UnifiedParser:
 
         suffix = path.suffix.lower()
 
-        # Use Docling if available and enabled
-        if self._docling_available and self._docling_enabled:
-            return self._parse_with_docling(path)
+        # Use MarkItDown if available
+        if self._markitdown_available:
+            return self._parse_with_markitdown(path)
 
         # Fallback parsers based on file type
         logger.info(f"Using fallback parser for: {path.name}")
@@ -84,23 +76,25 @@ class UnifiedParser:
             return self._parse_xlsx_fallback(path)
         else:
             raise ParseError(
-                f"Unsupported format '{suffix}' and Docling is not available. "
-                "Install Docling for advanced document parsing: pip install docling"
+                f"Unsupported format '{suffix}' and MarkItDown is not available. "
+                "Install MarkItDown for document parsing: pip install markitdown[all]"
             )
 
-    def _parse_with_docling(self, path: Path) -> Tuple[str, dict]:
-        """Parse using Docling (full functionality)."""
-        logger.info(f"Parsing with Docling: {path.name}")
+    def _parse_with_markitdown(self, path: Path) -> Tuple[str, dict]:
+        """Parse using MarkItDown."""
+        logger.info(f"Parsing with MarkItDown: {path.name}")
         try:
-            content, metadata = convert_document_to_markdown(path)
-            logger.info(
-                f"Docling parsing completed: {len(content)} chars, "
-                f"{metadata.get('pages', 'N/A')} pages"
-            )
+            content = convert_to_markdown(path)
+            metadata = {
+                "title": path.stem,
+                "source_file": str(path),
+                "parser": "markitdown",
+            }
+            logger.info(f"MarkItDown parsing completed: {len(content)} chars")
             return content, metadata
         except Exception as e:
-            logger.error(f"Docling parsing failed for {path}: {e}")
-            raise ParseError(f"Failed to parse document with Docling: {e}")
+            logger.error(f"MarkItDown parsing failed for {path}: {e}")
+            raise ParseError(f"Failed to parse document with MarkItDown: {e}")
 
     def _parse_pdf_fallback(self, path: Path) -> Tuple[str, dict]:
         """Parse PDF using pypdf (basic text extraction, no OCR)."""
