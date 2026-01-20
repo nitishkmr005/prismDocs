@@ -60,7 +60,7 @@ Choose what you want to create:
 
 Beyond standard documents, explore our specialized creative studios:
 
-### 💡 Idea Canvas
+### 💡 Idea Canvas [Beta]
 
 _Perfect for: Brainstorming & Planning (In Development)_
 
@@ -76,7 +76,7 @@ _Perfect for: Learning & Analysis_
 - **Interactive**: Zoom, pan, and explore nodes.
 - **Export**: Save as PNG or SVG.
 
-### 🎙️ Audio Studio (Beta)
+### 🎙️ Audio Studio
 
 _Perfect for: Learning on the Go_
 
