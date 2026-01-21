@@ -231,6 +231,10 @@ export default function HomePage() {
       sessionStorage.setItem('prismdocs_content_api_key', contentApiKey);
       sessionStorage.setItem('prismdocs_provider', provider);
       sessionStorage.setItem('prismdocs_content_model', contentModel);
+      sessionStorage.setItem(
+        "prismdocs_enable_image_generation",
+        enableImageGeneration ? "1" : "0"
+      );
       if (imageApiKey) {
         sessionStorage.setItem('prismdocs_image_api_key', imageApiKey);
       }
@@ -413,7 +417,7 @@ export default function HomePage() {
         onContentApiKeyChange={setContentApiKey}
         enableImageGeneration={enableImageGeneration}
         onEnableImageGenerationChange={setEnableImageGeneration}
-        allowImageGenerationToggle={false}
+        allowImageGenerationToggle={true}
         requireImageKey={false}
         imageModel={imageModel}
         onImageModelChange={setImageModel}

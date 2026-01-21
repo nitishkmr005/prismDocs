@@ -290,6 +290,7 @@ export default function GeneratePage() {
     const storedProvider = sessionStorage.getItem('prismdocs_provider') as Provider | null;
     const storedModel = sessionStorage.getItem('prismdocs_content_model');
     const storedImageKey = sessionStorage.getItem('prismdocs_image_api_key');
+    const storedEnableImages = sessionStorage.getItem('prismdocs_enable_image_generation');
     
     if (storedContentKey) {
       setContentApiKey(storedContentKey);
@@ -306,6 +307,10 @@ export default function GeneratePage() {
     if (storedImageKey) {
       setImageApiKey(storedImageKey);
       sessionStorage.removeItem('prismdocs_image_api_key');
+    }
+    if (storedEnableImages !== null) {
+      setEnableImageGeneration(storedEnableImages === "1");
+      sessionStorage.removeItem('prismdocs_enable_image_generation');
     }
   }, []);
 
