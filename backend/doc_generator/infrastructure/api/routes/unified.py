@@ -6,6 +6,7 @@ automatic session management for content reuse across formats.
 """
 
 import datetime
+import os
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -39,6 +40,22 @@ from ..services.unified_generation import get_unified_service
 router = APIRouter(prefix="/unified", tags=["unified"])
 
 _cache_service: CacheService | None = None
+DEFAULT_INLINE_PREVIEW_BYTES = 8 * 1024 * 1024
+
+
+def _get_max_inline_preview_bytes() -> int:
+    """Return max bytes to include inline previews in responses."""
+    raw_value = os.getenv("DOCGEN_MAX_INLINE_PREVIEW_BYTES")
+    if raw_value is None:
+        return DEFAULT_INLINE_PREVIEW_BYTES
+    try:
+        return max(0, int(raw_value))
+    except ValueError:
+        logger.warning(
+            "Invalid DOCGEN_MAX_INLINE_PREVIEW_BYTES='%s', using default",
+            raw_value,
+        )
+        return DEFAULT_INLINE_PREVIEW_BYTES
 
 
 def get_cache_service() -> CacheService:
@@ -133,16 +150,38 @@ async def generate_with_session(
                         import base64
 
                         suffix = cached_path.suffix.lower()
+                        max_preview_bytes = _get_max_inline_preview_bytes()
+                        file_size = cached_path.stat().st_size
                         try:
                             if suffix == ".pdf":
-                                with open(cached_path, "rb") as f:
-                                    pdf_base64 = base64.b64encode(f.read()).decode(
-                                        "utf-8"
+                                if (
+                                    max_preview_bytes > 0
+                                    and file_size <= max_preview_bytes
+                                ):
+                                    with open(cached_path, "rb") as f:
+                                        pdf_base64 = base64.b64encode(f.read()).decode(
+                                            "utf-8"
+                                        )
+                                else:
+                                    logger.info(
+                                        "Skipping inline PDF preview (%s bytes > %s)",
+                                        file_size,
+                                        max_preview_bytes,
                                     )
                             elif suffix == ".md":
-                                markdown_content = cached_path.read_text(
-                                    encoding="utf-8"
-                                )
+                                if (
+                                    max_preview_bytes > 0
+                                    and file_size <= max_preview_bytes
+                                ):
+                                    markdown_content = cached_path.read_text(
+                                        encoding="utf-8"
+                                    )
+                                else:
+                                    logger.info(
+                                        "Skipping inline markdown preview (%s bytes > %s)",
+                                        file_size,
+                                        max_preview_bytes,
+                                    )
                         except Exception as e:
                             logger.warning(
                                 f"Could not read cached file for preview: {e}"

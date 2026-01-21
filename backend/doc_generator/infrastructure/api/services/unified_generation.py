@@ -6,6 +6,7 @@ while enabling session-based state reuse across output formats.
 """
 
 import base64
+import os
 import uuid
 from pathlib import Path
 from typing import AsyncIterator, Callable, Optional
@@ -38,6 +39,23 @@ from ..schemas.mindmap import (
     MindMapMode,
 )
 from .storage import StorageService
+
+DEFAULT_INLINE_PREVIEW_BYTES = 8 * 1024 * 1024
+
+
+def _get_max_inline_preview_bytes() -> int:
+    """Return max bytes to include inline previews in responses."""
+    raw_value = os.getenv("DOCGEN_MAX_INLINE_PREVIEW_BYTES")
+    if raw_value is None:
+        return DEFAULT_INLINE_PREVIEW_BYTES
+    try:
+        return max(0, int(raw_value))
+    except ValueError:
+        logger.warning(
+            "Invalid DOCGEN_MAX_INLINE_PREVIEW_BYTES='%s', using default",
+            raw_value,
+        )
+        return DEFAULT_INLINE_PREVIEW_BYTES
 
 
 class UnifiedGenerationService:
@@ -210,12 +228,28 @@ class UnifiedGenerationService:
 
             path = Path(output_path)
             if path.exists():
+                max_preview_bytes = _get_max_inline_preview_bytes()
+                file_size = path.stat().st_size
                 suffix = path.suffix.lower()
                 if suffix == ".pdf":
-                    with open(path, "rb") as f:
-                        pdf_base64 = base64.b64encode(f.read()).decode("utf-8")
+                    if max_preview_bytes > 0 and file_size <= max_preview_bytes:
+                        with open(path, "rb") as f:
+                            pdf_base64 = base64.b64encode(f.read()).decode("utf-8")
+                    else:
+                        logger.info(
+                            "Skipping inline PDF preview (%s bytes > %s)",
+                            file_size,
+                            max_preview_bytes,
+                        )
                 elif suffix == ".md":
-                    markdown_content = path.read_text(encoding="utf-8")
+                    if max_preview_bytes > 0 and file_size <= max_preview_bytes:
+                        markdown_content = path.read_text(encoding="utf-8")
+                    else:
+                        logger.info(
+                            "Skipping inline markdown preview (%s bytes > %s)",
+                            file_size,
+                            max_preview_bytes,
+                        )
 
             # Build response
             download_url = self.storage.get_download_url(Path(output_path))
