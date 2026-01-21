@@ -380,17 +380,25 @@ class PodcastService:
         tts_prompt: str,
         speakers: list[SpeakerConfig],
         api_key: str,
+        max_retries: int = 3,
     ) -> bytes:
-        """Generate audio using Gemini TTS.
+        """Generate audio using Gemini TTS with retry logic.
 
         Args:
             tts_prompt: The formatted dialogue prompt
             speakers: Speaker configurations with voice assignments
             api_key: Gemini API key
+            max_retries: Maximum number of retry attempts for transient errors
 
         Returns:
             Raw PCM audio data
+
+        Raises:
+            Exception: If all retry attempts fail
         """
+        import time
+        import random
+
         loop = asyncio.get_event_loop()
 
         def _generate_tts():
@@ -430,7 +438,53 @@ class PodcastService:
             audio_data = response.candidates[0].content.parts[0].inline_data.data
             return audio_data
 
-        return await loop.run_in_executor(self._executor, _generate_tts)
+        # Retry loop with exponential backoff
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                result = await loop.run_in_executor(self._executor, _generate_tts)
+                if attempt > 0:
+                    logger.info(f"TTS succeeded on attempt {attempt + 1}")
+                return result
+            except Exception as e:
+                last_error = e
+                error_str = str(e).lower()
+
+                # Check if this is a retryable error (500, internal, overloaded, etc.)
+                retryable_patterns = [
+                    "500",
+                    "internal",
+                    "overload",
+                    "unavailable",
+                    "capacity",
+                    "timeout",
+                ]
+                is_retryable = any(
+                    pattern in error_str for pattern in retryable_patterns
+                )
+
+                if is_retryable and attempt < max_retries - 1:
+                    # Exponential backoff with jitter: 2^attempt * (1 + random 0-0.5) seconds
+                    base_delay = 2**attempt
+                    jitter = random.uniform(0, 0.5)
+                    delay = base_delay * (1 + jitter)
+
+                    logger.warning(
+                        f"TTS API error (attempt {attempt + 1}/{max_retries}): {str(e)[:100]}. "
+                        f"Retrying in {delay:.1f}s..."
+                    )
+
+                    # Use asyncio.sleep for non-blocking wait
+                    await asyncio.sleep(delay)
+                else:
+                    # Non-retryable error or last attempt
+                    logger.error(f"TTS API failed after {attempt + 1} attempts: {e}")
+                    raise
+
+        # Should not reach here, but just in case
+        if last_error:
+            raise last_error
+        raise RuntimeError("TTS generation failed unexpectedly")
 
 
 # Singleton instance
