@@ -228,7 +228,7 @@ class ImageGenerationSettings(BaseSettings):
     # Image storage
     images_dir: Path = Path("data/output/images")
     embed_in_pdf: bool = True
-    embed_in_pptx: bool = False
+    embed_in_pptx: bool = True
 
     # Auto-detection options
     enable_decorative_headers: bool = True

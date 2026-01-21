@@ -142,7 +142,7 @@ image_generation:
   # Image storage and embedding
   images_dir: "data/output/images"
   embed_in_pdf: true
-  embed_in_pptx: false
+  embed_in_pptx: true
 
   # Auto-detection options (what types to generate)
   enable_decorative_headers: true

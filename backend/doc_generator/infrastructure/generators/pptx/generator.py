@@ -245,7 +245,7 @@ class PPTXGenerator:
         Invoked by: (no references found)
         """
         for slide_data in slides:
-            title = slide_data.get("title", "")
+            title = self._strip_inline_markdown(slide_data.get("title", ""))
             bullets = slide_data.get("bullets", [])
             speaker_notes = slide_data.get("speaker_notes", "")
 
@@ -318,6 +318,7 @@ class PPTXGenerator:
         for kind, content_item in parse_markdown_lines(markdown_content):
             # H1 becomes section header
             if kind == "h1":
+                content_item = self._strip_inline_markdown(content_item)
                 # Flush current slide if any
                 if current_slide_title and current_slide_content:
                     self._add_bullet_slide_series(
@@ -331,6 +332,7 @@ class PPTXGenerator:
 
             # H2 becomes slide title
             elif kind == "h2":
+                content_item = self._strip_inline_markdown(content_item)
                 section_id, next_section_id = self._resolve_section_id(
                     content_item, next_section_id
                 )
@@ -358,6 +360,7 @@ class PPTXGenerator:
 
             # H3 becomes content item (if no H2 title yet, becomes title)
             elif kind == "h3":
+                content_item = self._strip_inline_markdown(content_item)
                 if current_slide_title:
                     current_slide_content.append(content_item)
                 else:
@@ -384,6 +387,7 @@ class PPTXGenerator:
                     current_slide_title = None
 
                 alt, url = content_item
+                alt = self._strip_inline_markdown(alt)
                 image_path = self._resolve_image_path(url)
                 if image_path:
                     add_image_slide(prs, alt, image_path, alt)
@@ -574,6 +578,7 @@ class PPTXGenerator:
         for slide in slides:
             section_title = slide.get("section_title", slide.get("title", ""))
             if section_title:
+                section_title = self._strip_inline_markdown(section_title)
                 # Add both normalized and number-stripped versions
                 slide_map[self._normalize_title(section_title)] = slide
                 slide_map[self._normalize_section_title(section_title)] = slide
@@ -585,10 +590,11 @@ class PPTXGenerator:
             section_title = section.get("title", "")
             if not section_title:
                 continue
+            clean_title = self._strip_inline_markdown(section_title)
 
             # Try to find matching LLM slide (check both normalized versions)
-            normalized = self._normalize_title(section_title)
-            normalized_no_num = self._normalize_section_title(section_title)
+            normalized = self._normalize_title(clean_title)
+            normalized_no_num = self._normalize_section_title(clean_title)
             slide = slide_map.get(normalized) or slide_map.get(normalized_no_num)
 
             # Handle section image first
@@ -599,9 +605,9 @@ class PPTXGenerator:
                     image_type = img_info.get("image_type", "image").title()
                     add_image_slide(
                         prs,
-                        section_title,
+                        clean_title,
                         img_path,
-                        f"{image_type} for {section_title}",
+                        f"{image_type} for {clean_title}",
                     )
 
             # Get bullets from LLM slide or extract from section content
@@ -620,7 +626,7 @@ class PPTXGenerator:
 
             if bullets:
                 self._add_bullet_slide_series(
-                    prs, section_title, bullets, speaker_notes=speaker_notes
+                    prs, clean_title, bullets, speaker_notes=speaker_notes
                 )
                 slides_added += 1
             else:
@@ -670,15 +676,17 @@ class PPTXGenerator:
             if line.startswith(("-", "*", "•")) or re.match(r"^\d+\.", line):
                 clean = re.sub(r"^[-*•]\s*", "", line)
                 clean = re.sub(r"^\d+\.\s*", "", clean)
+                clean = re.sub(r"^\[[xX ]\]\s*", "", clean)
                 if clean:
-                    bullets.append(clean.strip())
+                    bullets.append(self._strip_inline_markdown(clean.strip()))
             # Convert short paragraphs to bullets
             elif len(line) > 20 and len(line) < 300:
-                bullets.append(line)
+                bullets.append(self._strip_inline_markdown(line))
 
         # If no bullets found, split long content into sentences
         if not bullets and content.strip():
-            sentences = re.split(r"(?<=[.!?])\s+", content.strip())
+            cleaned_content = self._strip_inline_markdown(content.strip())
+            sentences = re.split(r"(?<=[.!?])\s+", cleaned_content)
             bullets = [s.strip() for s in sentences if len(s.strip()) > 20][:6]
 
         return bullets
@@ -704,7 +712,7 @@ class PPTXGenerator:
         seen_normalized = set()
 
         for match in re.finditer(r"^##\s+(.+)$", markdown_content, re.MULTILINE):
-            heading = match.group(1).strip()
+            heading = self._strip_inline_markdown(match.group(1).strip())
             if not heading:
                 continue
 
@@ -739,7 +747,7 @@ class PPTXGenerator:
         Invoked by: src/doc_generator/infrastructure/generators/pdf/generator.py, src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         match = re.search(r"^#\s+(.+)$", markdown_content, re.MULTILINE)
-        return match.group(1).strip() if match else ""
+        return self._strip_inline_markdown(match.group(1).strip()) if match else ""
 
     def _looks_like_placeholder(self, title: str) -> bool:
         """
@@ -841,7 +849,10 @@ class PPTXGenerator:
         """
         Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
-        return text.lstrip("•-* ").strip()
+        cleaned = text.lstrip("•-* ").strip()
+        cleaned = re.sub(r"^\d+[\.\)]\s*", "", cleaned)
+        cleaned = re.sub(r"^\[[xX ]\]\s*", "", cleaned)
+        return self._strip_inline_markdown(cleaned)
 
     def _split_sentences(self, text: str) -> list[str]:
         """
@@ -862,3 +873,21 @@ class PPTXGenerator:
             return parts
         clauses = [part.strip() for part in re.split(r"[;:]\s+", text) if part.strip()]
         return clauses if len(clauses) > 1 else [text]
+
+    def _strip_inline_markdown(self, text: str) -> str:
+        """
+        Strip common inline markdown for slide-friendly text.
+        Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
+        """
+        if not text:
+            return ""
+        cleaned = text
+        cleaned = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", cleaned)
+        cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", cleaned)
+        cleaned = re.sub(r"`([^`]+)`", r"\1", cleaned)
+        cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)
+        cleaned = re.sub(r"\*([^*]+)\*", r"\1", cleaned)
+        cleaned = re.sub(r"~~([^~]+)~~", r"\1", cleaned)
+        cleaned = re.sub(r"<[^>]+>", "", cleaned)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        return cleaned
