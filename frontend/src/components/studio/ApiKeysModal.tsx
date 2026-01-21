@@ -55,6 +55,7 @@ interface ApiKeysModalProps {
   imageApiKey: string;
   onImageApiKeyChange: (key: string) => void;
   canClose: boolean;
+  canConfirm?: boolean;
   // Podcast enablement (for non-Gemini providers)
   enablePodcast?: boolean;
   onEnablePodcastChange?: (enabled: boolean) => void;
@@ -81,6 +82,7 @@ export function ApiKeysModal({
   imageApiKey,
   onImageApiKeyChange,
   canClose,
+  canConfirm,
   enablePodcast = true,
   onEnablePodcastChange,
   podcastGeminiApiKey = "",
@@ -88,6 +90,7 @@ export function ApiKeysModal({
 }: ApiKeysModalProps) {
   const providerLabel = PROVIDER_LABELS[provider];
   const keyUrl = PROVIDER_KEY_URLS[provider];
+  const confirmEnabled = canConfirm ?? canClose;
 
   const handleOpenChange = (open: boolean) => {
     if (!open && !canClose) return;
@@ -425,7 +428,7 @@ export function ApiKeysModal({
 
         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">
           <div className="flex-1 text-xs text-muted-foreground">
-            {!canClose && (
+            {!confirmEnabled && (
               <span className="text-amber-600 dark:text-amber-400">
                 ⚠ Content API key is required to continue
               </span>
@@ -433,10 +436,10 @@ export function ApiKeysModal({
           </div>
           <Button 
             onClick={() => (onConfirm ? onConfirm() : onOpenChange(false))} 
-            disabled={!canClose}
+            disabled={!confirmEnabled}
             className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
           >
-            {canClose ? "Start Generating" : "Enter API Key"}
+            {confirmEnabled ? "Start Generating" : "Enter API Key"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -426,7 +426,8 @@ export default function HomePage() {
         onImageModelChange={setImageModel}
         imageApiKey={imageApiKey}
         onImageApiKeyChange={setImageApiKey}
-        canClose={hasContentKey}
+        canClose={true}
+        canConfirm={hasContentKey}
       />
 
       {/* Animated gradient background for hero */}
