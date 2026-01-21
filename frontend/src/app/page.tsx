@@ -190,6 +190,7 @@ export default function HomePage() {
   // API Keys state for modal
   const [provider, setProvider] = useState<Provider>("gemini");
   const [contentModel, setContentModel] = useState("gemini-2.5-flash");
+  const [imageModel, setImageModel] = useState("gemini-2.5-flash-image");
   const [contentApiKey, setContentApiKey] = useState("");
   const [imageApiKey, setImageApiKey] = useState("");
   const [enableImageGeneration, setEnableImageGeneration] = useState(false);
@@ -414,6 +415,8 @@ export default function HomePage() {
         onEnableImageGenerationChange={setEnableImageGeneration}
         allowImageGenerationToggle={false}
         requireImageKey={false}
+        imageModel={imageModel}
+        onImageModelChange={setImageModel}
         imageApiKey={imageApiKey}
         onImageApiKeyChange={setImageApiKey}
         canClose={hasContentKey}

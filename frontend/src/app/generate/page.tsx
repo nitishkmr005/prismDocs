@@ -182,6 +182,13 @@ export default function GeneratePage() {
   const [podcastStyle, setPodcastStyle] = useState<PodcastStyle>("conversational");
   const [podcastSpeakers, setPodcastSpeakers] = useState<SpeakerConfig[]>(DEFAULT_SPEAKERS);
   const [podcastDuration, setPodcastDuration] = useState(3);
+  // Podcast enablement for non-Gemini providers
+  const [enablePodcast, setEnablePodcast] = useState(true);
+  const [podcastGeminiApiKey, setPodcastGeminiApiKey] = useState("");
+  // Effective podcast key: use explicit podcast key if provided, otherwise use content key for Gemini provider
+  const effectivePodcastKey = provider === "gemini" ? contentApiKey : podcastGeminiApiKey;
+  // Podcast is actually enabled when: enabled toggle is on AND has the right key
+  const isPodcastActuallyEnabled = provider === "gemini" ? hasGeminiKey : (enablePodcast && podcastGeminiApiKey.trim().length > 0);
 
   // Generation hooks
   const {
@@ -261,7 +268,9 @@ export default function GeneratePage() {
     }
     if (isPodcast) {
       // Podcast requires content key for script generation AND Gemini key for TTS
-      return hasContentKey && hasGeminiKey;
+      // For Gemini provider, content key is used for both; for others, need separate podcast Gemini key
+      const hasPodcastKey = provider === "gemini" ? hasGeminiKey : (enablePodcast && podcastGeminiApiKey.trim().length > 0);
+      return hasContentKey && hasPodcastKey;
     }
     if (isImageType) {
       const needsContentKey = uploadedFiles.length > 0 || urls.length > 0;
@@ -530,7 +539,7 @@ export default function GeneratePage() {
           speakers: podcastSpeakers,
           duration_minutes: podcastDuration,
         },
-        contentApiKey,
+        effectivePodcastKey,  // Use Gemini content key or separate podcast Gemini key
         user?.id
       );
     }
@@ -551,6 +560,7 @@ export default function GeneratePage() {
     enableImageGeneration,
     contentApiKey,
     effectiveImageKey,
+    effectivePodcastKey,
     mindMapMode,
     imageCategory,
     selectedStyleId,
@@ -709,11 +719,17 @@ export default function GeneratePage() {
         onContentApiKeyChange={setContentApiKey}
         enableImageGeneration={enableImageGeneration}
         onEnableImageGenerationChange={setEnableImageGeneration}
-        allowImageGenerationToggle={isContentType}
+        allowImageGenerationToggle={true}
         requireImageKey={requiresImageKey}
+        imageModel={imageModel}
+        onImageModelChange={setImageModel}
         imageApiKey={imageApiKey}
         onImageApiKeyChange={setImageApiKey}
         canClose={hasContentKey}
+        enablePodcast={enablePodcast}
+        onEnablePodcastChange={setEnablePodcast}
+        podcastGeminiApiKey={podcastGeminiApiKey}
+        onPodcastGeminiApiKeyChange={setPodcastGeminiApiKey}
       />
 
       {/* Enhanced Header */}
@@ -840,6 +856,8 @@ export default function GeneratePage() {
                     selectedType={outputType}
                     onTypeChange={setOutputType}
                     geminiKeyAvailable={hasGeminiKey}
+                    imageGenerationEnabled={enableImageGeneration}
+                    podcastEnabled={provider === "gemini" ? true : (enablePodcast && podcastGeminiApiKey.trim().length > 0)}
                   />
                 </div>
               </div>

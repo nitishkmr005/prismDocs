@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Provider } from "@/lib/types/requests";
-import { contentModelOptions } from "./DynamicOptions";
+import { contentModelOptions, imageModelOptions } from "./DynamicOptions";
 
 const PROVIDER_LABELS: Record<Provider, string> = {
   gemini: "Gemini",
@@ -49,9 +49,16 @@ interface ApiKeysModalProps {
   onEnableImageGenerationChange: (enabled: boolean) => void;
   allowImageGenerationToggle: boolean;
   requireImageKey: boolean;
+  imageModel: string;
+  onImageModelChange: (model: string) => void;
   imageApiKey: string;
   onImageApiKeyChange: (key: string) => void;
   canClose: boolean;
+  // Podcast enablement (for non-Gemini providers)
+  enablePodcast?: boolean;
+  onEnablePodcastChange?: (enabled: boolean) => void;
+  podcastGeminiApiKey?: string;
+  onPodcastGeminiApiKeyChange?: (key: string) => void;
 }
 
 export function ApiKeysModal({
@@ -67,9 +74,15 @@ export function ApiKeysModal({
   onEnableImageGenerationChange,
   allowImageGenerationToggle,
   requireImageKey,
+  imageModel,
+  onImageModelChange,
   imageApiKey,
   onImageApiKeyChange,
   canClose,
+  enablePodcast = true,
+  onEnablePodcastChange,
+  podcastGeminiApiKey = "",
+  onPodcastGeminiApiKeyChange,
 }: ApiKeysModalProps) {
   const providerLabel = PROVIDER_LABELS[provider];
   const keyUrl = PROVIDER_KEY_URLS[provider];
@@ -240,41 +253,64 @@ export function ApiKeysModal({
               </div>
             )}
 
-            {/* Show image key input only if not using Gemini or want to override */}
-            {(provider !== "gemini" || !contentApiKey) && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="image-api-key" className="text-xs font-medium">
-                    Gemini Image API Key {requireImageKey && <span className="text-red-500">*</span>}
-                  </Label>
-                  <a
-                    href="https://aistudio.google.com/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                  >
-                    Get Gemini Key
-                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
+            <div className="space-y-2">
+              {/* Show image key input only if not using Gemini or want to override */}
+              {(provider !== "gemini" || !contentApiKey) && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="image-api-key" className="text-xs font-medium">
+                      Gemini Image API Key {requireImageKey && <span className="text-red-500">*</span>}
+                    </Label>
+                    <a
+                      href="https://aistudio.google.com/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                    >
+                      Get Gemini Key
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                  <Input
+                    id="image-api-key"
+                    type="password"
+                    placeholder="Enter Gemini API key for images"
+                    value={imageApiKey}
+                    onChange={(e) => onImageApiKeyChange(e.target.value)}
+                    autoComplete="off"
+                    className="bg-white/80 dark:bg-slate-900/80"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    {provider !== "gemini" 
+                      ? "Image generation requires a separate Gemini API key" 
+                      : "Enter a key, or add a content key above to use it for images too"}
+                  </p>
                 </div>
-                <Input
-                  id="image-api-key"
-                  type="password"
-                  placeholder="Enter Gemini API key for images"
-                  value={imageApiKey}
-                  onChange={(e) => onImageApiKeyChange(e.target.value)}
-                  autoComplete="off"
-                  className="bg-white/80 dark:bg-slate-900/80"
-                />
+              )}
+
+              <div className="space-y-1">
+                <Label htmlFor="image-model" className="text-xs font-medium">
+                  Image Model
+                </Label>
+                <Select value={imageModel} onValueChange={onImageModelChange}>
+                  <SelectTrigger id="image-model" className="h-8 text-xs bg-white/80 dark:bg-slate-900/80">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imageModelOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-[10px] text-muted-foreground">
-                  {provider !== "gemini" 
-                    ? "Image generation requires a separate Gemini API key" 
-                    : "Enter a key, or add a content key above to use it for images too"}
+                  Default: gemini-2.5-flash-image
                 </p>
               </div>
-            )}
+            </div>
 
             {/* No image key warning - only if no key available */}
             {!imageApiKey && !(provider === "gemini" && contentApiKey) && (
@@ -283,6 +319,106 @@ export function ApiKeysModal({
               </p>
             )}
           </div>
+
+          {/* Podcast Section - Only for non-Gemini providers */}
+          {provider !== "gemini" && (
+            <div className="space-y-3 p-4 rounded-xl border transition-all border-border/60 bg-gradient-to-br from-green-50/50 to-emerald-50/30 dark:from-green-950/30 dark:to-emerald-950/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    enablePodcast && podcastGeminiApiKey
+                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400"
+                      : "bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400"
+                  }`}>
+                    {enablePodcast && podcastGeminiApiKey ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : "3"}
+                  </div>
+                  <span className="font-medium text-sm">Podcast Generation</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">
+                    Requires Gemini
+                  </span>
+                </div>
+                {enablePodcast && podcastGeminiApiKey && (
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Key set ✓</span>
+                )}
+              </div>
+
+              <div className="flex items-start gap-2 rounded-lg border border-border/30 bg-white/50 dark:bg-slate-900/50 p-2.5">
+                <Checkbox
+                  id="enable-podcast"
+                  checked={enablePodcast}
+                  onCheckedChange={(checked) => {
+                    if (onEnablePodcastChange) {
+                      onEnablePodcastChange(checked === true);
+                    }
+                  }}
+                />
+                <div className="space-y-0.5">
+                  <Label htmlFor="enable-podcast" className="text-xs font-medium cursor-pointer">
+                    Enable podcast generation
+                  </Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Podcast TTS requires a Gemini API key
+                  </p>
+                </div>
+              </div>
+
+              {enablePodcast && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="podcast-gemini-key" className="text-xs font-medium">
+                      Gemini API Key for Podcast <span className="text-red-500">*</span>
+                    </Label>
+                    <a
+                      href="https://aistudio.google.com/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                    >
+                      Get Gemini Key
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                  <Input
+                    id="podcast-gemini-key"
+                    type="password"
+                    placeholder="Enter Gemini API key for podcast TTS"
+                    value={podcastGeminiApiKey}
+                    onChange={(e) => {
+                      if (onPodcastGeminiApiKeyChange) {
+                        onPodcastGeminiApiKeyChange(e.target.value);
+                      }
+                    }}
+                    autoComplete="off"
+                    className="bg-white/80 dark:bg-slate-900/80"
+                  />
+                </div>
+              )}
+
+              {!enablePodcast && (
+                <p className="text-[10px] text-muted-foreground">
+                  Podcast generation will be disabled.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Info for Gemini provider - podcast uses same key */}
+          {provider === "gemini" && contentApiKey && (
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-950/30 p-2.5">
+              <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                Your Gemini content key will be used for podcast generation automatically.
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-3">

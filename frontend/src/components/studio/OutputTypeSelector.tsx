@@ -99,6 +99,10 @@ interface OutputTypeSelectorProps {
   onTypeChange: (type: StudioOutputType) => void;
   /** Whether Gemini API key is available (required for image and podcast) */
   geminiKeyAvailable?: boolean;
+  /** Whether image generation is enabled (user toggle in modal) */
+  imageGenerationEnabled?: boolean;
+  /** Whether podcast generation is enabled (user toggle in modal) */
+  podcastEnabled?: boolean;
   /** @deprecated Use geminiKeyAvailable instead */
   imageGenerationAvailable?: boolean;
 }
@@ -107,10 +111,16 @@ export function OutputTypeSelector({
   selectedType,
   onTypeChange,
   geminiKeyAvailable,
+  imageGenerationEnabled = true,
+  podcastEnabled = true,
   imageGenerationAvailable = true,
 }: OutputTypeSelectorProps) {
   // Use geminiKeyAvailable if provided, otherwise fall back to imageGenerationAvailable for backwards compatibility
   const hasGeminiKey = geminiKeyAvailable ?? imageGenerationAvailable;
+
+  // Determine if specific features are disabled
+  const isImageDisabled = !hasGeminiKey || !imageGenerationEnabled;
+  const isPodcastDisabled = !hasGeminiKey || !podcastEnabled;
 
   return (
     <div className="space-y-3">
@@ -118,8 +128,28 @@ export function OutputTypeSelector({
       <div className="grid grid-cols-3 gap-1.5">
         {outputTypes.map((type) => {
           const isSelected = selectedType === type.id;
-          const requiresGeminiKey = type.requiresGeminiKey && !hasGeminiKey;
-          const isDisabled = type.comingSoon || requiresGeminiKey;
+          
+          // Determine if this specific type is disabled and why
+          let isDisabled = type.comingSoon;
+          let disabledReason: "soon" | "gemini_key" | "disabled" | null = type.comingSoon ? "soon" : null;
+          
+          if (type.id === "image_generate") {
+            if (!hasGeminiKey) {
+              isDisabled = true;
+              disabledReason = "gemini_key";
+            } else if (!imageGenerationEnabled) {
+              isDisabled = true;
+              disabledReason = "disabled";
+            }
+          } else if (type.id === "podcast") {
+            if (!hasGeminiKey) {
+              isDisabled = true;
+              disabledReason = "gemini_key";
+            } else if (!podcastEnabled) {
+              isDisabled = true;
+              disabledReason = "disabled";
+            }
+          }
           
           return (
             <button
@@ -140,9 +170,14 @@ export function OutputTypeSelector({
                   Soon
                 </span>
               )}
-              {requiresGeminiKey && (
+              {disabledReason === "gemini_key" && (
                 <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-muted text-muted-foreground">
                   Gemini key
+                </span>
+              )}
+              {disabledReason === "disabled" && (
+                <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-muted text-muted-foreground">
+                  Disabled
                 </span>
               )}
               {type.id === "presentation_pptx" && !type.comingSoon && (

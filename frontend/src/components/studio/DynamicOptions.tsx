@@ -379,66 +379,25 @@ export function DynamicOptions({
         </div>
       )}
 
-      {/* Image Generation Toggle - for content types */}
-      {isContentType && (
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2 py-1">
-          <Checkbox
-            id="enable-images"
-            checked={enableImageGeneration}
-            onCheckedChange={(checked: boolean) => onEnableImageGenerationChange(checked)}
-            disabled={isImageGenLocked}
-          />
-          <Label
-            htmlFor="enable-images"
-            className={`text-xs cursor-pointer ${isImageGenLocked ? "text-muted-foreground" : ""}`}
-          >
-            Enable image generation in document
-          </Label>
-          </div>
-          {isImageGenLocked && (
-            <p className="text-xs text-muted-foreground">
-              Add a Gemini image API key to unlock image generation.
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Image Style - for content with images enabled (NOT for standalone image generation) */}
+      {/* Note: Image generation toggle and image model are now configured in the API keys modal */}
       {isContentType && enableImageGeneration && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="image-style" className="text-xs">Image Style</Label>
-            <Select value={imageStyle} onValueChange={(v) => onImageStyleChange(v as ImageStyle)}>
-              <SelectTrigger id="image-style" className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto</SelectItem>
-                <SelectItem value="infographic">Infographic</SelectItem>
-                <SelectItem value="minimalist">Minimalist</SelectItem>
-                <SelectItem value="corporate">Corporate</SelectItem>
-                <SelectItem value="educational">Educational</SelectItem>
-                <SelectItem value="diagram">Diagram</SelectItem>
-                <SelectItem value="handwritten">Handwritten</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="image-model" className="text-xs">Image Model</Label>
-            <Select value={imageModel} onValueChange={onImageModelChange}>
-              <SelectTrigger id="image-model" className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {imageModelOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="image-style" className="text-xs">Image Style</Label>
+          <Select value={imageStyle} onValueChange={(v) => onImageStyleChange(v as ImageStyle)}>
+            <SelectTrigger id="image-style" className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto</SelectItem>
+              <SelectItem value="infographic">Infographic</SelectItem>
+              <SelectItem value="minimalist">Minimalist</SelectItem>
+              <SelectItem value="corporate">Corporate</SelectItem>
+              <SelectItem value="educational">Educational</SelectItem>
+              <SelectItem value="diagram">Diagram</SelectItem>
+              <SelectItem value="handwritten">Handwritten</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       )}
 
