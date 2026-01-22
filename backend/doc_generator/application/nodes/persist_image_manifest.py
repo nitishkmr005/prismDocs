@@ -23,9 +23,15 @@ def persist_image_manifest_node(state: WorkflowState) -> WorkflowState:
         log_progress,
         log_metric,
         log_file_operation,
+        resolve_step_number,
+        resolve_total_steps,
     )
     
-    log_node_start("persist_image_manifest", step_number=7)
+    log_node_start(
+        "persist_image_manifest",
+        step_number=resolve_step_number(state, "persist_image_manifest", 9),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     metadata = state.get("metadata", {})
     if not metadata.get("content_hash"):

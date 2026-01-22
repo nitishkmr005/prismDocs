@@ -149,8 +149,10 @@ class UnifiedGenerationService:
             progress_queue: asyncio.Queue[ProgressEvent] = asyncio.Queue()
 
             workflow_status_map = {
+                "ingest_sources": GenerationStatus.PARSING,
                 "detect_format": GenerationStatus.PARSING,
-                "parse_content": GenerationStatus.PARSING,
+                "parse_document_content": GenerationStatus.PARSING,
+                "summarize_sources": GenerationStatus.TRANSFORMING,
                 "transform_content": GenerationStatus.TRANSFORMING,
                 "enhance_content": GenerationStatus.TRANSFORMING,
                 "generate_images": GenerationStatus.GENERATING_IMAGES,

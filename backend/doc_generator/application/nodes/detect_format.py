@@ -15,6 +15,8 @@ from ...infrastructure.logging_utils import (
     log_node_end,
     log_progress,
     log_metric,
+    resolve_step_number,
+    resolve_total_steps,
 )
 
 
@@ -29,7 +31,11 @@ def detect_format_node(state: WorkflowState) -> WorkflowState:
         Updated state with input_format set
     Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
-    log_node_start("detect_format", step_number=1)
+    log_node_start(
+        "detect_format",
+        step_number=resolve_step_number(state, "detect_format", 3),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     input_path = state["input_path"]
     log_progress(f"Analyzing input: {input_path}")

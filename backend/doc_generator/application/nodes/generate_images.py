@@ -602,9 +602,15 @@ def generate_images_node(state: WorkflowState) -> WorkflowState:
         log_metric,
         log_subsection,
         log_cache_hit,
+        resolve_step_number,
+        resolve_total_steps,
     )
 
-    log_node_start("generate_images", step_number=5)
+    log_node_start(
+        "generate_images",
+        step_number=resolve_step_number(state, "generate_images", 7),
+        total_steps=resolve_total_steps(state, 9),
+    )
 
     try:
         structured_content = state.get("structured_content", {})

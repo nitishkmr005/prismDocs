@@ -33,9 +33,15 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
         log_node_end,
         log_progress,
         log_metric,
+        resolve_step_number,
+        resolve_total_steps,
     )
 
-    log_node_start("validate_output", step_number=9)
+    log_node_start(
+        "validate_output",
+        step_number=resolve_step_number(state, "validate_output", 11),
+        total_steps=resolve_total_steps(state, 9),
+    )
 
     if not state.get("output_path"):
         error_msg = "No output path specified"

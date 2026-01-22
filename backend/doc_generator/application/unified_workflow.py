@@ -36,14 +36,15 @@ from .nodes import (
     enhance_content_node,
     generate_images_node,
     generate_output_node,
-    parse_content_node,
+    parse_document_content_node,
     persist_image_manifest_node,
     transform_content_node,
     validate_output_node,
 )
 
 # Import new unified nodes
-from .nodes.extract_sources import extract_sources_node, route_by_output_type
+from .nodes.extract_sources import ingest_sources_node, route_by_output_type
+from .nodes.summarize_sources import summarize_sources_node
 from .nodes.podcast_nodes import (
     generate_podcast_script_node,
     synthesize_podcast_audio_node,
@@ -52,16 +53,38 @@ from .nodes.mindmap_nodes import generate_mindmap_node
 from .nodes.image_nodes import generate_image_node, edit_image_node
 
 
+def _build_step_metadata(output_type: str) -> tuple[dict, int]:
+    """
+    Build step metadata for logging progress.
+    """
+    if is_document_type(output_type):
+        step_numbers = {
+            "ingest_sources": 1,
+            "summarize_sources": 2,
+            "detect_format": 3,
+            "parse_document_content": 4,
+            "transform_content": 5,
+            "enhance_content": 6,
+            "generate_images": 7,
+            "describe_images": 8,
+            "persist_image_manifest": 9,
+            "generate_output": 10,
+            "validate_output": 11,
+        }
+        return step_numbers, 11
+    return {"ingest_sources": 1, "summarize_sources": 2}, 2
+
+
 def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
     """
     Build the unified LangGraph workflow for all content types.
 
     Workflow Structure:
 
-    1. COMMON: extract_sources -> (Route by output_type)
+    1. COMMON: ingest_sources -> summarize_sources -> (Route by output_type)
 
     2a. DOCUMENT BRANCH:
-        detect_format -> parse_content -> transform_content -> enhance_content
+        detect_format -> parse_document_content -> transform_content -> enhance_content
         -> generate_images -> describe_images -> generate_output -> validate_output
 
     2b. PODCAST BRANCH:
@@ -87,41 +110,121 @@ def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
     # ==========================================
     # COMMON NODES
     # ==========================================
-    workflow.add_node("extract_sources", extract_sources_node)
+    # ingest_sources
+    # Input: sources (file/url/text), output_type, api/model
+    # Core: load files/URLs/text, parse/OCR images, merge content,
+    #       write temp markdown for docs, record source metadata.
+    # Output: raw_content, input_path (docs), metadata source_count/file_id
+    # LLM: image understanding for image files only; 1 call per image source.
+    workflow.add_node("ingest_sources", ingest_sources_node)
+    # summarize_sources
+    # Input: raw_content, request_data (provider/model)
+    # Core: chunked map-reduce summarization without truncation; rewrite temp md for docs.
+    # Output: summary_content, raw_content (summary), metadata summary stats
+    # LLM: 1 call per chunk + 1 reduce call when multiple chunks.
+    workflow.add_node("summarize_sources", summarize_sources_node)
 
     # ==========================================
     # DOCUMENT BRANCH NODES
     # (Wrapper nodes that adapt existing nodes to unified state)
     # ==========================================
+    # doc_detect_format
+    # Input: input_path
+    # Core: detect format from URL or file extension; validate support.
+    # Output: input_format
     workflow.add_node("doc_detect_format", _wrap_document_node(detect_format_node))
-    workflow.add_node("doc_parse_content", _wrap_document_node(parse_content_node))
+    # doc_parse_document_content
+    # Input: input_format, input_path
+    # Core: parse content with format parser; collect metadata; compute content hash.
+    # Output: raw_content, metadata (title/page_count/content_hash)
+    workflow.add_node(
+        "doc_parse_document_content",
+        _wrap_document_node(parse_document_content_node),
+    )
+    # doc_transform_content
+    # Input: raw_content, input_format, metadata
+    # Core: LLM transform to structured markdown (title/outline/sections/markers),
+    #       reuse cache when valid, fallback to basic cleaning if needed.
+    # Output: structured_content
+    # LLM: 1 call per request when available (generate blog-style structure).
     workflow.add_node(
         "doc_transform_content", _wrap_document_node(transform_content_node)
     )
+    # doc_enhance_content
+    # Input: structured_content, output_format
+    # Core: generate executive summary and slide structure when applicable.
+    # Output: structured_content (summary/slides)
+    # LLM: 0-2 calls (summary, slides) depending on missing fields/output_format.
     workflow.add_node("doc_enhance_content", _wrap_document_node(enhance_content_node))
+    # doc_generate_images
+    # Input: structured_content, metadata (image prefs), output_format
+    # Core: decide image types, build prompts, generate/reuse assets per section.
+    # Output: structured_content.section_images
+    # LLM: 0-1 call per section for prompt generation (Gemini), when enabled.
     workflow.add_node("doc_generate_images", _wrap_document_node(generate_images_node))
+    # doc_describe_images
+    # Input: structured_content.section_images, markdown, metadata
+    # Core: generate image descriptions; embed base64 for PDFs when enabled.
+    # Output: structured_content.section_images (description/embed_base64)
+    # LLM: 0-1 call per image when description is missing.
     workflow.add_node("doc_describe_images", _wrap_document_node(describe_images_node))
+    # doc_persist_images
+    # Input: structured_content.section_images, metadata.content_hash
+    # Core: persist image manifest for cache reuse.
+    # Output: manifest.json on disk
     workflow.add_node(
         "doc_persist_images", _wrap_document_node(persist_image_manifest_node)
     )
+    # doc_generate_output
+    # Input: structured_content, output_format, metadata
+    # Core: render PDF/PPTX/Markdown, choose output path, cache structured content.
+    # Output: output_path
     workflow.add_node("doc_generate_output", _wrap_document_node(generate_output_node))
+    # doc_validate_output
+    # Input: output_path, output_format
+    # Core: validate file exists, non-empty, expected extension.
+    # Output: errors (on failure)
     workflow.add_node("doc_validate_output", _wrap_document_node(validate_output_node))
 
     # ==========================================
     # PODCAST BRANCH NODES
     # ==========================================
+    # podcast_generate_script
+    # Input: raw_content, request_data (style/speakers/model)
+    # Core: LLM generates JSON dialogue script + title/description.
+    # Output: podcast_script, podcast_dialogue, podcast_title/description
+    # LLM: 1 call per request for script generation.
     workflow.add_node("podcast_generate_script", generate_podcast_script_node)
+    # podcast_synthesize_audio
+    # Input: podcast_dialogue, speakers, gemini_api_key
+    # Core: Gemini TTS synthesis, build WAV, compute duration.
+    # Output: podcast_audio_base64, podcast_duration_seconds
     workflow.add_node("podcast_synthesize_audio", synthesize_podcast_audio_node)
 
     # ==========================================
     # MINDMAP BRANCH NODE
     # ==========================================
+    # mindmap_generate
+    # Input: raw_content, request_data (mode/model)
+    # Core: LLM extracts concepts and builds hierarchical tree + summary.
+    # Output: mindmap_tree, mindmap_mode
+    # LLM: 1 call per request for mind map JSON output.
     workflow.add_node("mindmap_generate", generate_mindmap_node)
 
     # ==========================================
     # IMAGE BRANCH NODES
     # ==========================================
+    # image_generate
+    # Input: prompt/style/output_format, api key
+    # Core: generate raster or SVG image with optional style.
+    # Output: image_data, image_output_format, image_prompt_used
+    # LLM: 1 model call per request (image generation).
     workflow.add_node("image_generate", generate_image_node)
+    # image_edit
+    # Input: source image, edit prompt, mode/style/region, api key
+    # Core: edit image (basic/style/region) and return raster output.
+    # Output: image_data, image_edit_mode
+    # LLM: 1 model call per request (image edit).
     workflow.add_node("image_edit", edit_image_node)
 
     # ==========================================
@@ -129,11 +232,12 @@ def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
     # ==========================================
 
     # Entry point
-    workflow.set_entry_point("extract_sources")
+    workflow.set_entry_point("ingest_sources")
+    workflow.add_edge("ingest_sources", "summarize_sources")
 
-    # Route after source extraction based on output_type
+    # Route after summarization based on output_type
     workflow.add_conditional_edges(
-        "extract_sources",
+        "summarize_sources",
         route_by_output_type,
         {
             "document": "doc_detect_format",
@@ -147,8 +251,8 @@ def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
     # ==========================================
     # DOCUMENT BRANCH FLOW
     # ==========================================
-    workflow.add_edge("doc_detect_format", "doc_parse_content")
-    workflow.add_edge("doc_parse_content", "doc_transform_content")
+    workflow.add_edge("doc_detect_format", "doc_parse_document_content")
+    workflow.add_edge("doc_parse_document_content", "doc_transform_content")
     workflow.add_edge("doc_transform_content", "doc_enhance_content")
     workflow.add_edge("doc_enhance_content", "doc_generate_images")
     workflow.add_edge("doc_generate_images", "doc_describe_images")
@@ -401,6 +505,7 @@ def run_unified_workflow_with_session(
             logger.debug(f"Could not retrieve checkpoint: {e}")
 
     # Build initial state
+    step_numbers, total_steps = _build_step_metadata(output_type)
     initial_state: UnifiedWorkflowState = {
         "output_type": output_type,
         "request_data": request_data,
@@ -417,6 +522,8 @@ def run_unified_workflow_with_session(
         "metadata": {
             "session_id": session_id,
             "reused_content": has_existing_content,
+            "step_numbers": step_numbers,
+            "total_steps": total_steps,
         },
         "completed": False,
     }
@@ -565,6 +672,7 @@ async def run_unified_workflow_async(
     workflow = build_unified_workflow()
 
     # Initial state
+    step_numbers, total_steps = _build_step_metadata(output_type)
     initial_state: UnifiedWorkflowState = {
         "output_type": output_type,
         "request_data": request_data,
@@ -578,7 +686,7 @@ async def run_unified_workflow_async(
         "enhanced_content": {},
         "output_path": "",
         "errors": [],
-        "metadata": {},
+        "metadata": {"step_numbers": step_numbers, "total_steps": total_steps},
         "completed": False,
     }
 
@@ -625,6 +733,7 @@ def run_unified_workflow(
     workflow = build_unified_workflow()
 
     # Initial state
+    step_numbers, total_steps = _build_step_metadata(output_type)
     initial_state: UnifiedWorkflowState = {
         "output_type": output_type,
         "request_data": request_data,
@@ -638,7 +747,7 @@ def run_unified_workflow(
         "enhanced_content": {},
         "output_path": "",
         "errors": [],
-        "metadata": {},
+        "metadata": {"step_numbers": step_numbers, "total_steps": total_steps},
         "completed": False,
     }
 

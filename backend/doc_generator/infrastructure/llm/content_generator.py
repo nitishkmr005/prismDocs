@@ -176,6 +176,7 @@ class LLMContentGenerator:
         topic: str = "",
         max_tokens: int = 8000,
         include_visual_markers: bool = True,
+        force_single_chunk: bool = False,
     ) -> GeneratedContent:
         """
         Transform raw content into structured blog-style markdown using chunked processing.
@@ -186,6 +187,9 @@ class LLMContentGenerator:
             topic: Optional topic/title hint
             max_tokens: Maximum tokens for LLM response per chunk
             
+        Args:
+            force_single_chunk: When True, skip chunk splitting even for long content.
+
         Returns:
             GeneratedContent with markdown and visual markers
         Invoked by: src/doc_generator/application/nodes/transform_content.py, src/doc_generator/application/workflow/nodes/transform_content.py, src/doc_generator/utils/content_merger.py
@@ -199,8 +203,8 @@ class LLMContentGenerator:
 
         outline = self.generate_blog_outline(raw_content, content_type, topic)
         
-        # For short content, process directly
-        if content_length <= self.settings.llm.content_single_chunk_char_limit:
+        # For short content or forced single-chunk, process directly
+        if force_single_chunk or content_length <= self.settings.llm.content_single_chunk_char_limit:
             return self._process_single_chunk(
                 raw_content,
                 content_type,

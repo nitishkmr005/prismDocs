@@ -45,7 +45,7 @@ def generate_podcast_script_node(state: UnifiedWorkflowState) -> UnifiedWorkflow
         Updated state with podcast_script and podcast_dialogue
     """
     request_data = state.get("request_data", {})
-    raw_content = state.get("raw_content", "")
+    raw_content = state.get("summary_content") or state.get("raw_content", "")
     api_key = state.get("api_key", "")
 
     if not raw_content:
@@ -95,7 +95,7 @@ def generate_podcast_script_node(state: UnifiedWorkflowState) -> UnifiedWorkflow
         prompt = f"""Generate a podcast script about the following content.
 
 CONTENT:
-{raw_content[:30000]}
+{raw_content}
 
 REQUIREMENTS:
 - Style: {style}

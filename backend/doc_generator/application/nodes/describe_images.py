@@ -91,9 +91,15 @@ def describe_images_node(state: WorkflowState) -> WorkflowState:
         log_node_end,
         log_progress,
         log_metric,
+        resolve_step_number,
+        resolve_total_steps,
     )
     
-    log_node_start("describe_images", step_number=6)
+    log_node_start(
+        "describe_images",
+        step_number=resolve_step_number(state, "describe_images", 8),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     structured_content = state.get("structured_content", {})
     section_images = structured_content.get("section_images", {})

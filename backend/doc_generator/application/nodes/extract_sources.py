@@ -11,12 +11,19 @@ from pathlib import Path
 from loguru import logger
 
 from ...domain.content_types import ContentFormat
+from ...infrastructure.logging_utils import (
+    log_node_start,
+    log_node_end,
+    log_metric,
+    resolve_step_number,
+    resolve_total_steps,
+)
 from ...infrastructure.settings import get_settings
 from ...utils.image_understanding import extract_image_content, is_image_file
 from ..unified_state import UnifiedWorkflowState, is_document_type, requires_content_extraction
 
 
-def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
+def ingest_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
     """
     Extract content from sources specified in the request.
 
@@ -42,10 +49,22 @@ def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         if is_document_type(output_type):
             input_path = state.get("input_path", "")
             if input_path and Path(input_path).exists():
+                log_node_start(
+                    "ingest_sources",
+                    step_number=resolve_step_number(state, "ingest_sources", 1),
+                    total_steps=resolve_total_steps(state, 9),
+                )
                 logger.info("Reusing extracted content from checkpoint")
+                log_node_end("ingest_sources", success=True, details="Reused checkpoint")
                 return state
         else:
+            log_node_start(
+                "ingest_sources",
+                step_number=resolve_step_number(state, "ingest_sources", 1),
+                total_steps=resolve_total_steps(state, 9),
+            )
             logger.info("Reusing extracted content from checkpoint")
+            log_node_end("ingest_sources", success=True, details="Reused checkpoint")
             return state
 
     request_data = state.get("request_data", {})
@@ -54,11 +73,19 @@ def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
     provider = request_data.get("provider", "gemini")
     model = request_data.get("model", "gemini-2.5-flash")
 
+    log_node_start(
+        "ingest_sources",
+        step_number=resolve_step_number(state, "ingest_sources", 1),
+        total_steps=resolve_total_steps(state, 9),
+    )
+
     if not sources:
         state["errors"] = state.get("errors", []) + ["No sources provided"]
+        log_node_end("ingest_sources", success=False, details="No sources")
         return state
 
     logger.info(f"Extracting content from {len(sources)} sources")
+    log_metric("Sources", len(sources))
 
     try:
         from ..parsers import WebParser, get_parser
@@ -93,6 +120,7 @@ def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
                     state["errors"] = state.get("errors", []) + [
                         "Excel files are not supported."
                     ]
+                    log_node_end("ingest_sources", success=False, details="Excel not supported")
                     return state
 
                 if is_image_file(file_path):
@@ -156,6 +184,7 @@ def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
 
         if not content_parts:
             state["errors"] = state.get("errors", []) + ["No valid sources provided"]
+            log_node_end("ingest_sources", success=False, details="No valid sources")
             return state
 
         is_doc = is_document_type(output_type)
@@ -163,12 +192,6 @@ def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
             merged_content = _merge_markdown_sources(content_blocks)
         else:
             merged_content = "\n\n---\n\n".join(content_parts)
-
-        if not is_doc:
-            max_chars = 50000
-            if len(merged_content) > max_chars:
-                merged_content = merged_content[:max_chars] + "\n\n[Content truncated...]"
-                logger.warning(f"Content truncated to {max_chars} characters")
 
         state["raw_content"] = merged_content
         state["metadata"] = state.get("metadata", {})
@@ -183,12 +206,20 @@ def extract_sources_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         logger.info(
             f"Extracted {len(merged_content)} chars from {source_count} sources"
         )
+        log_metric("Content Length", f"{len(merged_content)} chars")
+        log_metric("Parsed Sources", source_count)
+        log_node_end(
+            "ingest_sources",
+            success=True,
+            details=f"{source_count} sources, {len(merged_content)} chars",
+        )
 
     except Exception as e:
         logger.error(f"Content extraction failed: {e}")
         state["errors"] = state.get("errors", []) + [
             f"Content extraction failed: {str(e)}"
         ]
+        log_node_end("ingest_sources", success=False, details=str(e))
 
     return state
 

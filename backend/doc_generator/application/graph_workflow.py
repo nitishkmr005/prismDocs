@@ -19,7 +19,7 @@ from .nodes import (
     enhance_content_node,
     generate_images_node,
     generate_output_node,
-    parse_content_node,
+    parse_document_content_node,
     persist_image_manifest_node,
     transform_content_node,
     validate_output_node,
@@ -69,7 +69,7 @@ def build_workflow() -> StateGraph:
 
     Workflow:
     1. detect_format -> Detect input format from extension/URL
-    2. parse_content -> Extract content using appropriate parser
+    2. parse_document_content -> Extract content using appropriate parser
     3. transform_content -> Structure content for output (creates merged .md)
     4. enhance_content -> Generate summaries and slide structures
     5. generate_images -> Generate images per section (uses merged content)
@@ -88,7 +88,7 @@ def build_workflow() -> StateGraph:
 
     # Add nodes
     workflow.add_node("detect_format", detect_format_node)
-    workflow.add_node("parse_content", parse_content_node)
+    workflow.add_node("parse_document_content", parse_document_content_node)
     workflow.add_node("transform_content", transform_content_node)
     workflow.add_node("enhance_content", enhance_content_node)
     workflow.add_node("generate_images", generate_images_node)
@@ -99,8 +99,8 @@ def build_workflow() -> StateGraph:
 
     # Define linear flow
     workflow.set_entry_point("detect_format")
-    workflow.add_edge("detect_format", "parse_content")
-    workflow.add_edge("parse_content", "transform_content")
+    workflow.add_edge("detect_format", "parse_document_content")
+    workflow.add_edge("parse_document_content", "transform_content")
     workflow.add_edge("transform_content", "enhance_content")
     workflow.add_edge("enhance_content", "generate_images")
     workflow.add_edge("generate_images", "describe_images")
@@ -236,4 +236,3 @@ def run_workflow(
     )
 
     return result
-

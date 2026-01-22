@@ -1,7 +1,7 @@
 """
-Content parsing node for LangGraph workflow.
+Document content parsing node for LangGraph workflow.
 
-Parses input content using appropriate parser.
+Parses input content using the appropriate parser.
 """
 
 import hashlib
@@ -17,12 +17,14 @@ from ...infrastructure.logging_utils import (
     log_progress,
     log_metric,
     log_file_operation,
+    resolve_step_number,
+    resolve_total_steps,
 )
 
 
-def parse_content_node(state: WorkflowState) -> WorkflowState:
+def parse_document_content_node(state: WorkflowState) -> WorkflowState:
     """
-    Parse input content using appropriate parser.
+    Parse document input content using appropriate parser.
 
     Args:
         state: Current workflow state
@@ -31,7 +33,11 @@ def parse_content_node(state: WorkflowState) -> WorkflowState:
         Updated state with raw_content and metadata
     Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
-    log_node_start("parse_content", step_number=2)
+    log_node_start(
+        "parse_document_content",
+        step_number=resolve_step_number(state, "parse_document_content", 4),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     try:
         # Get appropriate parser
@@ -58,19 +64,19 @@ def parse_content_node(state: WorkflowState) -> WorkflowState:
         if "page_count" in metadata:
             log_metric("Pages", metadata["page_count"])
         
-        log_node_end("parse_content", success=True, 
+        log_node_end("parse_document_content", success=True, 
                     details=f"Parsed {len(content)} characters")
 
     except ParseError as e:
         error_msg = f"Parsing failed: {str(e)}"
         state["errors"].append(error_msg)
         logger.error(error_msg)
-        log_node_end("parse_content", success=False, details=error_msg)
+        log_node_end("parse_document_content", success=False, details=error_msg)
 
     except Exception as e:
         error_msg = f"Unexpected parsing error: {str(e)}"
         state["errors"].append(error_msg)
         logger.error(error_msg)
-        log_node_end("parse_content", success=False, details=error_msg)
+        log_node_end("parse_document_content", success=False, details=error_msg)
 
     return state

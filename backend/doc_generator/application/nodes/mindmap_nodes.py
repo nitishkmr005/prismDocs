@@ -29,7 +29,7 @@ def generate_mindmap_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
         Updated state with mindmap_tree
     """
     request_data = state.get("request_data", {})
-    raw_content = state.get("raw_content", "")
+    raw_content = state.get("summary_content") or state.get("raw_content", "")
     api_key = state.get("api_key", "")
 
     if not raw_content:
@@ -102,15 +102,11 @@ def generate_mindmap_node(state: UnifiedWorkflowState) -> UnifiedWorkflowState:
 
 def _build_mindmap_prompt(content: str, mode: str, source_count: int) -> str:
     """Build LLM prompt for mind map generation."""
-    # Limit content to avoid token limits
-    max_content = 30000
-    truncated_content = content[:max_content]
-
     if mode == "summarize":
         return f"""Analyze the following content and create a mind map structure.
 
 CONTENT:
-{truncated_content}
+{content}
 
 Create a mind map that captures the key concepts and their relationships.
 The mind map should have a central topic with 3-7 main branches, each with relevant sub-branches.
@@ -145,7 +141,7 @@ Based on {source_count} source document(s), create a comprehensive mind map."""
         return f"""Analyze the following content and create a detailed mind map structure.
 
 CONTENT:
-{truncated_content}
+{content}
 
 Create a comprehensive mind map with:
 - Clear central topic
@@ -169,7 +165,7 @@ Based on {source_count} source document(s), be thorough and detailed."""
         return f"""Analyze the following content and create a hierarchical mind map.
 
 CONTENT:
-{truncated_content}
+{content}
 
 Create a structured hierarchical mind map that shows:
 - Clear parent-child relationships

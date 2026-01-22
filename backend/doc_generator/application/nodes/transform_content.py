@@ -21,6 +21,8 @@ from ...infrastructure.logging_utils import (
     log_metric,
     log_cache_hit,
     log_subsection,
+    resolve_step_number,
+    resolve_total_steps,
 )
 
 
@@ -75,7 +77,11 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
         - slides: Slide structures for PPTX (optional)
     Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
-    log_node_start("transform_content", step_number=3)
+    log_node_start(
+        "transform_content",
+        step_number=resolve_step_number(state, "transform_content", 5),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     try:
         content = state.get("raw_content", "")
@@ -164,6 +170,7 @@ def transform_content_node(state: WorkflowState) -> WorkflowState:
                 topic=topic,
                 max_tokens=max_tokens,
                 include_visual_markers=include_visual_markers,
+                force_single_chunk=bool(metadata.get("summary_generated")),
             )
             
             # Store generated content

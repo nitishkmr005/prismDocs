@@ -31,9 +31,15 @@ def generate_output_node(state: WorkflowState) -> WorkflowState:
         log_progress,
         log_metric,
         log_file_operation,
+        resolve_step_number,
+        resolve_total_steps,
     )
     
-    log_node_start("generate_output", step_number=8)
+    log_node_start(
+        "generate_output",
+        step_number=resolve_step_number(state, "generate_output", 10),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     try:
         # Get appropriate generator

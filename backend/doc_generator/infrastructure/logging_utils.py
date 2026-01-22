@@ -33,6 +33,24 @@ def _emit_progress(step_number: int, total_steps: int, node_name: str, display_n
         callback(step_number, total_steps, node_name, display_name)
 
 
+def resolve_step_number(state: dict, node_name: str, default: int) -> int:
+    """
+    Resolve the step number from state metadata, falling back to default.
+    """
+    metadata = state.get("metadata", {}) if isinstance(state, dict) else {}
+    step_numbers = metadata.get("step_numbers", {}) if isinstance(metadata, dict) else {}
+    return step_numbers.get(node_name, default)
+
+
+def resolve_total_steps(state: dict, default: int) -> int:
+    """
+    Resolve total steps from state metadata, falling back to default.
+    """
+    metadata = state.get("metadata", {}) if isinstance(state, dict) else {}
+    total_steps = metadata.get("total_steps") if isinstance(metadata, dict) else None
+    return total_steps if isinstance(total_steps, int) and total_steps > 0 else default
+
+
 # Visual separators
 SEPARATOR_HEAVY = "=" * 80
 SEPARATOR_LIGHT = "-" * 80

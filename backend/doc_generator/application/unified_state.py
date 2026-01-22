@@ -43,6 +43,7 @@ class UnifiedWorkflowState(TypedDict, total=False):
         input_path: Path to input file or URL (for documents)
         input_format: Detected input format
         raw_content: Extracted raw content from sources
+        summary_content: Chunked summary of raw content
         structured_content: Parsed and structured content
         enhanced_content: LLM-enhanced content (summaries, topics, etc.)
 
@@ -89,6 +90,7 @@ class UnifiedWorkflowState(TypedDict, total=False):
     input_path: str
     input_format: str
     raw_content: str
+    summary_content: str
     structured_content: dict
     enhanced_content: dict
 

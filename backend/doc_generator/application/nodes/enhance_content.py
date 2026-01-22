@@ -12,6 +12,8 @@ from ...infrastructure.logging_utils import (
     log_progress,
     log_metric,
     log_subsection,
+    resolve_step_number,
+    resolve_total_steps,
 )
 
 
@@ -20,7 +22,11 @@ def enhance_content_node(state: WorkflowState) -> WorkflowState:
     Add executive summaries and slide structures to structured content.
     Invoked by: src/doc_generator/application/graph_workflow.py, src/doc_generator/application/workflow/graph.py
     """
-    log_node_start("enhance_content", step_number=4)
+    log_node_start(
+        "enhance_content",
+        step_number=resolve_step_number(state, "enhance_content", 6),
+        total_steps=resolve_total_steps(state, 9),
+    )
     
     structured = state.get("structured_content", {})
     markdown = structured.get("markdown", "")
