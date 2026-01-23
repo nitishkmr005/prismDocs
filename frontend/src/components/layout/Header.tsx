@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from "next/link";
 import { AuthButton, AuthModal } from "@/components/auth";
+import { ThemeToggle } from "@/components/system/ThemeToggle";
 
 function PrismDocsLogo({ className }: { className?: string }) {
   return (
@@ -84,6 +85,7 @@ export function Header() {
           </Link>
 
           <nav className="flex items-center gap-4">
+            <ThemeToggle />
             <AuthButton onSignInClick={() => setIsAuthModalOpen(true)} />
           </nav>
         </div>
@@ -95,4 +97,3 @@ export function Header() {
     </>
   );
 }
-
