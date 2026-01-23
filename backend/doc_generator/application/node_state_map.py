@@ -14,6 +14,7 @@ detailed_node_map = {
     "common": {
         "validate_sources": {
             "description": "Validates inputs and checks if existing content can be reused from session.",
+            "next_node": "resolve_sources",
             "updates": {
                 "errors": "[SYSTEM] Validation errors (e.g., no sources provided)",
                 "metadata.skip_source_processing": "[SYSTEM] Boolean flag. True if valid content already exists in session (checkpoint hit).",
@@ -23,9 +24,14 @@ detailed_node_map = {
                 "sources": "List of URLs, text, or file IDs from user",
                 "output_type": "Target format (pdf, podcast, etc.)",
             },
+            "example": {
+                "errors": [],
+                "metadata": {"skip_source_processing": True, "reused_content": True},
+            },
         },
         "resolve_sources": {
             "description": "Resolves uploaded files to disk paths and normalizes URLs.",
+            "next_node": "extract_sources",
             "updates": {
                 "resolved_sources": [
                     {
@@ -37,9 +43,20 @@ detailed_node_map = {
                 ],
                 "resolved_file_id": "[SYSTEM] ID of main uploaded file (if single file mode)",
             },
+            "example": {
+                "resolved_sources": [
+                    {
+                        "type": "url",
+                        "content": "https://example.com/article",
+                        "path": "",
+                    },
+                    {"type": "text", "content": "Some user pasted text", "path": ""},
+                ]
+            },
         },
         "extract_sources": {
             "description": "Extracts raw text/content from PDFs, URLs, images, etc.",
+            "next_node": "merge_sources",
             "updates": {
                 "content_blocks": [
                     {
@@ -51,18 +68,41 @@ detailed_node_map = {
                 ],
                 "metadata.source_count": "[SYSTEM] Total number of valid sources processed",
             },
+            "example": {
+                "content_blocks": [
+                    {
+                        "type": "text",
+                        "content": "# Web Article\nContent...",
+                        "source": "https://example.com",
+                    },
+                    {
+                        "type": "image",
+                        "description": "A chart showing growth",
+                        "source": "chart.png",
+                    },
+                ],
+                "metadata": {"source_count": 2},
+            },
         },
         "merge_sources": {
             "description": "Merges all extracted blocks into a single markdown string.",
+            "next_node": "summarize_sources",
             "updates": {
                 "raw_content": "[SYSTEM] Combined markdown text of all sources. CHECKPOINTED KEY for reuse.",
                 "metadata.file_id": "[SYSTEM] File ID for caching purposes",
             },
+            "example": {
+                "raw_content": "# Web Article\nContent...\n\n---\n\n(Image Description: A chart showing growth)\n\n---\n\nSome user pasted text"
+            },
         },
         "summarize_sources": {
             "description": "Generates a condensed summary of the raw content.",
+            "next_node": "Likely a ROUTER (split by output_type)",
             "updates": {
                 "summary_content": "[LLM] Concise summary of raw_content. Used for context-limited prompts (e.g., image gen, mindmap)."
+            },
+            "example": {
+                "summary_content": "The article discusses recent economic growth trends, highlighted by..."
             },
         },
     },
@@ -72,20 +112,25 @@ detailed_node_map = {
     "document": {
         "doc_detect_format": {
             "description": "Detects input format (mostly for legacy single-file flows).",
+            "next_node": "doc_parse_document_content",
             "updates": {
                 "input_format": "[SYSTEM] Detected mime-type or extension (e.g., 'application/pdf')"
             },
+            "example": {"input_format": "text/markdown"},
         },
         "doc_parse_document_content": {
             "description": "Parses specific doc types (redundant with extract_sources but kept for legacy).",
+            "next_node": "doc_transform_content",
             "updates": {
                 # Mostly redundant now, updates same fields as extract/merge in legacy path
                 "metadata.num_pages": "[SYSTEM] Page count if PDF",
                 "metadata.title": "[SYSTEM] Title from file metadata",
             },
+            "example": {"metadata": {"title": "Q3 Report", "num_pages": 5}},
         },
         "doc_transform_content": {
             "description": "Structures raw text into a coherent document with sections.",
+            "next_node": "doc_enhance_content",
             "updates": {
                 "structured_content": {
                     "title": "[LLM] Generated document title",
@@ -103,9 +148,23 @@ detailed_node_map = {
                 "request_data.preferences.audience": "Target audience (e.g., 'expert', 'child')",
                 "request_data.preferences.tone": "Writing tone",
             },
+            "example": {
+                "structured_content": {
+                    "title": "Annual Review",
+                    "introduction": "This year was...",
+                    "sections": [
+                        {
+                            "heading": "Q1 Performance",
+                            "content": "We saw a 10% increase...",
+                            "type": "text",
+                        }
+                    ],
+                }
+            },
         },
         "doc_enhance_content": {
             "description": "Adds executive summaries or slide content if requested.",
+            "next_node": "doc_generate_images",
             "updates": {
                 "enhanced_content": {
                     "executive_summary": "[LLM] High-level summary",
@@ -119,9 +178,15 @@ detailed_node_map = {
                     }
                 ],
             },
+            "example": {
+                "enhanced_content": {
+                    "executive_summary": "Overall growth was positive."
+                }
+            },
         },
         "doc_generate_images": {
             "description": "Generates relevant images for document sections.",
+            "next_node": "doc_describe_images",
             "updates": {
                 "structured_content.section_images": [
                     {
@@ -135,12 +200,28 @@ detailed_node_map = {
             "frontend_input": {
                 "request_data.preferences.image_style": "Style (e.g., 'minimalist', 'watercolor')"
             },
+            "example": {
+                "structured_content": {
+                    "section_images": [
+                        {
+                            "section_index": 0,
+                            "prompt": "A modern office graph",
+                            "image_path": "/tmp/img1.png",
+                        }
+                    ]
+                }
+            },
         },
         "doc_generate_output": {
             "description": "Renders final file (PDF/PPTX) to disk.",
+            "next_node": "doc_validate_output",
             "updates": {
                 "output_path": "[SYSTEM] Absolute path to final generated file",
                 "completed": "[SYSTEM] True",
+            },
+            "example": {
+                "output_path": "/app/data/output/report_123.pdf",
+                "completed": True,
             },
         },
     },
@@ -150,6 +231,7 @@ detailed_node_map = {
     "podcast": {
         "podcast_generate_script": {
             "description": "Converts content into a dialogue script.",
+            "next_node": "podcast_synthesize_audio",
             "updates": {
                 "podcast_script": "[LLM] Full conversation text",
                 "podcast_title": "[LLM] Catchy episode title",
@@ -164,12 +246,24 @@ detailed_node_map = {
                 "request_data.style": "Podcast style (e.g., 'interview', 'monologue')",
                 "request_data.speakers": "List of speaker definitions (names, voices)",
             },
+            "example": {
+                "podcast_title": "Tech Talk Daily",
+                "podcast_dialogue": [
+                    {"speaker": "Host", "text": "Welcome back everyone!"},
+                    {"speaker": "Guest", "text": "Thanks for having me."},
+                ],
+            },
         },
         "podcast_synthesize_audio": {
             "description": "Converts script to Audio (TTS).",
+            "next_node": "END",
             "updates": {
                 "podcast_audio_base64": "[SYSTEM] Base64 encoded MP3/WAV file",
                 "podcast_duration_seconds": "[SYSTEM] Length of audio in seconds",
+            },
+            "example": {
+                "podcast_audio_base64": "UklGRi...",
+                "podcast_duration_seconds": 120.5,
             },
         },
     },
@@ -179,6 +273,7 @@ detailed_node_map = {
     "mindmap": {
         "mindmap_generate": {
             "description": "Converts content into a hierarchical tree structure.",
+            "next_node": "END",
             "updates": {
                 "mindmap_tree": {
                     "root": {
@@ -190,6 +285,17 @@ detailed_node_map = {
             "frontend_input": {
                 "request_data.mode": "Detail level (e.g., 'summarize', 'detailed')"
             },
+            "example": {
+                "mindmap_tree": {
+                    "root": {
+                        "label": "Project Plan",
+                        "children": [
+                            {"label": "Phase 1", "children": []},
+                            {"label": "Phase 2", "children": []},
+                        ],
+                    }
+                }
+            },
         }
     },
     # ==========================================
@@ -198,19 +304,28 @@ detailed_node_map = {
     "image": {
         "build_image_prompt": {
             "description": "Creates a detailed image prompt from simple user input or text content.",
+            "next_node": "image_generate",
             "updates": {
                 "image_prompt": "[LLM] Detailed, descriptive prompt optimized for image models"
             },
             "frontend_input": {"request_data.prompt": "User's rough idea (optional)"},
+            "example": {
+                "image_prompt": "A futuristic city skyline at sunset, cyberpunk style, neon lights, high resolution"
+            },
         },
         "image_generate": {
             "description": "Generates visual asset.",
+            "next_node": "END",
             "updates": {
                 "image_data": "[SYSTEM] Base64 encoded image or SVG code",
                 "image_prompt_used": "[SYSTEM] The final prompt actually sent to the model",
             },
             "frontend_input": {
                 "request_data.style": "Visual style (e.g., 'cyberpunk', 'sketch')"
+            },
+            "example": {
+                "image_data": "iVBORw0KGgo...",
+                "image_prompt_used": "A futuristic city skyline...",
             },
         },
     },
