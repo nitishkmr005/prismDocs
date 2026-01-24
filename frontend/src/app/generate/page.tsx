@@ -17,6 +17,7 @@ import {
   contentModelOptions,
 } from "@/components/studio";
 import type { StudioOutputType } from "@/components/studio";
+import type { CombinedOutputType } from "@/components/studio/OutputTypeSelector";
 import { MindMapProgress } from "@/components/mindmap";
 import { generateImage } from "@/lib/api/image";
 import { StyleCategory } from "@/data/imageStyles";
@@ -53,6 +54,9 @@ export default function GeneratePage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
+  // Panel collapse state
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+
   // Collapsible section state for left panel
   const [expandedSections, setExpandedSections] = useState<{
     sources: boolean;
@@ -73,6 +77,7 @@ export default function GeneratePage() {
 
   // Output type selection
   const [outputType, setOutputType] = useState<StudioOutputType>("presentation_pptx");
+  const [combinedOutputType, setCombinedOutputType] = useState<CombinedOutputType | null>("presentation");
 
   // Source state
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -651,15 +656,53 @@ export default function GeneratePage() {
       </header>
 
       {/* Main Studio Layout */}
-      <main className="relative z-10 min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] px-4 py-6 lg:px-8 xl:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
-        <div className="h-full max-w-screen-2xl mx-auto grid gap-6 grid-cols-1 lg:grid-cols-[420px_1fr] items-start">
+      <main className="relative z-10 flex-1 px-4 py-6 lg:px-8 xl:px-12 overflow-auto">
+        <div className={`max-w-screen-2xl mx-auto grid gap-4 grid-cols-1 transition-all duration-300 ${
+          leftPanelCollapsed
+            ? "lg:grid-cols-[56px_1fr]"
+            : "lg:grid-cols-[420px_1fr]"
+        }`}>
           {/* Left Panel - Inputs with Collapsible Sections */}
-          <div className="lg:h-full lg:overflow-y-auto lg:scroll-smooth space-y-3 scrollbar-hide">
-            {/* Panel header */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-1 h-6 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full" />
-              <h2 className="font-display font-semibold text-slate-900 dark:text-white tracking-tight">Configuration</h2>
-            </div>
+          <div className={`transition-all duration-300 ${
+            leftPanelCollapsed ? "lg:w-14" : ""
+          }`}>
+            {/* Collapsed state */}
+            {leftPanelCollapsed ? (
+              <div className="hidden lg:flex flex-col items-center py-4 h-full rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm shadow-sm dark:shadow-none">
+                <button
+                  onClick={() => setLeftPanelCollapsed(false)}
+                  className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 flex items-center justify-center transition-colors group"
+                  title="Expand configuration panel"
+                >
+                  <svg className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <div className="mt-4 writing-mode-vertical text-xs font-medium text-slate-500 dark:text-slate-400" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                  Configuration
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm shadow-sm dark:shadow-none">
+                {/* Panel header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-5 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full" />
+                    <h2 className="font-display font-semibold text-slate-900 dark:text-white tracking-tight">Configuration</h2>
+                  </div>
+                  <button
+                    onClick={() => setLeftPanelCollapsed(true)}
+                    className="hidden lg:flex w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-amber-100 dark:hover:bg-amber-900/30 items-center justify-center transition-colors group"
+                    title="Collapse panel"
+                  >
+                    <svg className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-3">
 
             {/* Sources Section */}
             <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all">
@@ -740,6 +783,8 @@ export default function GeneratePage() {
                     geminiKeyAvailable={hasGeminiKey}
                     imageGenerationEnabled={enableImageGeneration}
                     podcastEnabled={provider === "gemini" ? true : (enablePodcast && podcastGeminiApiKey.trim().length > 0)}
+                    onCombinedTypeChange={setCombinedOutputType}
+                    selectedCombinedType={combinedOutputType}
                   />
                 </div>
               </div>
@@ -817,11 +862,8 @@ export default function GeneratePage() {
               </div>
             </div>
 
-            {/* Spacer */}
-            <div className="h-20" />
-
-            {/* Generate Button - Sticky */}
-            <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-slate-50 dark:from-slate-900 via-slate-50/95 dark:via-slate-900/95 to-transparent">
+            {/* Generate Button */}
+            <div className="pt-2">
               <Button
                 size="lg"
                 className={`w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 ${
@@ -847,15 +889,23 @@ export default function GeneratePage() {
                 )}
               </Button>
             </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Panel - Output Preview */}
-          <div className="min-h-[500px] lg:h-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm shadow-sm dark:shadow-none">
+          <div className="min-h-[500px] lg:h-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm shadow-sm dark:shadow-none flex flex-col">
             {/* Panel header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/50">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/50 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-1 h-5 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full" />
                 <h2 className="font-display font-semibold text-slate-900 dark:text-white tracking-tight">Preview</h2>
+                {combinedOutputType && (
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                    Dual Output
+                  </span>
+                )}
               </div>
               {getCurrentState() === "generating" && (
                 <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
@@ -864,7 +914,7 @@ export default function GeneratePage() {
                 </div>
               )}
             </div>
-            <div className="h-[calc(100%-60px)] p-4">
+            <div className="flex-1 min-h-0 p-4">
               {isMindMap && mindMapState === "generating" ? (
                 <div className="flex items-center justify-center h-full rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
                   <MindMapProgress
@@ -892,6 +942,7 @@ export default function GeneratePage() {
                   onDownload={handleDownload}
                   userId={user?.id}
                   imageApiKey={effectiveImageKey}
+                  combinedOutputType={combinedOutputType}
                 />
               )}
             </div>
