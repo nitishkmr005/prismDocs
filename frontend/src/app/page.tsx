@@ -186,8 +186,10 @@ function PrismIllustration() {
           </g>
           {/* Markdown */}
           <g>
-            <text x="725" y="178" textAnchor="start" fill="#22c55e" style={{ fontWeight: 800 }}>M</text>
-            <text x="737" y="186" textAnchor="start" fill="#22c55e">ARKDOWN</text>
+            <text x="725" y="180" textAnchor="start" fill="#22c55e">
+              <tspan fontWeight={800}>M</tspan>
+              <tspan dx="1">ARKDOWN</tspan>
+            </text>
           </g>
           {/* Whiteboard - NEW */}
           <g>
@@ -571,7 +573,7 @@ export default function HomePage() {
               <div className="animate-reveal-up">
                 <span className="mono-label inline-flex items-center gap-3 text-amber-600 dark:text-amber-400">
                   <span className="w-8 h-[2px] bg-amber-500" />
-                  Document Generation Platform
+                  AI-Powered Document Generation
                 </span>
               </div>
 
