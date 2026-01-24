@@ -500,19 +500,34 @@ export default function GeneratePage() {
   // Auth gate - if not authenticated, show sign in prompt
   if (!authLoading && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(to right, #f59e0b 1px, transparent 1px), linear-gradient(to bottom, #f59e0b 1px, transparent 1px)`,
+          backgroundSize: '80px 80px'
+        }} />
+        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-[100px]" />
+
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
+        <div className="relative text-center max-w-md mx-auto p-8">
+          {/* Prism icon */}
+          <div className="relative w-20 h-20 mx-auto mb-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl rotate-45 shadow-lg shadow-amber-500/25" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 19h20L12 2zm0 4l6.5 11h-13L12 6z" />
+              </svg>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold mb-3">Welcome to PrismDocs Studio</h1>
-          <p className="text-muted-foreground mb-6">
-            Sign in to start generating documents, presentations, mind maps, and images from your content.
+          <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">Welcome to PrismDocs</h1>
+          <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+            Sign in to start generating documents, presentations, mind maps, and podcasts from your content.
           </p>
-          <Button size="lg" onClick={() => setShowAuthModal(true)} className="w-full">
+          <Button
+            size="lg"
+            onClick={() => setShowAuthModal(true)}
+            className="w-full h-12 text-sm font-semibold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white shadow-lg shadow-amber-500/25"
+          >
             Sign In to Continue
           </Button>
         </div>
@@ -523,10 +538,14 @@ export default function GeneratePage() {
   // Loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(to right, #f59e0b 1px, transparent 1px), linear-gradient(to bottom, #f59e0b 1px, transparent 1px)`,
+          backgroundSize: '80px 80px'
+        }} />
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <span className="text-muted-foreground">Loading...</span>
+          <div className="w-12 h-12 border-3 border-amber-200 dark:border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+          <span className="text-slate-500 dark:text-slate-400 text-sm tracking-wide">Loading...</span>
         </div>
       </div>
     );
@@ -536,7 +555,22 @@ export default function GeneratePage() {
   const keysActionLabel = hasRequiredApiKeys ? "Change" : "Add keys";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 scroll-smooth">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
+      {/* Subtle background texture */}
+      <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+      }} />
+
+      {/* Geometric grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: `linear-gradient(to right, #f59e0b 1px, transparent 1px), linear-gradient(to bottom, #f59e0b 1px, transparent 1px)`,
+        backgroundSize: '80px 80px'
+      }} />
+
+      {/* Ambient glow effects */}
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-amber-400/5 dark:bg-amber-500/3 rounded-full blur-[100px] pointer-events-none" />
+
       {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <ApiKeysModal
@@ -563,50 +597,52 @@ export default function GeneratePage() {
         onPodcastGeminiApiKeyChange={setPodcastGeminiApiKey}
       />
 
-      {/* Enhanced Header */}
-      <header className="border-b border-border/40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 shadow-sm">
-        <div className="px-6 h-16 flex items-center justify-between">
+      {/* Editorial Header */}
+      <header className="relative z-40 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+        <div className="px-6 h-16 flex items-center justify-between max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-4">
             <a href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/40 transition-shadow">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              {/* Prism icon with amber accent */}
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg rotate-45 transform group-hover:rotate-[50deg] transition-transform duration-300 shadow-lg shadow-amber-500/20" />
+                <svg className="relative w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 19h20L12 2zm0 4l6.5 11h-13L12 6z" />
                 </svg>
               </div>
-              <div>
-                <span className="font-bold text-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">PrismDocs</span>
-                <span className="font-medium text-xl text-muted-foreground ml-1">Studio</span>
+              <div className="flex items-baseline gap-1">
+                <span className="font-display font-bold text-xl text-slate-900 dark:text-white tracking-tight">PrismDocs</span>
+                <span className="text-sm font-medium text-amber-600 dark:text-amber-500 tracking-wide">STUDIO</span>
               </div>
             </a>
           </div>
-          <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+          <div className="flex items-center gap-3">
+            {/* API Key status pill */}
+            <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
               hasRequiredApiKeys
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-amber-200 bg-amber-50 text-amber-700"
+                ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                : "border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
             }`}>
-              <span className={`h-2 w-2 rounded-full ${
-                hasRequiredApiKeys ? "bg-emerald-500" : "bg-amber-500"
+              <span className={`h-1.5 w-1.5 rounded-full ${
+                hasRequiredApiKeys ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
               }`} />
-              <span>{keysStatusLabel}</span>
-              <Button
+              <span className="tracking-wide">{keysStatusLabel}</span>
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[11px]"
                 onClick={() => setShowApiKeyModal(true)}
+                className="ml-1 text-[10px] uppercase tracking-wider opacity-60 hover:opacity-100 transition-opacity"
               >
                 {keysActionLabel}
-              </Button>
+              </button>
             </div>
+            {/* Idea Canvas button */}
             <Button
               variant="outline"
               size="sm"
-              className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-300 shadow-sm"
+              className="h-9 px-4 text-xs font-semibold tracking-wide uppercase border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-400 dark:hover:border-amber-500/50 hover:text-amber-800 dark:hover:text-amber-300 transition-all"
               onClick={() => window.location.href = "/generate/idea-canvas"}
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              <svg className="w-3.5 h-3.5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 19h20L12 2zm0 4l6.5 11h-13L12 6z" />
               </svg>
               Idea Canvas
             </Button>
@@ -614,29 +650,39 @@ export default function GeneratePage() {
         </div>
       </header>
 
-      {/* Main Studio Layout - Responsive with stacked mobile, side-by-side desktop */}
-      <main className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] px-4 py-4 lg:px-12 xl:px-20 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
-        <div className="h-full max-w-screen-2xl mx-auto grid gap-4 grid-cols-1 lg:grid-cols-2 items-start">
+      {/* Main Studio Layout */}
+      <main className="relative z-10 min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] px-4 py-6 lg:px-8 xl:px-12 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
+        <div className="h-full max-w-screen-2xl mx-auto grid gap-6 grid-cols-1 lg:grid-cols-[420px_1fr] items-start">
           {/* Left Panel - Inputs with Collapsible Sections */}
-          <div className="lg:h-full border border-border/30 rounded-2xl bg-white/60 dark:bg-slate-900/60 lg:overflow-y-auto lg:scroll-smooth p-2 space-y-2">
+          <div className="lg:h-full lg:overflow-y-auto lg:scroll-smooth space-y-3 scrollbar-hide">
+            {/* Panel header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-6 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full" />
+              <h2 className="font-display font-semibold text-slate-900 dark:text-white tracking-tight">Configuration</h2>
+            </div>
+
             {/* Sources Section */}
-            <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all">
               <button
                 type="button"
                 onClick={() => toggleSection("sources")}
-                className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  <span className="text-sm font-medium">Sources</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({uploadedFiles.length + urls.length + (textContent.trim() ? 1 : 0)})
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white block">Sources</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {uploadedFiles.length + urls.length + (textContent.trim() ? 1 : 0)} added
+                    </span>
+                  </div>
                 </div>
                 <svg
-                  className={`w-4 h-4 text-muted-foreground transition-transform ${expandedSections.sources ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedSections.sources ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -644,8 +690,8 @@ export default function GeneratePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.sources ? "max-h-[9999px]" : "max-h-0"}`}>
-                <div className="px-3 pb-3">
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${expandedSections.sources ? "max-h-[9999px]" : "max-h-0"}`}>
+                <div className="px-4 pb-4 border-t border-slate-100 dark:border-slate-700/50">
                   <SourceInput
                     onSourcesChange={() => {}}
                     uploadedFiles={uploadedFiles}
@@ -660,20 +706,25 @@ export default function GeneratePage() {
             </div>
 
             {/* Output Type Section */}
-            <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all">
               <button
                 type="button"
                 onClick={() => toggleSection("outputType")}
-                className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                  </svg>
-                  <span className="text-sm font-medium">Output Type</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white block">Output Format</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Choose your output type</span>
+                  </div>
                 </div>
                 <svg
-                  className={`w-4 h-4 text-muted-foreground transition-transform ${expandedSections.outputType ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedSections.outputType ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -681,8 +732,8 @@ export default function GeneratePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.outputType ? "max-h-[9999px]" : "max-h-0"}`}>
-                <div className="px-3 pb-3">
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${expandedSections.outputType ? "max-h-[9999px]" : "max-h-0"}`}>
+                <div className="px-4 pb-4 border-t border-slate-100 dark:border-slate-700/50">
                   <OutputTypeSelector
                     selectedType={outputType}
                     onTypeChange={setOutputType}
@@ -695,21 +746,26 @@ export default function GeneratePage() {
             </div>
 
             {/* Settings/Options Section */}
-            <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm overflow-hidden hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all">
               <button
                 type="button"
                 onClick={() => toggleSection("options")}
-                className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="text-sm font-medium">Settings</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white block">Settings</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Fine-tune your output</span>
+                  </div>
                 </div>
                 <svg
-                  className={`w-4 h-4 text-muted-foreground transition-transform ${expandedSections.options ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedSections.options ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -717,8 +773,8 @@ export default function GeneratePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-200 ${expandedSections.options ? "max-h-[9999px]" : "max-h-0"}`}>
-                <div className="px-3 pb-3">
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${expandedSections.options ? "max-h-[9999px]" : "max-h-0"}`}>
+                <div className="px-4 pb-4 border-t border-slate-100 dark:border-slate-700/50">
                   <DynamicOptions
                     outputType={outputType}
                     provider={provider}
@@ -761,26 +817,30 @@ export default function GeneratePage() {
               </div>
             </div>
 
-            {/* Spacer to prevent content from being hidden behind sticky button */}
-            <div className="h-16" />
+            {/* Spacer */}
+            <div className="h-20" />
 
-            {/* Generate Button - Now sticky at bottom */}
-            <div className="sticky bottom-0 pt-2 pb-1 bg-gradient-to-t from-white/90 dark:from-slate-900/90 via-white/80 dark:via-slate-900/80 to-transparent">
+            {/* Generate Button - Sticky */}
+            <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-slate-50 dark:from-slate-900 via-slate-50/95 dark:via-slate-900/95 to-transparent">
               <Button
                 size="lg"
-                className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+                className={`w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 ${
+                  getCurrentState() === "generating"
+                    ? "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                    : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-0.5"
+                }`}
                 disabled={!canGenerate || getCurrentState() === "generating"}
                 onClick={handleGenerateClick}
               >
                 {getCurrentState() === "generating" ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Generating...
+                    <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-3" />
+                    Processing...
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     {hasRequiredApiKeys ? "Generate" : "Configure & Generate"}
                   </>
@@ -789,12 +849,24 @@ export default function GeneratePage() {
             </div>
           </div>
 
-
-          {/* Right Panel - Output (responsive height) */}
-          <div className="min-h-[400px] lg:h-full overflow-hidden p-4 rounded-2xl border border-border/30 bg-white/60 dark:bg-slate-900/60">
-            <div className="h-full">
+          {/* Right Panel - Output Preview */}
+          <div className="min-h-[500px] lg:h-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/40 backdrop-blur-sm shadow-sm dark:shadow-none">
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-5 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full" />
+                <h2 className="font-display font-semibold text-slate-900 dark:text-white tracking-tight">Preview</h2>
+              </div>
+              {getCurrentState() === "generating" && (
+                <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  <span className="font-medium tracking-wide">{Math.round(getCurrentProgress())}%</span>
+                </div>
+              )}
+            </div>
+            <div className="h-[calc(100%-60px)] p-4">
               {isMindMap && mindMapState === "generating" ? (
-                <div className="flex items-center justify-center h-full rounded-xl border bg-card">
+                <div className="flex items-center justify-center h-full rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
                   <MindMapProgress
                     stage={mindMapProgress.stage}
                     progress={mindMapProgress.percent}

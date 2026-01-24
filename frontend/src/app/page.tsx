@@ -11,207 +11,253 @@ import { AuthModal } from "@/components/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { Provider } from "@/lib/types/requests";
 
-// Geometric Prism Illustration - Editorial Style with 6 outputs
+// Geometric Prism Illustration - Refined Editorial Style with 6 outputs
 function PrismIllustration() {
   return (
     <div className="relative w-full max-w-3xl mx-auto">
+      {/* Ambient glow behind the illustration */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[300px] h-[300px] bg-amber-500/10 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '4s' }} />
+      </div>
+
       <svg
         viewBox="0 0 920 420"
-        className="w-full"
+        className="w-full relative z-10"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Amber gradient for prism */}
+          {/* Enhanced amber gradient for prism - more depth */}
           <linearGradient id="prism-amber" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
-            <stop offset="50%" stopColor="#d97706" stopOpacity="1" />
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
+            <stop offset="30%" stopColor="#f59e0b" stopOpacity="1" />
+            <stop offset="70%" stopColor="#d97706" stopOpacity="1" />
             <stop offset="100%" stopColor="#b45309" stopOpacity="1" />
           </linearGradient>
 
-          {/* Light reflection */}
+          {/* Prism side face - darker */}
+          <linearGradient id="prism-side" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#92400e" stopOpacity="1" />
+            <stop offset="100%" stopColor="#78350f" stopOpacity="1" />
+          </linearGradient>
+
+          {/* Light reflection - top highlight */}
           <linearGradient id="prism-light" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+            <stop offset="0%" stopColor="white" stopOpacity="0.5" />
+            <stop offset="50%" stopColor="white" stopOpacity="0.15" />
             <stop offset="100%" stopColor="white" stopOpacity="0" />
           </linearGradient>
 
-          {/* Input beam gradient */}
+          {/* Enhanced input beam gradient */}
           <linearGradient id="input-beam" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#94a3b8" stopOpacity="0.4" />
-            <stop offset="40%" stopColor="#f59e0b" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity="1" />
+            <stop offset="0%" stopColor="#64748b" stopOpacity="0.3" />
+            <stop offset="30%" stopColor="#f59e0b" stopOpacity="0.6" />
+            <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="1" />
           </linearGradient>
 
-          {/* Input beam glow */}
-          <filter id="input-glow" x="-50%" y="-100%" width="200%" height="300%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+          {/* Input beam glow - stronger */}
+          <filter id="input-glow" x="-50%" y="-200%" width="200%" height="500%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
 
-          {/* Output ray gradients - 6 colors */}
+          {/* Output ray gradients - 6 vibrant colors with better gradients */}
           <linearGradient id="ray-pdf" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#ef4444" stopOpacity="1" />
+            <stop offset="0%" stopColor="#f87171" stopOpacity="1" />
+            <stop offset="50%" stopColor="#ef4444" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="ray-slides" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
+            <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="ray-markdown" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity="1" />
+            <stop offset="0%" stopColor="#4ade80" stopOpacity="1" />
+            <stop offset="50%" stopColor="#22c55e" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="ray-whiteboard" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#14b8a6" stopOpacity="1" />
+            <stop offset="0%" stopColor="#2dd4bf" stopOpacity="1" />
+            <stop offset="50%" stopColor="#14b8a6" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#14b8a6" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="ray-mindmap" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#3b82f6" stopOpacity="1" />
+            <stop offset="0%" stopColor="#60a5fa" stopOpacity="1" />
+            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="ray-podcast" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#a855f7" stopOpacity="1" />
+            <stop offset="0%" stopColor="#c084fc" stopOpacity="1" />
+            <stop offset="50%" stopColor="#a855f7" stopOpacity="0.7" />
             <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
           </linearGradient>
 
-          {/* Glow filter for output rays */}
+          {/* Stronger glow filter for output rays */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feGaussianBlur stdDeviation="5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
 
-          {/* Drop shadow for prism */}
+          {/* Enhanced drop shadow for prism */}
           <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="10" stdDeviation="20" floodColor="#f59e0b" floodOpacity="0.3" />
+            <feDropShadow dx="0" dy="15" stdDeviation="25" floodColor="#f59e0b" floodOpacity="0.4" />
+          </filter>
+
+          {/* Document card shadow */}
+          <filter id="card-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity="0.3" />
           </filter>
         </defs>
 
-        {/* Input document */}
-        <g className="animate-reveal-up delay-200">
-          <rect x="40" y="150" width="100" height="120" rx="6" fill="white" fillOpacity="0.95" stroke="#cbd5e1" strokeWidth="1.5" className="dark:fill-slate-800 dark:fill-opacity-60 dark:stroke-slate-600" />
-          <line x1="58" y1="178" x2="122" y2="178" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <line x1="58" y1="198" x2="112" y2="198" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <line x1="58" y1="218" x2="118" y2="218" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <line x1="58" y1="238" x2="100" y2="238" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <text x="90" y="290" textAnchor="middle" className="fill-slate-400 dark:fill-slate-500" style={{ fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.1em' }}>SOURCE</text>
+        {/* Input document - redesigned with better styling */}
+        <g className="animate-reveal-up delay-200" filter="url(#card-shadow)">
+          {/* Card background */}
+          <rect x="40" y="145" width="105" height="130" rx="8" className="fill-slate-800/90 dark:fill-slate-800" />
+          {/* Card inner content area */}
+          <rect x="48" y="153" width="89" height="114" rx="4" className="fill-slate-700/50" />
+          {/* Text lines with varied lengths */}
+          <line x1="56" y1="172" x2="120" y2="172" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="56" y1="190" x2="108" y2="190" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="56" y1="208" x2="115" y2="208" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="56" y1="226" x2="98" y2="226" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="56" y1="244" x2="88" y2="244" stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
+          {/* Document corner fold */}
+          <path d="M137 145 L145 153 L137 153 Z" className="fill-slate-600" />
+          {/* Label */}
+          <text x="92" y="298" textAnchor="middle" className="fill-slate-500" style={{ fontSize: '10px', fontFamily: 'var(--font-geist-mono), monospace', letterSpacing: '0.15em', fontWeight: 500 }}>SOURCE</text>
         </g>
 
-        {/* Input beam - enhanced visibility */}
+        {/* Input beam - enhanced with better animation */}
         <g filter="url(#input-glow)">
-          {/* Background glow */}
-          <line x1="145" y1="210" x2="305" y2="210" stroke="#fcd34d" strokeWidth="14" opacity="0.15" strokeLinecap="round" />
+          {/* Outer glow */}
+          <line x1="150" y1="210" x2="310" y2="210" stroke="#fcd34d" strokeWidth="20" opacity="0.08" strokeLinecap="round" />
+          {/* Middle glow */}
+          <line x1="150" y1="210" x2="310" y2="210" stroke="#f59e0b" strokeWidth="12" opacity="0.15" strokeLinecap="round" />
           {/* Main beam */}
-          <line x1="150" y1="210" x2="300" y2="210" stroke="url(#input-beam)" strokeWidth="8" strokeLinecap="round">
-            <animate attributeName="stroke-width" values="6;10;6" dur="2s" repeatCount="indefinite" />
+          <line x1="155" y1="210" x2="305" y2="210" stroke="url(#input-beam)" strokeWidth="6" strokeLinecap="round">
+            <animate attributeName="stroke-width" values="5;8;5" dur="2.5s" repeatCount="indefinite" />
           </line>
-          {/* Animated particles */}
-          <circle r="5" fill="#f59e0b">
-            <animateMotion dur="1.2s" repeatCount="indefinite" path="M150,210 L300,210" />
-            <animate attributeName="opacity" values="0;1;1;0" dur="1.2s" repeatCount="indefinite" />
+          {/* Animated particles - staggered */}
+          <circle r="6" fill="#f59e0b" opacity="0.9">
+            <animateMotion dur="1s" repeatCount="indefinite" path="M155,210 L305,210" />
+            <animate attributeName="opacity" values="0;0.9;0.9;0" dur="1s" repeatCount="indefinite" />
+            <animate attributeName="r" values="4;6;4" dur="1s" repeatCount="indefinite" />
           </circle>
-          <circle r="4" fill="#fbbf24">
-            <animateMotion dur="1.2s" repeatCount="indefinite" begin="0.4s" path="M150,210 L300,210" />
-            <animate attributeName="opacity" values="0;1;1;0" dur="1.2s" repeatCount="indefinite" begin="0.4s" />
+          <circle r="4" fill="#fbbf24" opacity="0.8">
+            <animateMotion dur="1s" repeatCount="indefinite" begin="0.33s" path="M155,210 L305,210" />
+            <animate attributeName="opacity" values="0;0.8;0.8;0" dur="1s" repeatCount="indefinite" begin="0.33s" />
           </circle>
-          <circle r="3" fill="#fcd34d">
-            <animateMotion dur="1.2s" repeatCount="indefinite" begin="0.8s" path="M150,210 L300,210" />
-            <animate attributeName="opacity" values="0;1;1;0" dur="1.2s" repeatCount="indefinite" begin="0.8s" />
+          <circle r="3" fill="#fcd34d" opacity="0.7">
+            <animateMotion dur="1s" repeatCount="indefinite" begin="0.66s" path="M155,210 L305,210" />
+            <animate attributeName="opacity" values="0;0.7;0.7;0" dur="1s" repeatCount="indefinite" begin="0.66s" />
           </circle>
-          {/* Arrow head */}
-          <polygon points="295,200 318,210 295,220" fill="#f59e0b">
-            <animate attributeName="opacity" values="0.8;1;0.8" dur="1s" repeatCount="indefinite" />
+          {/* Arrow head - refined */}
+          <polygon points="300,198 325,210 300,222" fill="#f59e0b">
+            <animate attributeName="opacity" values="0.7;1;0.7" dur="1.5s" repeatCount="indefinite" />
           </polygon>
         </g>
 
-        {/* Central Prism */}
+        {/* Central Prism - 3D effect enhanced */}
         <g filter="url(#shadow)" className="animate-reveal-scale delay-300">
-          <polygon points="400,50 540,370 260,370" fill="url(#prism-amber)" />
-          <polygon points="400,50 540,370 400,370" fill="black" fillOpacity="0.2" />
-          <polygon points="400,50 455,210 345,210" fill="url(#prism-light)" />
-          <polygon points="400,50 540,370 260,370" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" />
-          <text x="400" y="235" textAnchor="middle" fill="white" style={{ fontSize: '34px', fontWeight: 700, fontFamily: 'Clash Display, system-ui' }}>AI</text>
-          <circle cx="400" cy="210" r="30" fill="white" opacity="0.1">
-            <animate attributeName="r" values="25;40;25" dur="3s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.05;0.2;0.05" dur="3s" repeatCount="indefinite" />
+          {/* Back face hint */}
+          <polygon points="400,55 535,365 265,365" fill="rgba(245,158,11,0.1)" />
+          {/* Main face */}
+          <polygon points="400,60 530,360 270,360" fill="url(#prism-amber)" />
+          {/* Right face - darker for 3D effect */}
+          <polygon points="400,60 530,360 400,360" fill="url(#prism-side)" />
+          {/* Top highlight reflection */}
+          <polygon points="400,60 460,210 340,210" fill="url(#prism-light)" />
+          {/* Edge highlights */}
+          <line x1="400" y1="60" x2="270" y2="360" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
+          <line x1="400" y1="60" x2="530" y2="360" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+          <line x1="270" y1="360" x2="530" y2="360" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+          {/* AI text - refined */}
+          <text x="400" y="240" textAnchor="middle" fill="white" style={{ fontSize: '36px', fontWeight: 700, fontFamily: 'Clash Display, system-ui', letterSpacing: '-0.02em' }}>AI</text>
+          {/* Inner glow pulse */}
+          <circle cx="400" cy="215" r="30" fill="white" opacity="0.08">
+            <animate attributeName="r" values="25;45;25" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.05;0.15;0.05" dur="3s" repeatCount="indefinite" />
           </circle>
         </g>
 
-        {/* Output rays - 6 rays evenly distributed */}
+        {/* Output rays - 6 rays with better visual weight */}
         <g filter="url(#glow)">
           {/* PDF - Red */}
-          <line x1="460" y1="145" x2="680" y2="50" stroke="url(#ray-pdf)" strokeWidth="5" strokeLinecap="round">
-            <animate attributeName="x2" values="670;695;670" dur="3s" repeatCount="indefinite" />
+          <line x1="465" y1="145" x2="680" y2="55" stroke="url(#ray-pdf)" strokeWidth="4" strokeLinecap="round">
+            <animate attributeName="x2" values="670;700;670" dur="3.5s" repeatCount="indefinite" />
           </line>
           {/* Slides - Amber */}
-          <line x1="485" y1="185" x2="700" y2="115" stroke="url(#ray-slides)" strokeWidth="5" strokeLinecap="round">
-            <animate attributeName="x2" values="690;715;690" dur="3s" repeatCount="indefinite" begin="0.15s" />
+          <line x1="488" y1="185" x2="700" y2="118" stroke="url(#ray-slides)" strokeWidth="4" strokeLinecap="round">
+            <animate attributeName="x2" values="690;720;690" dur="3.5s" repeatCount="indefinite" begin="0.2s" />
           </line>
           {/* Markdown - Green */}
-          <line x1="500" y1="220" x2="710" y2="180" stroke="url(#ray-markdown)" strokeWidth="5" strokeLinecap="round">
-            <animate attributeName="x2" values="700;725;700" dur="3s" repeatCount="indefinite" begin="0.3s" />
+          <line x1="502" y1="222" x2="710" y2="183" stroke="url(#ray-markdown)" strokeWidth="4" strokeLinecap="round">
+            <animate attributeName="x2" values="700;730;700" dur="3.5s" repeatCount="indefinite" begin="0.4s" />
           </line>
           {/* Whiteboard - Teal */}
-          <line x1="500" y1="255" x2="710" y2="250" stroke="url(#ray-whiteboard)" strokeWidth="5" strokeLinecap="round">
-            <animate attributeName="x2" values="700;725;700" dur="3s" repeatCount="indefinite" begin="0.45s" />
+          <line x1="502" y1="258" x2="710" y2="252" stroke="url(#ray-whiteboard)" strokeWidth="4" strokeLinecap="round">
+            <animate attributeName="x2" values="700;730;700" dur="3.5s" repeatCount="indefinite" begin="0.6s" />
           </line>
           {/* Mind Map - Blue */}
-          <line x1="485" y1="290" x2="700" y2="315" stroke="url(#ray-mindmap)" strokeWidth="5" strokeLinecap="round">
-            <animate attributeName="x2" values="690;715;690" dur="3s" repeatCount="indefinite" begin="0.6s" />
+          <line x1="488" y1="292" x2="700" y2="318" stroke="url(#ray-mindmap)" strokeWidth="4" strokeLinecap="round">
+            <animate attributeName="x2" values="690;720;690" dur="3.5s" repeatCount="indefinite" begin="0.8s" />
           </line>
           {/* Podcast - Purple */}
-          <line x1="460" y1="330" x2="680" y2="385" stroke="url(#ray-podcast)" strokeWidth="5" strokeLinecap="round">
-            <animate attributeName="x2" values="670;695;670" dur="3s" repeatCount="indefinite" begin="0.75s" />
+          <line x1="465" y1="330" x2="680" y2="385" stroke="url(#ray-podcast)" strokeWidth="4" strokeLinecap="round">
+            <animate attributeName="x2" values="670;700;670" dur="3.5s" repeatCount="indefinite" begin="1s" />
           </line>
         </g>
 
-        {/* Output labels with icons */}
-        <g style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, letterSpacing: '0.05em' }}>
+        {/* Output labels with refined icons */}
+        <g style={{ fontFamily: 'var(--font-geist-mono), monospace', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em' }}>
           {/* PDF */}
-          <g>
-            <rect x="695" y="38" width="14" height="18" rx="2" fill="none" stroke="#ef4444" strokeWidth="1.5" />
-            <line x1="698" y1="44" x2="706" y2="44" stroke="#ef4444" strokeWidth="1" />
-            <line x1="698" y1="48" x2="704" y2="48" stroke="#ef4444" strokeWidth="1" />
-            <text x="714" y="52" textAnchor="start" fill="#ef4444">PDF</text>
+          <g className="animate-reveal-left delay-300">
+            <rect x="695" y="40" width="16" height="20" rx="2" fill="none" stroke="#f87171" strokeWidth="1.5" />
+            <path d="M698 52 L708 52" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M698 47 L705 47" stroke="#f87171" strokeWidth="1" strokeLinecap="round" />
+            <text x="716" y="55" textAnchor="start" fill="#f87171">PDF</text>
           </g>
           {/* Slides */}
-          <g>
-            <rect x="715" y="100" width="14" height="10" rx="1" fill="none" stroke="#f59e0b" strokeWidth="1.5" />
-            <rect x="718" y="97" width="14" height="10" rx="1" fill="none" stroke="#f59e0b" strokeWidth="1" opacity="0.5" />
-            <text x="735" y="110" textAnchor="start" fill="#f59e0b">SLIDES</text>
+          <g className="animate-reveal-left delay-400">
+            <rect x="715" y="103" width="16" height="11" rx="2" fill="none" stroke="#fbbf24" strokeWidth="1.5" />
+            <rect x="718" y="100" width="16" height="11" rx="2" fill="none" stroke="#fbbf24" strokeWidth="1" opacity="0.4" />
+            <text x="738" y="114" textAnchor="start" fill="#fbbf24">SLIDES</text>
           </g>
           {/* Markdown */}
-          <g>
-            <text x="725" y="180" textAnchor="start" fill="#22c55e">
-              <tspan fontWeight={800}>M</tspan>
-              <tspan dx="1">ARKDOWN</tspan>
+          <g className="animate-reveal-left delay-500">
+            <text x="725" y="186" textAnchor="start" fill="#4ade80" style={{ fontWeight: 700 }}>
+              <tspan>M</tspan>
+              <tspan dx="1" style={{ fontWeight: 600 }}>ARKDOWN</tspan>
             </text>
           </g>
-          {/* Whiteboard - NEW */}
-          <g>
-            <rect x="725" y="238" width="16" height="12" rx="1" fill="none" stroke="#14b8a6" strokeWidth="1.5" />
-            <path d="M728 246 L731 241 L735 245 L738 240" stroke="#14b8a6" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <text x="746" y="250" textAnchor="start" fill="#14b8a6">WHITEBOARD</text>
+          {/* Whiteboard */}
+          <g className="animate-reveal-left delay-500">
+            <rect x="725" y="241" width="18" height="13" rx="2" fill="none" stroke="#2dd4bf" strokeWidth="1.5" />
+            <path d="M728 250 L731 245 L736 249 L740 244" stroke="#2dd4bf" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <text x="748" y="254" textAnchor="start" fill="#2dd4bf">WHITEBOARD</text>
           </g>
           {/* Mind Map */}
-          <g>
-            <circle cx="722" cy="312" r="4" fill="none" stroke="#3b82f6" strokeWidth="1.5" />
-            <line x1="726" y1="309" x2="732" y2="304" stroke="#3b82f6" strokeWidth="1.2" />
-            <circle cx="734" cy="302" r="2" fill="#3b82f6" />
-            <line x1="726" y1="315" x2="732" y2="320" stroke="#3b82f6" strokeWidth="1.2" />
-            <circle cx="734" cy="322" r="2" fill="#3b82f6" />
-            <text x="740" y="316" textAnchor="start" fill="#3b82f6">MIND MAP</text>
+          <g className="animate-reveal-left delay-600">
+            <circle cx="724" cy="316" r="5" fill="none" stroke="#60a5fa" strokeWidth="1.5" />
+            <line x1="729" y1="312" x2="736" y2="306" stroke="#60a5fa" strokeWidth="1.3" />
+            <circle cx="738" cy="304" r="2.5" fill="#60a5fa" />
+            <line x1="729" y1="320" x2="736" y2="326" stroke="#60a5fa" strokeWidth="1.3" />
+            <circle cx="738" cy="328" r="2.5" fill="#60a5fa" />
+            <text x="746" y="320" textAnchor="start" fill="#60a5fa">MIND MAP</text>
           </g>
           {/* Podcast */}
-          <g>
-            <ellipse cx="700" cy="383" rx="5" ry="8" fill="none" stroke="#a855f7" strokeWidth="1.5" />
-            <line x1="700" y1="391" x2="700" y2="396" stroke="#a855f7" strokeWidth="2" />
-            <line x1="695" y1="396" x2="705" y2="396" stroke="#a855f7" strokeWidth="1.5" />
-            <text x="712" y="388" textAnchor="start" fill="#a855f7">PODCAST</text>
+          <g className="animate-reveal-left delay-700">
+            <ellipse cx="702" cy="383" rx="6" ry="9" fill="none" stroke="#c084fc" strokeWidth="1.5" />
+            <line x1="702" y1="392" x2="702" y2="398" stroke="#c084fc" strokeWidth="2" />
+            <line x1="696" y1="398" x2="708" y2="398" stroke="#c084fc" strokeWidth="1.5" strokeLinecap="round" />
+            <text x="716" y="390" textAnchor="start" fill="#c084fc">PODCAST</text>
           </g>
         </g>
       </svg>
