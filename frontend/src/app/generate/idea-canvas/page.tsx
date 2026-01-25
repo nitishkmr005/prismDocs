@@ -525,195 +525,265 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
               </Tabs>
             </div>
 
-            {/* Right Panel: Report & Actions */}
+            {/* Right Panel: Approaches & Report */}
             <div className="w-1/2 flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
-              <div className="px-5 py-4 border-b border-border/60 bg-gradient-to-r from-emerald-50 to-teal-50/50 dark:from-emerald-950/30 dark:to-teal-950/20 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-sm">{reportData ? "Report Ready" : "Exploration Complete"}</h4>
-                    <p className="text-xs text-muted-foreground">{canvasProgressMessage || "Generate your implementation spec"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                <div className="p-5 flex-1 flex flex-col min-h-0 space-y-5">
-                  {reportError && (
-                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400 flex items-center gap-2 shrink-0">
-                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <Tabs defaultValue="approaches" className="flex flex-col h-full">
+                <div className="px-5 py-3 border-b border-border/60 bg-gradient-to-r from-emerald-50 to-teal-50/50 dark:from-emerald-950/30 dark:to-teal-950/20 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {reportError}
                     </div>
-                  )}
+                    <div>
+                      <h4 className="font-semibold text-sm">{reportData ? "Report Ready" : "Exploration Complete"}</h4>
+                      <p className="text-xs text-muted-foreground">{canvasProgressMessage || "View approaches or generate report"}</p>
+                    </div>
+                  </div>
+                  <TabsList className="bg-white/50 dark:bg-slate-800/50">
+                    <TabsTrigger value="approaches" className="text-xs gap-1.5">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Approaches
+                      {isGeneratingApproaches && (
+                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="report" className="text-xs gap-1.5">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Report
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
-                  {!reportData ? (
-                    <div className="space-y-3">
-                      <Button
-                        onClick={handleGenerateReport}
-                        disabled={isGeneratingReport}
-                        className="w-full h-12 text-base shadow-sm hover:shadow-md transition-all"
-                        size="lg"
-                      >
-                        {isGeneratingReport ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                            Generating Report Pack...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Generate Report Pack
-                          </>
-                        )}
-                      </Button>
-                      <Button onClick={() => handleCanvasAnswer("continue")} variant="outline" className="w-full h-10">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                        Continue Exploring
-                      </Button>
+                {/* Approaches Tab */}
+                <TabsContent value="approaches" className="flex-1 min-h-0 m-0 flex flex-col">
+                  {isGeneratingApproaches ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8">
+                      <div className="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                      <p className="text-sm text-muted-foreground">Generating implementation approaches...</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">This may take a moment</p>
+                    </div>
+                  ) : approaches.length > 0 ? (
+                    <div className="flex-1 min-h-0">
+                      <ApproachTabs
+                        approaches={approaches}
+                        onElementClick={handleElementClick}
+                        refinementTarget={refinementTarget || undefined}
+                        isLoading={false}
+                      />
                     </div>
                   ) : (
-                    <>
-                      <div className="grid grid-cols-3 gap-2 shrink-0">
-                        <Button onClick={handleDownloadPdf} disabled={!reportData?.pdf_base64} className="h-10 text-sm">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          PDF
-                        </Button>
-                        <Button onClick={handleDownloadMarkdown} variant="outline" className="h-10 text-sm">
-                          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Markdown
-                        </Button>
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                      <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                        <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-muted-foreground mb-2">Implementation Approaches</h3>
+                      <p className="text-sm text-muted-foreground/70 max-w-xs mb-4">
+                        Generate 4 different implementation approaches with diagrams and task breakdowns
+                      </p>
+                      <Button onClick={handleGenerateApproaches} disabled={isGeneratingApproaches}>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Generate Approaches
+                      </Button>
+                    </div>
+                  )}
+                  {approaches.length > 0 && (
+                    <div className="px-4 py-3 border-t border-border/60 bg-muted/30 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateApproaches}
+                        disabled={isGeneratingApproaches}
+                      >
+                        {isGeneratingApproaches ? 'Regenerating...' : 'Regenerate Approaches'}
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Report Tab */}
+                <TabsContent value="report" className="flex-1 min-h-0 m-0 flex flex-col overflow-hidden">
+                  <div className="p-5 flex-1 flex flex-col min-h-0 space-y-5">
+                    {reportError && (
+                      <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400 flex items-center gap-2 shrink-0">
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {reportError}
+                      </div>
+                    )}
+
+                    {!reportData ? (
+                      <div className="space-y-3">
                         <Button
-                          onClick={() => {
-                            if (generatedImage) {
-                              downloadImage(
-                                generatedImage.data,
-                                `${reportData?.title.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "infographic"}`,
-                                generatedImage.format as "png" | "svg"
-                              );
-                            }
-                          }}
-                          disabled={!includeReportImage || !generatedImage || isGeneratingImage}
-                          variant="outline"
-                          className="h-10 text-sm"
+                          onClick={handleGenerateReport}
+                          disabled={isGeneratingReport}
+                          className="w-full h-12 text-base shadow-sm hover:shadow-md transition-all"
+                          size="lg"
                         >
-                          {isGeneratingImage ? (
+                          {isGeneratingReport ? (
                             <>
-                              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5" />
-                              Image...
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                              Generating Report Pack...
                             </>
                           ) : (
                             <>
-                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              Image
+                              Generate Report Pack
                             </>
                           )}
+                        </Button>
+                        <Button onClick={() => handleCanvasAnswer("continue")} variant="outline" className="w-full h-10">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                          Continue Exploring
                         </Button>
                       </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-2 shrink-0">
+                          <Button onClick={handleDownloadPdf} disabled={!reportData?.pdf_base64} className="h-10 text-sm">
+                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            PDF
+                          </Button>
+                          <Button onClick={handleDownloadMarkdown} variant="outline" className="h-10 text-sm">
+                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Markdown
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              if (generatedImage) {
+                                downloadImage(
+                                  generatedImage.data,
+                                  `${reportData?.title.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "infographic"}`,
+                                  generatedImage.format as "png" | "svg"
+                                );
+                              }
+                            }}
+                            disabled={!includeReportImage || !generatedImage || isGeneratingImage}
+                            variant="outline"
+                            className="h-10 text-sm"
+                          >
+                            {isGeneratingImage ? (
+                              <>
+                                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin mr-1.5" />
+                                Image...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Image
+                              </>
+                            )}
+                          </Button>
+                        </div>
 
-                      {imageGenError && <p className="text-xs text-red-600 shrink-0">{imageGenError}</p>}
+                        {imageGenError && <p className="text-xs text-red-600 shrink-0">{imageGenError}</p>}
 
-                      <Tabs defaultValue="image" className="flex-1 flex flex-col min-h-0">
-                        <TabsList className="w-full grid grid-cols-3 h-9 shrink-0">
-                          <TabsTrigger value="image" className="text-xs">Image</TabsTrigger>
-                          <TabsTrigger value="pdf" className="text-xs">PDF</TabsTrigger>
-                          <TabsTrigger value="markdown" className="text-xs">Markdown</TabsTrigger>
-                        </TabsList>
+                        <Tabs defaultValue="image" className="flex-1 flex flex-col min-h-0">
+                          <TabsList className="w-full grid grid-cols-3 h-9 shrink-0">
+                            <TabsTrigger value="image" className="text-xs">Image</TabsTrigger>
+                            <TabsTrigger value="pdf" className="text-xs">PDF</TabsTrigger>
+                            <TabsTrigger value="markdown" className="text-xs">Markdown</TabsTrigger>
+                          </TabsList>
 
-                        <TabsContent value="image" className="mt-3 rounded-lg border border-border/60 overflow-auto bg-white dark:bg-slate-900">
-                          {isGeneratingImage ? (
-                            <div className="flex items-center justify-center flex-1 min-h-[200px] text-muted-foreground">
-                              <div className="flex flex-col items-center gap-3">
-                                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                <span className="text-sm">Generating visual summary...</span>
+                          <TabsContent value="image" className="mt-3 rounded-lg border border-border/60 overflow-auto bg-white dark:bg-slate-900">
+                            {isGeneratingImage ? (
+                              <div className="flex items-center justify-center flex-1 min-h-[200px] text-muted-foreground">
+                                <div className="flex flex-col items-center gap-3">
+                                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                  <span className="text-sm">Generating visual summary...</span>
+                                </div>
                               </div>
-                            </div>
-                          ) : generatedImage ? (
-                            <img
-                              src={`data:image/${generatedImage.format};base64,${generatedImage.data}`}
-                              alt="Generated infographic"
-                              className="w-full h-auto"
-                            />
-                          ) : imageGenError ? (
-                            <div className="flex items-center justify-center flex-1 min-h-[200px] text-red-600 text-sm">
-                              {imageGenError}
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center flex-1 min-h-[200px] text-muted-foreground text-sm">
-                              {includeReportImage ? "Image generation pending..." : "Image disabled for this report."}
-                            </div>
-                          )}
-                        </TabsContent>
+                            ) : generatedImage ? (
+                              <img
+                                src={`data:image/${generatedImage.format};base64,${generatedImage.data}`}
+                                alt="Generated infographic"
+                                className="w-full h-auto"
+                              />
+                            ) : imageGenError ? (
+                              <div className="flex items-center justify-center flex-1 min-h-[200px] text-red-600 text-sm">
+                                {imageGenError}
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center flex-1 min-h-[200px] text-muted-foreground text-sm">
+                                {includeReportImage ? "Image generation pending..." : "Image disabled for this report."}
+                              </div>
+                            )}
+                          </TabsContent>
 
-                        <TabsContent value="pdf" className="mt-3 rounded-lg border border-border/60 overflow-hidden">
-                          <div className="flex items-center justify-end px-3 py-2 border-b border-border/60 bg-muted/30 shrink-0">
-                            <Button size="sm" variant="ghost" onClick={handleOpenPdfPreview} disabled={!reportData.pdf_base64} className="h-7 text-xs">
-                              <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                              Open in New Tab
-                            </Button>
-                          </div>
-                          {reportData.pdf_base64 ? (
-                            <iframe
-                              src={`data:application/pdf;base64,${reportData.pdf_base64}#view=FitH&zoom=page-width`}
-                              className="w-full flex-1 min-h-0 border-0 bg-white"
-                              title="PDF Preview"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center flex-1 text-muted-foreground text-sm">
-                              PDF generation in progress...
+                          <TabsContent value="pdf" className="mt-3 rounded-lg border border-border/60 overflow-hidden">
+                            <div className="flex items-center justify-end px-3 py-2 border-b border-border/60 bg-muted/30 shrink-0">
+                              <Button size="sm" variant="ghost" onClick={handleOpenPdfPreview} disabled={!reportData.pdf_base64} className="h-7 text-xs">
+                                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Open in New Tab
+                              </Button>
                             </div>
-                          )}
-                        </TabsContent>
+                            {reportData.pdf_base64 ? (
+                              <iframe
+                                src={`data:application/pdf;base64,${reportData.pdf_base64}#view=FitH&zoom=page-width`}
+                                className="w-full flex-1 min-h-0 border-0 bg-white"
+                                title="PDF Preview"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center flex-1 text-muted-foreground text-sm">
+                                PDF generation in progress...
+                              </div>
+                            )}
+                          </TabsContent>
 
-                        <TabsContent value="markdown" className="mt-3 rounded-lg border border-border/60 overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-muted/30 shrink-0">
-                            <span className="text-xs text-muted-foreground font-medium">Markdown Source</span>
-                            <Button size="sm" variant="ghost" onClick={handleCopyMarkdown} disabled={!reportData.markdown_content} className="h-7 text-xs">
-                              {markdownCopied ? (
-                                <>
-                                  <svg className="w-3.5 h-3.5 mr-1 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                  Copied!
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                  Copy
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                          <div className="p-3 flex-1 min-h-0 overflow-y-auto">
-                            <pre className="text-xs font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                              {reportData.markdown_content}
-                            </pre>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </>
-                  )}
-                </div>
-              </div>
+                          <TabsContent value="markdown" className="mt-3 rounded-lg border border-border/60 overflow-hidden">
+                            <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-muted/30 shrink-0">
+                              <span className="text-xs text-muted-foreground font-medium">Markdown Source</span>
+                              <Button size="sm" variant="ghost" onClick={handleCopyMarkdown} disabled={!reportData.markdown_content} className="h-7 text-xs">
+                                {markdownCopied ? (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 mr-1 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Copied!
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Copy
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                            <div className="p-3 flex-1 min-h-0 overflow-y-auto">
+                              <pre className="text-xs font-mono whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                                {reportData.markdown_content}
+                              </pre>
+                            </div>
+                          </TabsContent>
+                        </Tabs>
+                      </>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </main>
