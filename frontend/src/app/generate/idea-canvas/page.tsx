@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { IdeaCanvasForm, IdeaCanvas, QuestionCard } from "@/components/idea-canvas";
+import { IdeaCanvasForm, IdeaCanvas, QuestionCard, ApproachTabs, IdeaSummary } from "@/components/idea-canvas";
 import { MindMapViewer } from "@/components/mindmap";
 import { useIdeaCanvas } from "@/hooks/useIdeaCanvas";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { StartCanvasRequest } from "@/lib/types/idea-canvas";
-import { generateCanvasReport, generateCanvasMindmap, CanvasMindmapResult } from "@/lib/api/idea-canvas";
+import { StartCanvasRequest, CanvasPhase, RefinementTarget } from "@/lib/types/idea-canvas";
+import { generateCanvasReport, generateCanvasMindmap, CanvasMindmapResult, generateApproaches, Approach } from "@/lib/api/idea-canvas";
 import { generateImage, downloadImage } from "@/lib/api/image";
 
 export default function IdeaCanvasPage() {
@@ -58,6 +58,12 @@ export default function IdeaCanvasPage() {
   const [isGeneratingCanvasMindMap, setIsGeneratingCanvasMindMap] = useState(false);
   const [canvasMindMapError, setCanvasMindMapError] = useState<string | null>(null);
 
+  // Approach generation state
+  const [approaches, setApproaches] = useState<Approach[]>([]);
+  const [isGeneratingApproaches, setIsGeneratingApproaches] = useState(false);
+  const [phase, setPhase] = useState<CanvasPhase>('understanding');
+  const [refinementTarget, setRefinementTarget] = useState<RefinementTarget | null>(null);
+
   const handleExitToSummary = useCallback(() => {
     setExitedToSummary(true);
   }, []);
@@ -100,6 +106,35 @@ export default function IdeaCanvasPage() {
       setIsGeneratingCanvasMindMap(false);
     }
   }, [canvasSessionId, canvasApiKey, canvasProvider]);
+
+  const handleGenerateApproaches = useCallback(async () => {
+    if (!canvasSessionId || !canvasApiKey) return;
+
+    setIsGeneratingApproaches(true);
+    try {
+      const result = await generateApproaches({
+        sessionId: canvasSessionId,
+        provider: canvasProvider,
+        apiKey: canvasApiKey,
+      });
+      setApproaches(result.approaches);
+      setPhase('approaches');
+    } catch (err) {
+      console.error('Failed to generate approaches:', err);
+    } finally {
+      setIsGeneratingApproaches(false);
+    }
+  }, [canvasSessionId, canvasApiKey, canvasProvider]);
+
+  const handleElementClick = useCallback((target: RefinementTarget) => {
+    setRefinementTarget(target);
+    setPhase('refining');
+  }, []);
+
+  const handleCancelRefinement = useCallback(() => {
+    setRefinementTarget(null);
+    setPhase('approaches');
+  }, []);
 
   const generateImageFromReportContent = useCallback(
     async (reportTitle: string, reportMarkdown: string) => {
@@ -275,6 +310,13 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
     }
   }, [reportData]);
 
+  // Auto-generate approaches when Q&A completes
+  useEffect(() => {
+    if (canvasState === 'suggest_complete' && approaches.length === 0 && !isGeneratingApproaches) {
+      handleGenerateApproaches();
+    }
+  }, [canvasState, approaches.length, isGeneratingApproaches, handleGenerateApproaches]);
+
   const isCanvasStarting = canvasState === "starting";
   const isCanvasAnswering = canvasState === "answering";
 
@@ -388,6 +430,9 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
                 setExitedToSummary(false);
                 setCanvasMindMap(null);
                 setCanvasMindMapError(null);
+                setApproaches([]);
+                setPhase('understanding');
+                setRefinementTarget(null);
               }}
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -676,7 +721,7 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
     );
   }
 
-  // Active questioning - Fullscreen mode
+  // Active questioning - Fullscreen mode with new layout
   return (
     <div className="fixed inset-0 z-50 bg-background">
       <div className="h-14 border-b flex items-center justify-between px-4">
@@ -700,49 +745,80 @@ Style: Hand-drawn, sketch-like, warm colors, clean whiteboard aesthetic with ico
           <div className="text-sm text-muted-foreground">
             Questions: <span className="font-medium text-foreground">{canvas?.question_count || 0}</span>
           </div>
+          {(phase === 'approaches' || phase === 'refining') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateApproaches}
+              disabled={isGeneratingApproaches}
+            >
+              {isGeneratingApproaches ? 'Regenerating...' : 'Regenerate Approaches'}
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="h-[calc(100vh-3.5rem)] flex">
+        {/* Left Panel - Questions or Summary */}
         <div className="w-[420px] border-r bg-muted/30 flex flex-col">
-          {questionHistory.length > 0 && (
-            <div className="px-6 pt-4 pb-2 border-b flex items-center justify-end">
-              <span className="text-xs text-muted-foreground">
-                Q{questionHistory.length + 1} of ~{Math.max(questionHistory.length + 3, 8)}
-              </span>
-            </div>
-          )}
-
-          <div className="flex-1 overflow-y-auto p-6">
-            {currentQuestion ? (
-              <QuestionCard
-                question={currentQuestion}
-                onAnswer={handleCanvasAnswer}
-                onSkip={currentQuestion.allow_skip ? () => handleCanvasAnswer("Skipped") : undefined}
-                isAnswering={isCanvasAnswering}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">{canvasProgressMessage || "Loading next question..."}</p>
+          {phase === 'approaches' || phase === 'refining' ? (
+            <IdeaSummary
+              idea={canvas?.idea || ''}
+              questionHistory={questionHistory}
+            />
+          ) : (
+            <>
+              {questionHistory.length > 0 && (
+                <div className="px-6 pt-4 pb-2 border-b flex items-center justify-end">
+                  <span className="text-xs text-muted-foreground">
+                    Q{questionHistory.length + 1} of ~{Math.max(questionHistory.length + 3, 8)}
+                  </span>
                 </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto p-6">
+                {currentQuestion ? (
+                  <QuestionCard
+                    question={currentQuestion}
+                    onAnswer={handleCanvasAnswer}
+                    onSkip={currentQuestion.allow_skip ? () => handleCanvasAnswer("Skipped") : undefined}
+                    isAnswering={isCanvasAnswering}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">{canvasProgressMessage || "Loading next question..."}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
+        {/* Right Panel - Empty during Q&A, Approaches after */}
         <div className="flex-1 bg-card">
-          <IdeaCanvas
-            canvas={canvas}
-            currentQuestion={currentQuestion}
-            progressMessage={null}
-            isAnswering={isCanvasAnswering}
-            onAnswer={handleCanvasAnswer}
-            onReset={resetCanvas}
-            isSuggestComplete={false}
-            hideQuestionCard={true}
-          />
+          {phase === 'approaches' || phase === 'refining' ? (
+            <ApproachTabs
+              approaches={approaches}
+              onElementClick={handleElementClick}
+              refinementTarget={refinementTarget || undefined}
+              isLoading={isGeneratingApproaches}
+            />
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-6">
+                <svg className="w-10 h-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium text-muted-foreground mb-2">Implementation Approaches</h3>
+              <p className="text-sm text-muted-foreground/70 max-w-sm">
+                Answer the questions to explore your idea. Once complete, you will see 4 different implementation approaches with diagrams and task breakdowns.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
