@@ -253,3 +253,110 @@ export async function generateCanvasMindmap(options: GenerateMindmapOptions): Pr
 
   return response.json();
 }
+
+// Approach Generation API
+
+export interface GenerateApproachesOptions {
+  sessionId: string;
+  provider: Provider;
+  apiKey: string;
+}
+
+export interface ApproachTask {
+  id: string;
+  name: string;
+  description: string;
+  techStack: string;
+  complexity: "Low" | "Medium" | "High";
+}
+
+export interface Approach {
+  id: string;
+  name: string;
+  mermaidCode: string;
+  tasks: ApproachTask[];
+}
+
+export interface ApproachesResult {
+  approaches: Approach[];
+}
+
+export async function generateApproaches(
+  options: GenerateApproachesOptions
+): Promise<ApproachesResult> {
+  const { sessionId, provider, apiKey } = options;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    [getApiKeyHeader(provider)]: apiKey,
+  };
+
+  const url = getApiUrl("/api/canvas/approaches");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to generate approaches: ${errorText}`);
+  }
+
+  return response.json();
+}
+
+export interface RefineApproachOptions {
+  sessionId: string;
+  provider: Provider;
+  apiKey: string;
+  approachIndex: number;
+  elementId: string;
+  elementType: "diagram" | "task";
+  refinementAnswer: string;
+  currentApproach: Approach;
+}
+
+export async function refineApproach(
+  options: RefineApproachOptions
+): Promise<Approach> {
+  const {
+    sessionId,
+    provider,
+    apiKey,
+    approachIndex,
+    elementId,
+    elementType,
+    refinementAnswer,
+    currentApproach,
+  } = options;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    [getApiKeyHeader(provider)]: apiKey,
+  };
+
+  const url = getApiUrl("/api/canvas/refine");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      session_id: sessionId,
+      approach_index: approachIndex,
+      element_id: elementId,
+      element_type: elementType,
+      refinement_answer: refinementAnswer,
+      current_approach: currentApproach,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to refine approach: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.approach;
+}
