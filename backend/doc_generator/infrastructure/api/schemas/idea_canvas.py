@@ -225,3 +225,58 @@ class GenerateReportResponse(BaseModel):
     image_format: str | None = None
     markdown_url: str | None = None
     markdown_content: str | None = None
+
+
+# Approach Generation Schemas
+
+
+class ApproachTask(BaseModel):
+    """A task within an approach."""
+
+    id: str
+    name: str
+    description: str
+    tech_stack: str = Field(alias="techStack")
+    complexity: Literal["Low", "Medium", "High"]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class Approach(BaseModel):
+    """A single implementation approach."""
+
+    id: str
+    name: str
+    mermaid_code: str = Field(alias="mermaidCode")
+    tasks: list[ApproachTask]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class GenerateApproachesRequest(BaseModel):
+    """Request to generate implementation approaches."""
+
+    session_id: str
+
+
+class GenerateApproachesResponse(BaseModel):
+    """Response with 4 implementation approaches."""
+
+    approaches: list[Approach]
+
+
+class RefineApproachRequest(BaseModel):
+    """Request to refine a specific approach."""
+
+    session_id: str
+    approach_index: int
+    element_id: str
+    element_type: Literal["diagram", "task"]
+    refinement_answer: str
+    current_approach: Approach
+
+
+class RefineApproachResponse(BaseModel):
+    """Response with the refined approach."""
+
+    approach: Approach
