@@ -251,3 +251,41 @@ export interface GenerateReportResponse {
   markdown_content?: string;
 }
 
+// Approach Panel Types
+
+export interface ApproachTask {
+  id: string;
+  name: string;
+  description: string;
+  techStack: string;
+  complexity: 'Low' | 'Medium' | 'High';
+}
+
+export interface Approach {
+  id: string;
+  name: string;
+  mermaidCode: string;
+  tasks: ApproachTask[];
+}
+
+export interface ApproachesResponse {
+  approaches: Approach[];
+}
+
+export interface RefinementTarget {
+  approachIndex: number;
+  elementId: string;
+  elementType: 'diagram' | 'task';
+}
+
+export interface RefinementQuestion {
+  id: string;
+  question: string;
+  options: QuestionOption[];
+  targetApproach: number;
+  targetElement: string;
+}
+
+// Canvas phase type
+export type CanvasPhase = 'understanding' | 'approaches' | 'refining';
+
