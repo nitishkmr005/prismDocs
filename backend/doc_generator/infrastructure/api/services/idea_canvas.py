@@ -544,6 +544,227 @@ class IdeaCanvasService:
             return True
         return False
 
+    def generate_approaches(self, session_id: str, api_key: str) -> dict:
+        """Generate 4 implementation approaches from the Q&A session.
+
+        Args:
+            session_id: The session ID
+            api_key: API key for LLM
+
+        Returns:
+            Dict with list of 4 approaches, each containing mermaid diagram and tasks
+        """
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session not found: {session_id}")
+
+        self._configure_api_key(session.provider, api_key)
+
+        # Build Q&A summary
+        qa_summary = ""
+        for i, item in enumerate(session.conversation_history, 1):
+            question = item.get("question", "")
+            answer = item.get("answer", "")
+            qa_summary += f"\nQ{i}: {question}\nA{i}: {answer}\n"
+
+        system_prompt = """You are an expert solution architect. Generate exactly 4 different implementation approaches for the given idea.
+
+For each approach, provide:
+1. A unique descriptive name (e.g., "Microservices", "Serverless", "Monolith", "Hybrid")
+2. A mermaid diagram showing the architecture or flow
+3. A list of implementation tasks with tech stack and complexity
+
+Return ONLY valid JSON in this exact format:
+{
+  "approaches": [
+    {
+      "id": "approach_1",
+      "name": "Descriptive Name",
+      "mermaidCode": "flowchart TD\\n    A[Start] --> B[Process]\\n    B --> C[End]",
+      "tasks": [
+        {
+          "id": "task_1",
+          "name": "Task Name",
+          "description": "What this task involves",
+          "techStack": "React, Node.js",
+          "complexity": "Medium"
+        }
+      ]
+    }
+  ]
+}
+
+MERMAID RULES:
+- Use flowchart TD (top-down) or LR (left-right) for architecture
+- Use sequenceDiagram for interactions
+- Use graph for simple flows
+- Escape special characters properly
+- Keep diagrams clear and readable
+- Use descriptive node labels
+
+TASK RULES:
+- 4-8 tasks per approach
+- Complexity: Low, Medium, or High
+- Tech stack: comma-separated technologies
+- Description: 1-2 sentences explaining the task"""
+
+        user_prompt = f"""Generate 4 different implementation approaches for this idea.
+
+IDEA: {session.idea}
+
+TEMPLATE: {session.template.value.replace('_', ' ').title()}
+
+Q&A CONTEXT:
+{qa_summary}
+
+Generate 4 distinct approaches with varying complexity/architecture styles:
+1. A simple/minimal approach (fastest to implement)
+2. A balanced/standard approach (good tradeoffs)
+3. A scalable/enterprise approach (more complex but scales better)
+4. An innovative/modern approach (using latest technologies)
+
+Each approach should have a mermaid diagram and implementation tasks.
+Return ONLY the JSON object."""
+
+        response = self._call_llm_with_fallback(
+            provider=session.provider,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            max_tokens=6000,
+            temperature=0.7,
+            json_mode=True,
+            step_name="generate_approaches",
+            preferred_model=session.model,
+        )
+
+        # Parse response
+        data = self._parse_question_response(response)
+
+        if not data or "approaches" not in data:
+            # Create fallback structure
+            data = {"approaches": self._create_fallback_approaches(session)}
+
+        return data
+
+    def _create_fallback_approaches(self, session: CanvasSession) -> list[dict]:
+        """Create fallback approaches if LLM response is invalid."""
+        base_name = session.idea[:30] if len(session.idea) > 30 else session.idea
+
+        return [
+            {
+                "id": "approach_1",
+                "name": "Simple MVP",
+                "mermaidCode": f"flowchart TD\n    A[User] --> B[{base_name}]\n    B --> C[Database]",
+                "tasks": [
+                    {"id": "t1", "name": "Setup project", "description": "Initialize project structure", "techStack": "Node.js", "complexity": "Low"},
+                    {"id": "t2", "name": "Build core feature", "description": "Implement main functionality", "techStack": "React", "complexity": "Medium"},
+                ]
+            },
+            {
+                "id": "approach_2",
+                "name": "Standard Stack",
+                "mermaidCode": "flowchart TD\n    A[Frontend] --> B[API]\n    B --> C[Service]\n    C --> D[Database]",
+                "tasks": [
+                    {"id": "t1", "name": "Frontend setup", "description": "Build user interface", "techStack": "React, TypeScript", "complexity": "Medium"},
+                    {"id": "t2", "name": "API development", "description": "Create REST endpoints", "techStack": "FastAPI", "complexity": "Medium"},
+                ]
+            },
+            {
+                "id": "approach_3",
+                "name": "Scalable Architecture",
+                "mermaidCode": "flowchart TD\n    A[Load Balancer] --> B[Service 1]\n    A --> C[Service 2]\n    B --> D[Cache]\n    C --> D\n    D --> E[Database]",
+                "tasks": [
+                    {"id": "t1", "name": "Microservices setup", "description": "Design service boundaries", "techStack": "Docker, K8s", "complexity": "High"},
+                    {"id": "t2", "name": "Caching layer", "description": "Add Redis caching", "techStack": "Redis", "complexity": "Medium"},
+                ]
+            },
+            {
+                "id": "approach_4",
+                "name": "Modern Serverless",
+                "mermaidCode": "flowchart TD\n    A[CDN] --> B[Edge Functions]\n    B --> C[Serverless API]\n    C --> D[Managed DB]",
+                "tasks": [
+                    {"id": "t1", "name": "Serverless setup", "description": "Configure cloud functions", "techStack": "AWS Lambda, Vercel", "complexity": "Medium"},
+                    {"id": "t2", "name": "Edge optimization", "description": "Deploy edge functions", "techStack": "Cloudflare Workers", "complexity": "Medium"},
+                ]
+            },
+        ]
+
+    def refine_approach(
+        self,
+        session_id: str,
+        api_key: str,
+        approach_index: int,
+        element_id: str,
+        element_type: str,
+        refinement_answer: str,
+        current_approach: dict,
+    ) -> dict:
+        """Refine a specific approach based on user feedback.
+
+        Args:
+            session_id: The session ID
+            api_key: API key for LLM
+            approach_index: Index of the approach to refine
+            element_id: ID of the clicked element
+            element_type: 'diagram' or 'task'
+            refinement_answer: User's refinement answer
+            current_approach: Current approach data
+
+        Returns:
+            Updated approach dict
+        """
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session not found: {session_id}")
+
+        self._configure_api_key(session.provider, api_key)
+
+        system_prompt = """You are refining an implementation approach based on user feedback.
+
+Update ONLY the relevant parts of the approach while keeping the overall structure.
+Return the complete updated approach in the same JSON format.
+
+{
+  "id": "approach_id",
+  "name": "Approach Name",
+  "mermaidCode": "updated mermaid code",
+  "tasks": [updated tasks array]
+}"""
+
+        user_prompt = f"""Refine this approach based on user feedback.
+
+CURRENT APPROACH:
+{json.dumps(current_approach, indent=2)}
+
+USER CLICKED ON: {element_type} with ID "{element_id}"
+
+USER'S REFINEMENT REQUEST: {refinement_answer}
+
+Update the approach to address the user's feedback. If they clicked on:
+- A diagram element: Update the mermaid code and related tasks
+- A task: Update that specific task and potentially related diagram elements
+
+Return the complete updated approach as JSON."""
+
+        response = self._call_llm_with_fallback(
+            provider=session.provider,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            max_tokens=3000,
+            temperature=0.6,
+            json_mode=True,
+            step_name="refine_approach",
+            preferred_model=session.model,
+        )
+
+        data = self._parse_question_response(response)
+
+        if not data or "id" not in data:
+            # Return original if parsing failed
+            return current_approach
+
+        return data
+
     def generate_report(
         self, session_id: str, api_key: str, image_api_key: str | None = None
     ) -> dict:
