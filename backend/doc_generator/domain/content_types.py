@@ -26,6 +26,7 @@ class OutputFormat(str, Enum):
     PPTX = "pptx"
     MARKDOWN = "markdown"
     PDF_FROM_PPTX = "pdf_from_pptx"
+    FAQ = "faq"
 
 
 class ImageType(str, Enum):
