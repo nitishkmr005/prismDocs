@@ -74,6 +74,7 @@ def _load_palette() -> dict:
 
 
 PALETTE = _load_palette()
+CONTENT_WIDTH = 6.9 * inch
 
 
 def inline_md(text: str) -> str:
@@ -966,11 +967,16 @@ def make_table(table_data: list[list[str]], styles: dict) -> Table:
 
         return cell_text
 
-    # Process table data with enhancements
+    max_cols = max((len(row) for row in table_data), default=1)
+
+    # Process table data with enhancements and normalize column count
     wrapped = []
     for row_idx, row in enumerate(table_data):
+        normalized_row = list(row)
+        if len(normalized_row) < max_cols:
+            normalized_row.extend([""] * (max_cols - len(normalized_row)))
         wrapped_row = []
-        for cell in row:
+        for cell in normalized_row:
             # Skip enhancement for header row
             if row_idx == 0:
                 wrapped_row.append(Paragraph(inline_md(cell), styles["TableCell"]))
@@ -981,7 +987,13 @@ def make_table(table_data: list[list[str]], styles: dict) -> Table:
                 )
         wrapped.append(wrapped_row)
 
-    table = Table(wrapped, hAlign="LEFT")
+    col_width = CONTENT_WIDTH / max_cols if max_cols else CONTENT_WIDTH
+    table = Table(
+        wrapped,
+        colWidths=[col_width] * max_cols,
+        hAlign="LEFT",
+        repeatRows=1,
+    )
 
     # Build table style with alternating row colors
     table_style = [
@@ -1237,6 +1249,8 @@ def create_custom_styles() -> dict:
             fontSize=10,
             leading=14,
             textColor=PALETTE["ink"],
+            alignment=0,
+            wordWrap="CJK",
         )
     )
 

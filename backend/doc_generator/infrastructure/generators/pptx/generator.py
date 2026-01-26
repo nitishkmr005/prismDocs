@@ -352,10 +352,11 @@ class PPTXGenerator:
 
             # H2 becomes slide title
             elif kind == "h2":
-                content_item = self._strip_inline_markdown(content_item)
+                raw_heading = self._strip_inline_markdown(content_item)
                 section_id, next_section_id = self._resolve_section_id(
-                    content_item, next_section_id
+                    raw_heading, next_section_id
                 )
+                content_item = self._strip_leading_numbering(raw_heading)
                 # Flush current slide if any
                 if current_slide_title and current_slide_content:
                     self._add_bullet_slide_series(
@@ -380,7 +381,9 @@ class PPTXGenerator:
 
             # H3 becomes content item (if no H2 title yet, becomes title)
             elif kind == "h3":
-                content_item = self._strip_inline_markdown(content_item)
+                content_item = self._strip_leading_numbering(
+                    self._strip_inline_markdown(content_item)
+                )
                 if current_slide_title:
                     current_slide_content.append(content_item)
                 else:
@@ -598,7 +601,9 @@ class PPTXGenerator:
         for slide in slides:
             section_title = slide.get("section_title", slide.get("title", ""))
             if section_title:
-                section_title = self._strip_inline_markdown(section_title)
+                section_title = self._strip_leading_numbering(
+                    self._strip_inline_markdown(section_title)
+                )
                 # Add both normalized and number-stripped versions
                 slide_map[self._normalize_title(section_title)] = slide
                 slide_map[self._normalize_section_title(section_title)] = slide
@@ -610,7 +615,9 @@ class PPTXGenerator:
             section_title = section.get("title", "")
             if not section_title:
                 continue
-            clean_title = self._strip_inline_markdown(section_title)
+            clean_title = self._strip_leading_numbering(
+                self._strip_inline_markdown(section_title)
+            )
 
             # Try to find matching LLM slide (check both normalized versions)
             normalized = self._normalize_title(clean_title)
@@ -660,13 +667,22 @@ class PPTXGenerator:
         """
         return re.sub(r"\s+", " ", title or "").strip().lower()
 
+    def _strip_leading_numbering(self, text: str) -> str:
+        """
+        Remove leading numbering like "2.", "2.1", "2.1.3", or "2)".
+        """
+        if not text:
+            return ""
+        cleaned = re.sub(r"^\s*\d+(?:\.\d+)*[\.:\)\s]+\s*", "", text.strip())
+        return cleaned.strip()
+
     def _normalize_section_title(self, title: str) -> str:
         """
         Normalize section title for duplicate detection.
         Removes leading numbers like "1." from "1. Introduction".
         """
         # Remove leading number patterns like "1.", "1)", "1:", "1 "
-        cleaned = re.sub(r"^\d+[\.:\)\s]+\s*", "", (title or "").strip())
+        cleaned = self._strip_leading_numbering(title)
         return re.sub(r"\s+", " ", cleaned).strip().lower()
 
     def _extract_bullets_from_content(self, content: str) -> list[str]:
@@ -695,13 +711,19 @@ class PPTXGenerator:
             # Already a bullet/list item
             if line.startswith(("-", "*", "•")) or re.match(r"^\d+\.", line):
                 clean = re.sub(r"^[-*•]\s*", "", line)
-                clean = re.sub(r"^\d+\.\s*", "", clean)
+                clean = re.sub(r"^\d+(?:\.\d+)*\.\s*", "", clean)
                 clean = re.sub(r"^\[[xX ]\]\s*", "", clean)
                 if clean:
-                    bullets.append(self._strip_inline_markdown(clean.strip()))
+                    bullets.append(
+                        self._strip_leading_numbering(
+                            self._strip_inline_markdown(clean.strip())
+                        )
+                    )
             # Convert short paragraphs to bullets
             elif len(line) > 20 and len(line) < 300:
-                bullets.append(self._strip_inline_markdown(line))
+                bullets.append(
+                    self._strip_leading_numbering(self._strip_inline_markdown(line))
+                )
 
         # If no bullets found, split long content into sentences
         if not bullets and content.strip():
@@ -732,7 +754,9 @@ class PPTXGenerator:
         seen_normalized = set()
 
         for match in re.finditer(r"^##\s+(.+)$", markdown_content, re.MULTILINE):
-            heading = self._strip_inline_markdown(match.group(1).strip())
+            heading = self._strip_leading_numbering(
+                self._strip_inline_markdown(match.group(1).strip())
+            )
             if not heading:
                 continue
 
@@ -870,9 +894,10 @@ class PPTXGenerator:
         Invoked by: src/doc_generator/infrastructure/generators/pptx/generator.py
         """
         cleaned = text.lstrip("•-* ").strip()
-        cleaned = re.sub(r"^\d+[\.\)]\s*", "", cleaned)
+        cleaned = re.sub(r"^\d+(?:\.\d+)*[\.:\)]?\s*", "", cleaned)
         cleaned = re.sub(r"^\[[xX ]\]\s*", "", cleaned)
-        return self._strip_inline_markdown(cleaned)
+        cleaned = self._strip_inline_markdown(cleaned)
+        return self._strip_leading_numbering(cleaned)
 
     def _split_sentences(self, text: str) -> list[str]:
         """

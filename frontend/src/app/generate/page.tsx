@@ -96,7 +96,7 @@ export default function GeneratePage() {
   const [contentModel, setContentModel] = useState("gemini-2.5-flash");
   const [imageModel, setImageModel] = useState("gemini-2.5-flash-image");
   const [audience, setAudience] = useState<Audience>("technical");
-  const [imageStyle, setImageStyle] = useState<ImageStyle>("auto");
+  const [imageStyle, setImageStyle] = useState<ImageStyle>("handwritten");
   const [mindMapMode, setMindMapMode] = useState<MindMapMode>("summarize");
   const [enableImageGeneration, setEnableImageGeneration] = useState(false);
   const [contentApiKey, setContentApiKey] = useState("");

@@ -93,6 +93,7 @@ def _generate_image_with_timeout(
     section_title: str,
     output_path: Path,
     timeout_seconds: int,
+    style_name: str | None,
 ) -> Path | None:
     """Run image generation with a timeout to allow model fallback."""
     with ThreadPoolExecutor(max_workers=1) as executor:
@@ -102,6 +103,7 @@ def _generate_image_with_timeout(
             image_type=image_type,
             section_title=section_title,
             output_path=output_path,
+            style=style_name,
         )
         try:
             return future.result(timeout=timeout_seconds)
@@ -165,6 +167,10 @@ def _apply_requested_style(
         return
     if requested_style == "decorative":
         decision.image_type = ImageType.DECORATIVE
+    elif requested_style == "diagram":
+        decision.image_type = ImageType.DIAGRAM
+    elif requested_style == "chart":
+        decision.image_type = ImageType.CHART
     elif requested_style == "mermaid":
         decision.image_type = ImageType.MERMAID
     else:
@@ -176,10 +182,11 @@ def _should_skip_image_type(decision: ImageDecision, settings) -> bool:
     Check feature flags to decide if this image type should be skipped.
     Invoked by: src/doc_generator/application/nodes/generate_images.py
     """
-    if (
-        decision.image_type == ImageType.INFOGRAPHIC
-        and not settings.image_generation.enable_infographics
-    ):
+    if decision.image_type in (
+        ImageType.INFOGRAPHIC,
+        ImageType.DIAGRAM,
+        ImageType.CHART,
+    ) and not settings.image_generation.enable_infographics:
         return True
     if (
         decision.image_type == ImageType.DECORATIVE
@@ -205,6 +212,7 @@ def _generate_raster_image(
     image_api_key: str | None,
     output_format: str,
     output_type: str,
+    style_name: str | None,
 ) -> tuple[Path | None, str, dict, int, int]:
     """
     Generate or reuse a raster image with a single pass.
@@ -237,6 +245,7 @@ def _generate_raster_image(
             section_title=section_title,
             output_path=temp_output_path,
             timeout_seconds=180,
+            style_name=style_name,
         )
         if image_path and image_path.exists():
             if image_path != output_path:
@@ -256,6 +265,7 @@ def _generate_raster_image(
             image_type=decision.image_type,
             section_title=section_title,
             output_path=output_path,
+            style=style_name,
         )
         if image_path and image_path.exists():
             return image_path, prompt_used, {}, 1, 0
@@ -275,6 +285,7 @@ def _generate_raster_image(
             image_type=decision.image_type,
             section_title=section_title,
             output_path=output_path,
+            style=style_name,
         )
         if fallback_path and fallback_path.exists():
             return fallback_path, prompt_used, {}, 2, 0
@@ -300,7 +311,11 @@ def _maybe_load_cached_images(
     from ...utils.content_cache import load_existing_images
 
     content_hash = metadata.get("content_hash")
-    section_images = load_existing_images(images_dir, expected_hash=content_hash)
+    section_images = load_existing_images(
+        images_dir,
+        expected_hash=content_hash,
+        expected_style=metadata.get("image_style"),
+    )
     return section_images or None
 
 
@@ -401,6 +416,7 @@ def _process_section_image(
     # Prefer cached prompt to keep outputs stable when reusing images.
     prompt_used = existing_images.get(section_id, {}).get("prompt") or decision.prompt
     # Single-pass image generation (no validation loop).
+    style_name = metadata.get("image_style", "auto")
     image_path, prompt_used, alignment_result, attempts, reused_delta = (
         _generate_raster_image(
             images_dir=images_dir,
@@ -412,6 +428,7 @@ def _process_section_image(
             image_api_key=image_api_key,
             output_format=output_format,
             output_type=output_type,
+            style_name=style_name,
         )
     )
     if image_path is None:

@@ -10,7 +10,7 @@ from pathlib import Path
 from loguru import logger
 from pptx import Presentation
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
+from pptx.enum.text import PP_ALIGN, MSO_AUTO_SIZE
 from pptx.util import Inches, Pt
 from PIL import Image
 
@@ -34,6 +34,7 @@ _BASE_THEME_COLORS = {
 
 TITLE_FONT_NAME = "Georgia"
 BODY_FONT_NAME = "Verdana"
+BULLET_ICONS = ["✓", "★", "◆", "➜", "●", "■"]
 
 
 def _hex_to_rgb(value: str) -> RGBColor:
@@ -260,6 +261,7 @@ def add_content_slide(
     )
     tf = content_box.text_frame
     tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
 
     for i, item in enumerate(content):
         if i == 0:
@@ -271,7 +273,8 @@ def add_content_slide(
         clean_item = item.lstrip("•-* ").strip()
 
         if is_bullets:
-            p.text = f"•  {clean_item}"
+            icon = BULLET_ICONS[i % len(BULLET_ICONS)]
+            p.text = f"{icon} {clean_item}"
             p.font.name = BODY_FONT_NAME
             p.font.size = Pt(18)
             p.font.color.rgb = THEME_COLORS["ink"]
@@ -553,6 +556,7 @@ def add_executive_summary_slide(
             Inches(8.6), Inches(0.6)
         )
         tf = point_box.text_frame
+        tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
         tf.word_wrap = True
         p = tf.paragraphs[0]
         clean_point = point.lstrip("•-* ").strip()
@@ -636,12 +640,14 @@ def add_two_column_slide(
     )
     tf = left_box.text_frame
     tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
     for i, item in enumerate(left_content[:6]):
         if i == 0:
             p = tf.paragraphs[0]
         else:
             p = tf.add_paragraph()
-        p.text = f"•  {item.lstrip('•-* ').strip()}"
+        icon = BULLET_ICONS[i % len(BULLET_ICONS)]
+        p.text = f"{icon} {item.lstrip('•-* ').strip()}"
         p.font.name = BODY_FONT_NAME
         p.font.size = Pt(16)
         p.font.color.rgb = THEME_COLORS["ink"]
@@ -677,12 +683,14 @@ def add_two_column_slide(
     )
     tf = right_box.text_frame
     tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
     for i, item in enumerate(right_content[:6]):
         if i == 0:
             p = tf.paragraphs[0]
         else:
             p = tf.add_paragraph()
-        p.text = f"•  {item.lstrip('•-* ').strip()}"
+        icon = BULLET_ICONS[i % len(BULLET_ICONS)]
+        p.text = f"{icon} {item.lstrip('•-* ').strip()}"
         p.font.name = BODY_FONT_NAME
         p.font.size = Pt(16)
         p.font.color.rgb = THEME_COLORS["ink"]

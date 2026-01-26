@@ -76,6 +76,7 @@ def persist_image_manifest_node(state: WorkflowState) -> WorkflowState:
         descriptions=description_map,
         section_map=section_map,
         image_types=image_types,
+        image_style=metadata.get("image_style"),
     )
     
     log_metric("Manifest Entries", len(section_images))

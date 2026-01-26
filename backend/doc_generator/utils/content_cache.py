@@ -108,6 +108,7 @@ def save_image_manifest(
     descriptions: Optional[dict] = None,
     section_map: Optional[dict] = None,
     image_types: Optional[dict] = None,
+    image_style: Optional[str] = None,
 ) -> None:
     """
     Invoked by: src/doc_generator/application/nodes/generate_images.py, src/doc_generator/application/workflow/nodes/generate_images.py
@@ -121,6 +122,7 @@ def save_image_manifest(
             "descriptions": descriptions or {},
             "section_map": section_map or {},
             "image_types": image_types or {},
+            "image_style": image_style or "",
         }
         with open(manifest_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -131,6 +133,7 @@ def save_image_manifest(
 def load_existing_images(
     images_dir: Path | None = None,
     expected_hash: Optional[str] = None,
+    expected_style: Optional[str] = None,
 ) -> dict:
     """
     Load existing section images from disk.
@@ -160,6 +163,9 @@ def load_existing_images(
         manifest = load_image_manifest(images_dir)
         if not manifest or manifest.get("content_hash") != expected_hash:
             logger.info("Image cache skipped due to content hash mismatch")
+            return section_images
+        if expected_style and manifest.get("image_style") != expected_style:
+            logger.info("Image cache skipped due to image style mismatch")
             return section_images
         descriptions = manifest.get("descriptions", {}) or {}
         section_map = manifest.get("section_map", {}) or {}

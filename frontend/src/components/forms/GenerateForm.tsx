@@ -114,7 +114,7 @@ export function GenerateForm({
   const [contentModel, setContentModel] = useState<string>("gemini-2.5-flash");
   const [imageModel, setImageModel] = useState<string>("gemini-2.5-flash-image");
   const [audience, setAudience] = useState<Audience>("technical");
-  const [imageStyle, setImageStyle] = useState<ImageStyle>("auto");
+  const [imageStyle, setImageStyle] = useState<ImageStyle>("handwritten");
   const [enableImageGeneration, setEnableImageGeneration] = useState(false);
   const [contentApiKey, setContentApiKey] = useState("");
   const [imageApiKey, setImageApiKey] = useState("");

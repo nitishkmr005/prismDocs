@@ -64,7 +64,7 @@ export interface GenerateRequest {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   audience: "technical",
-  image_style: "auto",
+  image_style: "handwritten",
   temperature: 0.4,
   max_tokens: 12000,
   max_slides: 25,

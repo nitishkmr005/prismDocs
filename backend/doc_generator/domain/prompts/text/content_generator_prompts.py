@@ -128,6 +128,11 @@ def build_generation_prompt(
    | Feature | Description | Notes |
    |---------|-------------|-------|
    | Item 1  | Details     | Info  |
+
+   Table rules:
+   - Keep to 2-4 columns when possible
+   - Use concise cell text for readability
+   - Ensure every row has the same number of columns
    
    Use tables for:
    - Comparisons (e.g., framework A vs B; pros vs cons)

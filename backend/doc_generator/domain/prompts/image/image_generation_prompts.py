@@ -4,12 +4,40 @@ Prompt templates for image generation and evaluation.
 
 from ...content_types import ImageType
 
+_STYLE_GUIDANCE = {
+    "handwritten": "- Handwritten/whiteboard aesthetic with marker strokes and slight imperfections; keep labels legible.",
+    "minimalist": "- Minimalist design with generous whitespace, thin lines, and a restrained color palette.",
+    "corporate": "- Corporate, polished look with clean lines, consistent iconography, and professional colors.",
+    "educational": "- Classroom-friendly visuals with clear labels and step-by-step flow.",
+    "diagram": "- Diagrammatic layout with boxes, arrows, and connectors; minimal decoration.",
+    "chart": "- Prefer a chart/graph visualization; do NOT invent numbers. If values are missing, use relative labels instead of numeric values.",
+}
 
-def build_gemini_image_prompt(image_type: ImageType, prompt: str, size_hint: str) -> str:
+
+def _resolve_style_guidance(style: str | None) -> str:
+    if not style or style == "auto":
+        return ""
+    return _STYLE_GUIDANCE.get(style, f"- Visual style: {style.replace('_', ' ')}.")
+
+
+def build_gemini_image_prompt(
+    image_type: ImageType,
+    prompt: str,
+    size_hint: str,
+    style: str | None = None,
+) -> str:
     """
     Build Gemini image generation prompt with size hints.
     """
-    if image_type == ImageType.INFOGRAPHIC:
+    style_guidance = _resolve_style_guidance(style)
+    style_block = f"\nStyle guidance:\n{style_guidance}\n" if style_guidance else ""
+
+    if image_type in (ImageType.INFOGRAPHIC, ImageType.DIAGRAM, ImageType.CHART):
+        extra = ""
+        if image_type == ImageType.DIAGRAM:
+            extra = "\n- Prefer a diagram layout with boxes, arrows, and clear relationships\n- Avoid illustrative artwork; focus on structure"
+        elif image_type == ImageType.CHART:
+            extra = "\n- Prefer a chart or graph layout with labeled axes/legend\n- Do NOT invent numeric values; use relative or categorical comparisons only"
         return f"""Create a vibrant, educational infographic that explains: {prompt}
 
 Style requirements:
@@ -23,7 +51,8 @@ Style requirements:
 - Use ONLY the concepts in the prompt; do not add new information
 - Avoid metaphorical objects (pipes, ropes, factories) unless explicitly mentioned
 - For workflows/architectures, use flat rounded rectangles + arrows in a clean grid
-{size_hint}"""
+{extra}
+{style_block}{size_hint}"""
 
     if image_type == ImageType.DECORATIVE:
         return f"""Create a professional, thematic header image for: {prompt}
@@ -37,7 +66,7 @@ Style requirements:
 - Wide aspect ratio (16:9 or similar)
 - No text in the image
 - Use ONLY the concepts in the prompt; do not add new information
-{size_hint}"""
+{style_block}{size_hint}"""
 
     if image_type == ImageType.MERMAID:
         return f"""Create a professional, clean flowchart/diagram image that represents: {prompt}
@@ -52,7 +81,7 @@ Style requirements:
 - No watermarks or decorative elements
 - Focus on clarity and visual hierarchy
 - Use ONLY the concepts in the prompt; do not add new information
-{size_hint}"""
+{style_block}{size_hint}"""
 
     return prompt
 

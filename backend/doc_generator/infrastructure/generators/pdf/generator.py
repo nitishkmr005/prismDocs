@@ -390,17 +390,20 @@ class PDFGenerator:
                 )
                 if should_page_break(content_item):
                     story.append(PageBreak())
-                heading_flow = [Spacer(1, 16), make_banner(content_item, self.styles), Spacer(1, 12)]
-                queue_heading(heading_flow, wants_lead=True)
+                heading_flow = [
+                    Spacer(1, 16),
+                    make_banner(content_item, self.styles),
+                    Spacer(1, 12),
+                ]
 
-                # Check for Gemini-generated section image
+                # Check for Gemini-generated section image and keep it under the heading.
                 img_info = section_images.get(section_id) or section_image_lookup.get(
                     self._normalize_title(content_item)
                 )
                 if img_info:
                     img_path = Path(img_info.get("path", ""))
                     if img_path.exists():
-                        story.extend(
+                        heading_flow.extend(
                             make_image_flowable(
                                 img_info.get("section_title", content_item),
                                 img_path,
@@ -409,13 +412,15 @@ class PDFGenerator:
                         )
                         description = (img_info.get("description") or "").strip()
                         if description:
-                            story.append(
+                            heading_flow.append(
                                 Paragraph(
                                     inline_md(description), self.styles["BodyCustom"]
                                 )
                             )
-                        story.append(Spacer(1, 12))
+                        heading_flow.append(Spacer(1, 12))
                         logger.debug(f"Embedded section image for: {content_item}")
+
+                queue_heading(heading_flow, wants_lead=True)
 
             elif kind == "h3":
                 heading_flow = [

@@ -111,7 +111,12 @@ class GeminiImageGenerator:
             logger.debug(f"Waiting {sleep_time:.1f}s between requests")
             time.sleep(sleep_time)
 
-    def _enhance_prompt(self, prompt: str, image_type: ImageType) -> str:
+    def _enhance_prompt(
+        self,
+        prompt: str,
+        image_type: ImageType,
+        style: str | None = None,
+    ) -> str:
         """
         Enhance the prompt based on image type for better results.
 
@@ -124,14 +129,15 @@ class GeminiImageGenerator:
         Invoked by: src/doc_generator/infrastructure/image/gemini.py
         """
         size_hint = f"- Target size: {self.settings.default_width}x{self.settings.default_height}px"
-        return build_gemini_image_prompt(image_type, prompt, size_hint)
+        return build_gemini_image_prompt(image_type, prompt, size_hint, style=style)
 
     def generate_image(
         self,
         prompt: str,
         image_type: ImageType,
         section_title: str,
-        output_path: Path
+        output_path: Path,
+        style: str | None = None,
     ) -> Optional[Path]:
         """
         Generate an image using Gemini API with rate limiting.
@@ -157,7 +163,7 @@ class GeminiImageGenerator:
         self._wait_for_rate_limit()
 
         # Enhance prompt based on image type
-        enhanced_prompt = self._enhance_prompt(prompt, image_type)
+        enhanced_prompt = self._enhance_prompt(prompt, image_type, style=style)
 
         try:
             GeminiImageGenerator._total_calls += 1

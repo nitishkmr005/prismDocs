@@ -71,7 +71,7 @@ SourceItem = Annotated[
 
 class Preferences(BaseModel):
     audience: Audience = Audience.TECHNICAL
-    image_style: ImageStyle = ImageStyle.AUTO
+    image_style: ImageStyle = ImageStyle.HANDWRITTEN
     temperature: float = Field(default=0.4, ge=0.0, le=1.0)
     max_tokens: int = Field(default=8000, ge=100, le=32000)
     max_slides: int = Field(default=25, ge=1, le=50)
@@ -124,7 +124,7 @@ class GenerateRequest(BaseModel):
                     "image_model": "gemini-2.5-flash-image",
                     "preferences": {
                         "audience": "technical",
-                        "image_style": "auto",
+                        "image_style": "handwritten",
                         "temperature": 0.4,
                         "max_tokens": 8000,
                         "max_slides": 25,
