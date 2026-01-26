@@ -102,6 +102,11 @@ class PPTXGenerator:
             # Ensure output directory exists
             output_dir.mkdir(parents=True, exist_ok=True)
 
+            if metadata.get("require_slide_llm") and not content.get("slides"):
+                raise GenerationError(
+                    "Slide generation required but slide structure is missing"
+                )
+
             # Set up image cache for mermaid diagrams
             self._image_cache = output_dir / "images"
 
@@ -329,7 +334,9 @@ class PPTXGenerator:
         for kind, content_item in parse_markdown_lines(markdown_content):
             # H1 becomes section header
             if kind == "h1":
-                content_item = self._strip_inline_markdown(content_item)
+                content_item = self._strip_leading_numbering(
+                    self._strip_inline_markdown(content_item)
+                )
                 if (
                     not skipped_root_title
                     and normalized_root

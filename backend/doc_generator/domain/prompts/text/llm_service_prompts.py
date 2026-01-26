@@ -42,6 +42,7 @@ Requirements:
 - Structure for logical flow (problem → insight → implication → action)
 - Ensure bullet points are parallel in structure and style
 - Avoid copying sentences verbatim; condense into crisp, decision-ready bullets
+- Do NOT include numeric prefixes like "1." or "2.1" in titles or bullets
 - Do not include markdown formatting, only plain text
 - Use ONLY information from the content; do not introduce new facts or examples
 
@@ -87,6 +88,7 @@ Requirements:
 - Avoid filler phrases and long sentences
 - Bullets should align to the section content and image hint
 - Avoid copying sentences verbatim; condense into executive-ready bullets
+- Do NOT include numeric prefixes like "1." or "2.1" in titles or bullets
 - Do not include markdown formatting, only plain text
 - Provide 1-2 sentence speaker notes per slide
 - Use ONLY information from each section; do not add new facts or examples

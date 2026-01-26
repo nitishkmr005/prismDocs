@@ -6,6 +6,7 @@ from loguru import logger
 
 from ...domain.models import WorkflowState
 from ...infrastructure.llm import get_llm_service
+from ...infrastructure.settings import get_settings
 from ...infrastructure.logging_utils import (
     log_node_start,
     log_node_end,
@@ -39,9 +40,20 @@ def enhance_content_node(state: WorkflowState) -> WorkflowState:
     log_metric("Output Format", output_format.upper())
     
     llm = state.get("llm_service") or get_llm_service()
+    require_slide_llm = output_format in ("pptx", "pdf_from_pptx")
+    metadata = state.get("metadata", {})
+    if require_slide_llm:
+        metadata["require_slide_llm"] = True
+        state["metadata"] = metadata
+
     if not llm.is_available():
         log_progress("LLM not available - skipping enhancements")
-        log_node_end("enhance_content", success=True, details="LLM unavailable")
+        if require_slide_llm:
+            error_msg = "LLM unavailable for slide generation"
+            state["errors"].append(error_msg)
+            log_node_end("enhance_content", success=False, details=error_msg)
+        else:
+            log_node_end("enhance_content", success=True, details="LLM unavailable")
         return state
 
     enhancements_added = []
@@ -71,12 +83,25 @@ def enhance_content_node(state: WorkflowState) -> WorkflowState:
     # Generate slide structure for PPTX and PDF-from-PPTX
     if output_format in ("pptx", "pdf_from_pptx") and not structured.get("slides"):
         log_subsection("Generating Slide Structure")
-        max_slides = state.get("metadata", {}).get("max_slides")
-        slides = llm.generate_slide_structure(markdown, max_slides=max_slides)
-        if slides:
-            structured["slides"] = slides
-            log_metric("Slides Generated", len(slides))
-            enhancements_added.append(f"{len(slides)} slides")
+        settings = get_settings()
+        max_slides = metadata.get("max_slides")
+        max_attempts = max(1, int(metadata.get("slide_generation_retries", 0) or settings.generator.max_retries))
+        slides = []
+
+        for attempt in range(1, max_attempts + 1):
+            slides = llm.generate_slide_structure(markdown, max_slides=max_slides)
+            if slides:
+                structured["slides"] = slides
+                log_metric("Slides Generated", len(slides))
+                enhancements_added.append(f"{len(slides)} slides")
+                break
+            log_progress(f"Slide generation attempt {attempt} failed")
+
+        if not slides and require_slide_llm:
+            error_msg = f"Slide generation failed after {max_attempts} attempts"
+            state["errors"].append(error_msg)
+            log_node_end("enhance_content", success=False, details=error_msg)
+            return state
 
     state["structured_content"] = structured
     
