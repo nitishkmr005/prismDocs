@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ScrollingImage } from "@/components/ui/scrolling-image";
 import { ApiKeysModal } from "@/components/studio/ApiKeysModal";
 import { AuthModal } from "@/components/auth";
 import { useAuth } from "@/hooks/useAuth";
@@ -337,145 +335,6 @@ export default function HomePage() {
     router.push("/generate");
   };
 
-  type GalleryItem = {
-    id: string;
-    category: string;
-    title: string;
-    format: string;
-    kind: "scrolling" | "image";
-    src: string;
-    alt: string;
-    aspect: "portrait" | "landscape" | "square";
-    className?: string;
-    fit?: "contain" | "cover";
-    showPlay?: boolean;
-    containerClassName?: string;
-    audioSrc?: string;
-  };
-
-  const [activeImage, setActiveImage] = useState<GalleryItem | null>(null);
-
-  const handleOpenImage = (item: GalleryItem) => {
-    setActiveImage(item);
-  };
-
-  const handleCloseImage = () => {
-    setActiveImage(null);
-  };
-
-  const galleryMediaHeight = "h-64 sm:h-72 lg:h-80";
-
-  const galleryItems: GalleryItem[] = [
-    {
-      id: "article-pdf",
-      category: "Articles",
-      title: "PDF Report",
-      format: "PDF",
-      kind: "scrolling",
-      src: "/screenshots/Article_PDF.png",
-      alt: "PDF Article Output",
-      aspect: "portrait",
-      className: "border-slate-200 dark:border-slate-800",
-    },
-    {
-      id: "article-markdown",
-      category: "Articles",
-      title: "Markdown Document",
-      format: "Markdown",
-      kind: "scrolling",
-      src: "/screenshots/Article_Markdown.png",
-      alt: "Markdown Article Output",
-      aspect: "portrait",
-      className: "border-slate-200 dark:border-slate-800",
-    },
-    {
-      id: "slides-pdf",
-      category: "Presentations",
-      title: "Slides Preview",
-      format: "Slides",
-      kind: "scrolling",
-      src: "/screenshots/Slides_PDF.png",
-      alt: "Slides Output",
-      aspect: "landscape",
-      className: "border-slate-200 dark:border-slate-800",
-    },
-    {
-      id: "podcast",
-      category: "Audio",
-      title: "AI Podcast",
-      format: "Audio",
-      kind: "image",
-      src: "/screenshots/Podcast.png",
-      alt: "Podcast Output",
-      aspect: "landscape",
-      fit: "contain",
-      containerClassName: "bg-slate-900",
-      showPlay: true,
-      audioSrc: "/audio/Podcast.wav",
-    },
-    {
-      id: "mindmap",
-      category: "Visual",
-      title: "Mind Map",
-      format: "Mind Map",
-      kind: "scrolling",
-      src: "/screenshots/Mindmap.png",
-      alt: "Mind Map Output",
-      aspect: "landscape",
-      className: "border-slate-200 dark:border-slate-800 bg-white",
-    },
-    {
-      id: "image-original",
-      category: "Image",
-      title: "Original Image",
-      format: "Original",
-      kind: "image",
-      src: "/screenshots/Original_Image.png",
-      alt: "Original AI Image",
-      aspect: "square",
-      fit: "contain",
-    },
-    {
-      id: "image-inpaint",
-      category: "Image",
-      title: "Inpainting",
-      format: "Edit",
-      kind: "image",
-      src: "/screenshots/Inpainting_UI.png",
-      alt: "Inpainting UI",
-      aspect: "square",
-      fit: "contain",
-    },
-    {
-      id: "image-edited",
-      category: "Image",
-      title: "Final Result",
-      format: "Result",
-      kind: "image",
-      src: "/screenshots/Edited_Image.png",
-      alt: "Edited Result",
-      aspect: "square",
-      fit: "contain",
-    },
-  ];
-
-  useEffect(() => {
-    if (!activeImage) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setActiveImage(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [activeImage]);
-
   // Process steps data
   const processSteps = [
     {
@@ -638,13 +497,6 @@ export default function HomePage() {
                 Upload a PDF, URL, or document. Get professional reports, presentations,
                 mind maps, and podcasts. Your API keys, your data, your control.
               </p>
-
-              <div className="inline-flex items-center gap-3 rounded-full border border-amber-200/60 bg-amber-100/80 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/30 dark:text-amber-300 animate-reveal-up delay-250">
-                <span className="mono-label rounded-full bg-amber-500 px-2 py-0.5 text-xs text-black">
-                  NEW
-                </span>
-                <span>FAQ Cards — generate polished Q&A carousels in seconds.</span>
-              </div>
 
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-4 animate-reveal-up delay-300">
@@ -831,76 +683,34 @@ export default function HomePage() {
               Sample Outputs
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400">
-              Documents generated entirely by PrismDocs. Scroll to explore.
+              Documents generated entirely by PrismDocs. Watch the full workflow in action.
             </p>
           </div>
 
-          {/* Gallery horizontal scroll */}
-          <div className="relative -mx-4">
-            <div className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-6 px-4 editorial-scrollbar">
-              {galleryItems.map((item) => (
-                <div key={item.id} className="snap-start shrink-0 w-[300px] sm:w-[360px]">
-                  <div className="group h-full editorial-card rounded-xl p-4">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="mono-label text-amber-600 dark:text-amber-400">
-                        {item.category}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{item.format}</span>
-                    </div>
-
-                    {/* Media */}
-                    <button
-                      type="button"
-                      className="block w-full rounded-lg text-left cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                      onClick={() => handleOpenImage(item)}
-                      aria-label={`Open ${item.title} in full screen`}
-                    >
-                      {item.kind === "scrolling" ? (
-                        <ScrollingImage
-                          src={item.src}
-                          alt={item.alt}
-                          aspectRatio={item.aspect}
-                          className={`${galleryMediaHeight} ${item.className ?? ""}`}
-                          fixedHeight
-                        />
-                      ) : (
-                        <div className={`relative overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 ${galleryMediaHeight} ${item.containerClassName ?? ""}`}>
-                          <Image
-                            src={item.src}
-                            alt={item.alt}
-                            fill
-                            className={`transition-transform duration-500 group-hover:scale-105 ${item.fit === "contain" ? "object-contain p-4" : "object-cover"}`}
-                          />
-                          {item.showPlay && (
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                              <span className="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center">
-                                <svg className="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z" />
-                                </svg>
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </button>
-
-                    {/* Title */}
-                    <p className="text-sm font-medium text-slate-900 dark:text-white mt-3">{item.title}</p>
-
-                    {/* Audio player */}
-                    {item.audioSrc && (
-                      <audio controls preload="none" className="w-full mt-3 h-10">
-                        <source src={item.audioSrc} type="audio/wav" />
-                      </audio>
-                    )}
-                  </div>
-                </div>
-              ))}
+          {/* Demo video */}
+          <div className="relative">
+            <div className="editorial-card rounded-2xl p-4 md:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="mono-label text-amber-600 dark:text-amber-400">
+                  Demo Reel
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Video</span>
+              </div>
+              <div className="relative overflow-hidden rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-950/60">
+                <video
+                  className="w-full h-full"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  poster="/screenshots/Slides_PDF.png"
+                >
+                  <source src="/sampleOutputs/PrismDocs_Final_Web.mp4" type="video/mp4" />
+                </video>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-4">
+                Watch PrismDocs generate articles, slides, mind maps, and FAQ Cards end-to-end.
+              </p>
             </div>
-
-            {/* Fade edge */}
-            <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white dark:from-slate-950 to-transparent" />
           </div>
         </div>
       </section>
@@ -1017,43 +827,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Image lightbox modal */}
-      {activeImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${activeImage.title} full screen`}
-          onClick={handleCloseImage}
-        >
-          <button
-            type="button"
-            onClick={handleCloseImage}
-            className="absolute right-4 top-4 mono-label px-4 py-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
-            aria-label="Close"
-          >
-            ESC
-          </button>
-          <div
-            className="relative w-full max-w-6xl overflow-hidden rounded-2xl bg-slate-900/90 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="relative h-[70vh] sm:h-[75vh] w-full bg-black/80">
-              <Image
-                src={activeImage.src}
-                alt={activeImage.alt}
-                fill
-                sizes="100vw"
-                className="object-contain"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-4 px-6 py-4 border-t border-white/10">
-              <span className="font-medium text-white">{activeImage.title}</span>
-              <span className="mono-label text-slate-400">{activeImage.category}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
