@@ -24,6 +24,7 @@ import { generateImage } from "@/lib/api/image";
 import { generateDocument } from "@/lib/api/generate";
 import { isCompleteEvent, isCacheHitEvent } from "@/lib/types/responses";
 import { StyleCategory } from "@/data/imageStyles";
+import { getApiUrl } from "@/config/api";
 import {
   Provider,
   Audience,
@@ -550,8 +551,9 @@ export default function GeneratePage() {
   const handleDownload = useCallback(() => {
     const url = isFaq ? faqResult?.downloadUrl : downloadUrl;
     if (!url) return;
+    const resolvedUrl = url.startsWith("http") ? url : getApiUrl(url);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = resolvedUrl;
     a.download = isFaq
       ? faqResult?.document.title || "faq"
       : metadata?.title || "document";

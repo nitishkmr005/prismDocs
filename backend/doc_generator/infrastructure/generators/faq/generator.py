@@ -4,6 +4,7 @@ FAQ generator.
 Writes FAQ document as JSON file.
 """
 
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -48,7 +49,9 @@ class FAQGenerator:
 
             title = metadata.get("title", "FAQ Document")
             filename = metadata.get("custom_filename", title)
-            safe_name = filename.replace(" ", "_").replace("/", "_")
+            safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", filename).strip("_")
+            if not safe_name:
+                safe_name = "faq"
             output_path = output_dir / f"{safe_name}.json"
 
             # Get FAQ data from content

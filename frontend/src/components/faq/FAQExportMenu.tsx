@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FAQDocument } from "@/lib/types/faq";
+import { getApiUrl } from "@/config/api";
 
 interface FAQExportMenuProps {
   faqDocument: FAQDocument;
@@ -37,11 +38,14 @@ function buildFaqMarkdown(doc: FAQDocument): string {
 export function FAQExportMenu({ faqDocument, downloadUrl }: FAQExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const resolvedDownloadUrl = downloadUrl
+    ? (downloadUrl.startsWith("http") ? downloadUrl : getApiUrl(downloadUrl))
+    : null;
 
   const handleDownloadJson = () => {
-    if (downloadUrl) {
+    if (resolvedDownloadUrl) {
       const link = document.createElement("a");
-      link.href = downloadUrl;
+      link.href = resolvedDownloadUrl;
       link.download = `${faqDocument.title.replace(/[^a-zA-Z0-9]/g, "_")}.json`;
       document.body.appendChild(link);
       link.click();
