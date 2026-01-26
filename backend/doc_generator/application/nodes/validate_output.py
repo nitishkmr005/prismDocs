@@ -79,6 +79,7 @@ def validate_output_node(state: WorkflowState) -> WorkflowState:
             "markdown": ".md",
             "md": ".md",
             "pdf_from_pptx": ".pdf",  # PDF from PPTX produces a PDF file
+            "faq": ".json",
         }
         expected_ext = extension_map.get(format_value, f".{format_value}")
         if output_path.suffix.lower() != expected_ext:

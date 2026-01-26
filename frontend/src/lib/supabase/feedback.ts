@@ -1,7 +1,7 @@
 import { getSupabase } from "./client";
 
 export interface ContentFeedback {
-  content_type: "document" | "image" | "mindmap" | "podcast";
+  content_type: "document" | "image" | "mindmap" | "podcast" | "faq";
   output_format?: string; // pdf, pptx, markdown, png, svg, etc.
   feedback_type: "like" | "dislike" | "comment";
   user_id?: string;

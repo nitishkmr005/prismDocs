@@ -6,8 +6,10 @@ while enabling session-based state reuse across output formats.
 """
 
 import base64
+import json
 import os
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncIterator, Callable, Optional
 
@@ -37,6 +39,14 @@ from ..schemas.mindmap import (
     MindMapTree,
     MindMapNode,
     MindMapMode,
+)
+from ..schemas.faq import (
+    FAQCompleteEvent,
+    FAQDocumentResponse,
+    FAQErrorEvent,
+    FAQMetadataResponse,
+    FAQItemResponse,
+    FAQProgressEvent,
 )
 from .storage import StorageService
 
@@ -494,6 +504,147 @@ class UnifiedGenerationService:
         except Exception as e:
             logger.error(f"Mind map generation failed: {e}")
             yield MindMapErrorEvent(
+                message=str(e),
+                code="internal_error",
+            )
+
+    async def generate_faq(
+        self,
+        sources: list[dict],
+        api_key: str,
+        provider: str = "gemini",
+        model: str = "gemini-2.5-flash",
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> AsyncIterator:
+        """
+        Generate FAQ cards with checkpointing support.
+
+        Args:
+            sources: List of source items
+            api_key: Primary API key
+            provider: LLM provider
+            model: Model name
+            user_id: Optional user ID
+            session_id: Optional session ID for content reuse
+
+        Yields:
+            Progress and completion events
+        """
+        request_data = {
+            "sources": sources,
+            "provider": provider,
+            "model": model,
+        }
+
+        yield FAQProgressEvent(
+            stage="extracting",
+            percent=5,
+            message="Starting FAQ generation...",
+        )
+
+        try:
+            yield FAQProgressEvent(
+                stage="generating",
+                percent=40,
+                message="Generating FAQ questions...",
+            )
+
+            result, session_id = await self._run_workflow_async(
+                output_type="faq",
+                request_data=request_data,
+                api_key=api_key,
+                user_id=user_id,
+                session_id=session_id,
+            )
+
+            if result.get("errors"):
+                yield FAQErrorEvent(
+                    message=result["errors"][0],
+                    code="generation_error",
+                )
+                return
+
+            output_path = result.get("output_path", "")
+            if not output_path:
+                yield FAQErrorEvent(
+                    message="FAQ generation failed - no output file generated",
+                    code="no_output",
+                )
+                return
+
+            yield FAQProgressEvent(
+                stage="finalizing",
+                percent=90,
+                message="Finalizing FAQ document...",
+            )
+
+            path = Path(output_path)
+            if not path.exists():
+                yield FAQErrorEvent(
+                    message="FAQ output file not found",
+                    code="file_missing",
+                )
+                return
+
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                yield FAQErrorEvent(
+                    message=f"Failed to parse FAQ output: {exc}",
+                    code="parse_error",
+                )
+                return
+            if not isinstance(payload, dict):
+                yield FAQErrorEvent(
+                    message="FAQ output is not a valid JSON object",
+                    code="invalid_format",
+                )
+                return
+
+            items = [
+                FAQItemResponse(
+                    id=item.get("id", f"faq-{idx + 1}"),
+                    question=item.get("question", ""),
+                    answer=item.get("answer", ""),
+                    tags=item.get("tags", []),
+                )
+                for idx, item in enumerate(payload.get("items", []))
+                if isinstance(item, dict)
+            ]
+
+            metadata_payload = payload.get("metadata", {})
+            generated_at = metadata_payload.get("generated_at") or datetime.now(
+                timezone.utc
+            ).isoformat()
+            source_count = metadata_payload.get(
+                "source_count", result.get("metadata", {}).get("source_count", 0)
+            )
+
+            document = FAQDocumentResponse(
+                title=payload.get("title", "FAQ"),
+                description=payload.get("description"),
+                items=items,
+                metadata=FAQMetadataResponse(
+                    source_count=source_count,
+                    generated_at=generated_at,
+                    tag_colors=metadata_payload.get("tag_colors", {}),
+                ),
+            )
+
+            download_url = self.storage.get_download_url(Path(output_path))
+            file_path = str(Path(output_path).relative_to(self.storage.base_output_dir))
+
+            yield FAQCompleteEvent(
+                document=document,
+                download_url=download_url,
+                file_path=file_path,
+                session_id=session_id,
+            )
+
+        except Exception as e:
+            logger.error(f"FAQ generation failed: {e}")
+            yield FAQErrorEvent(
                 message=str(e),
                 code="internal_error",
             )

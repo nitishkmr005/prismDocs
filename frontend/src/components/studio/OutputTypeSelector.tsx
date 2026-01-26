@@ -125,7 +125,6 @@ const outputTypes: OutputTypeConfig[] = [
     color: "text-cyan-600 dark:text-cyan-400",
     bgColor: "bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-950/40 dark:to-teal-950/30 border-cyan-200/80 dark:border-cyan-800/50",
     hoverBgColor: "hover:border-cyan-300 dark:hover:border-cyan-700",
-    comingSoon: true,
   },
 ];
 
@@ -353,4 +352,3 @@ export function OutputTypeSelector({
 }
 
 export { outputTypes, legacyOutputTypes };
-

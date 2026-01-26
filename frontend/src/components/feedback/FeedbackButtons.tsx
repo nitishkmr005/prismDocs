@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FeedbackModal } from "./FeedbackModal";
 
 interface FeedbackButtonsProps {
-  contentType: "document" | "image" | "mindmap" | "podcast";
+  contentType: "document" | "image" | "mindmap" | "podcast" | "faq";
   outputFormat?: string;
   userId?: string;
   metadata?: Record<string, any>;

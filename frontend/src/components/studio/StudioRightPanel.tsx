@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MindMapViewer } from "@/components/mindmap";
 import { MindMapTree } from "@/lib/types/mindmap";
+import { FAQCarousel } from "@/components/faq";
+import { FAQDocument } from "@/lib/types/faq";
 import { FeedbackButtons } from "@/components/feedback/FeedbackButtons";
 import { RegionSelector } from "@/components/image/RegionSelector";
 import { BeforeAfterView } from "@/components/image/BeforeAfterView";
@@ -35,6 +37,9 @@ interface StudioRightPanelProps {
   mindMapTree?: MindMapTree | null;
   // Podcast outputs
   podcastResult?: PodcastResult | null;
+  // FAQ outputs
+  faqDocument?: FAQDocument | null;
+  faqDownloadUrl?: string | null;
   // Metadata
   metadata?: {
     title?: string;
@@ -69,6 +74,8 @@ export function StudioRightPanel({
   imageFormat,
   mindMapTree,
   podcastResult,
+  faqDocument,
+  faqDownloadUrl,
   metadata,
   onReset,
   onDownload,
@@ -394,6 +401,8 @@ export function StudioRightPanel({
           return { icon: "🎨", title: "Ready to Generate Image", desc: "Describe your image, select a style, and generate stunning visuals" };
         case "podcast":
           return { icon: "🎙️", title: "Ready to Create Podcast", desc: "Transform your content into an engaging audio podcast with AI voices" };
+        case "faq":
+          return { icon: "❓", title: "Ready to Create FAQ Cards", desc: "Turn your content into a carousel of questions and answers" };
         default:
           return { icon: "✨", title: "Ready to Generate", desc: "Configure your options and click Generate to create your content" };
       }
@@ -450,6 +459,12 @@ export function StudioRightPanel({
             "Add a source to transform into audio.",
             "Pick a podcast style that fits your content.",
             "Customize speaker names and voices.",
+          ];
+        case "faq":
+          return [
+            "Provide one focused source for clearer Q&A.",
+            "Headings help guide the generated questions.",
+            "Review tags to spot missing topics.",
           ];
         default:
           return [
@@ -863,6 +878,24 @@ export function StudioRightPanel({
       return (
         <div className="h-full">
           <MindMapViewer tree={mindMapTree} onReset={onReset} />
+        </div>
+      );
+    }
+
+    // FAQ Cards
+    if (outputType === "faq" && faqDocument) {
+      return (
+        <div className="flex flex-col h-full">
+          <FAQCarousel
+            faqDocument={faqDocument}
+            downloadUrl={faqDownloadUrl}
+            onReset={onReset}
+          />
+          {userId && (
+            <div className="p-3 border-t flex justify-end">
+              <FeedbackButtons contentType="faq" userId={userId} />
+            </div>
+          )}
         </div>
       );
     }

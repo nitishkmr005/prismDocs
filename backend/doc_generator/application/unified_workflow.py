@@ -52,6 +52,7 @@ from .nodes.summarize_sources import summarize_sources_node
 from .nodes.podcast_script import generate_podcast_script_node
 from .nodes.podcast_audio import synthesize_podcast_audio_node
 from .nodes.mindmap_nodes import generate_mindmap_node
+from .nodes.generate_faq import generate_faq_node
 from .nodes.generate_image import generate_image_node
 from .nodes.edit_image import edit_image_node
 from .nodes.image_prompt import build_image_prompt_node
@@ -90,6 +91,18 @@ def _build_step_metadata(output_type: str) -> tuple[dict, int]:
             "image_generate": 7,
         }
         return step_numbers, 7
+    if output_type == "faq":
+        step_numbers = {
+            "validate_sources": 1,
+            "resolve_sources": 2,
+            "extract_sources": 3,
+            "merge_sources": 4,
+            "summarize_sources": 5,
+            "generate_faq": 6,
+            "doc_generate_output": 7,
+            "doc_validate_output": 8,
+        }
+        return step_numbers, 8
     if requires_content_extraction(output_type):
         step_numbers = {
             "validate_sources": 1,
@@ -257,6 +270,16 @@ def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
     workflow.add_node("mindmap_generate", generate_mindmap_node)
 
     # ==========================================
+    # FAQ BRANCH NODE
+    # ==========================================
+    # generate_faq
+    # Input: raw_content/summary_content, request_data (provider/model)
+    # Core: LLM extracts FAQ items with tags.
+    # Output: structured_content.faq_data
+    # LLM: 1 call per request for FAQ JSON output.
+    workflow.add_node("generate_faq", generate_faq_node)
+
+    # ==========================================
     # IMAGE BRANCH NODES
     # ==========================================
     # build_image_prompt
@@ -297,6 +320,7 @@ def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
             "document": "doc_detect_format",
             "podcast": "podcast_generate_script",
             "mindmap": "mindmap_generate",
+            "faq": "generate_faq",
             "image_generate": "build_image_prompt",
             "image_edit": "image_edit",
         },
@@ -331,6 +355,11 @@ def build_unified_workflow(checkpointer: Any = None) -> StateGraph:
     # MINDMAP BRANCH FLOW (Single node)
     # ==========================================
     workflow.add_edge("mindmap_generate", END)
+
+    # ==========================================
+    # FAQ BRANCH FLOW
+    # ==========================================
+    workflow.add_edge("generate_faq", "doc_generate_output")
 
     # ==========================================
     # IMAGE BRANCH FLOWS (Single nodes)
@@ -377,6 +406,7 @@ def _wrap_document_node(original_node: Callable) -> Callable:
             "article_markdown": "markdown",
             "slide_deck_pdf": "pdf_from_pptx",
             "presentation_pptx": "pptx",
+            "faq": "faq",
         }
         output_format = format_mapping.get(output_type, "pdf")
 

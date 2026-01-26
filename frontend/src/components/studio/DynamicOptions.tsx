@@ -207,6 +207,7 @@ export function DynamicOptions({
   const isImageType = outputType === "image_generate";
   const isMindMap = outputType === "mindmap";
   const isPodcast = outputType === "podcast";
+  const isFaq = outputType === "faq";
   const isImageGenLocked = isContentType && !imageGenerationAvailable;
 
   // Determine which API key sections to show
@@ -321,7 +322,7 @@ export function DynamicOptions({
       )}
 
       {/* Provider & Model Selection - for content types, mind map, image generation, AND podcast */}
-      {showProviderModel && (isContentType || isMindMap || isImageType || isPodcast) && (
+      {showProviderModel && (isContentType || isMindMap || isImageType || isPodcast || isFaq) && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="provider" className="text-xs">Provider</Label>

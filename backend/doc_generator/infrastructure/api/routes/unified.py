@@ -34,6 +34,12 @@ from ..schemas.mindmap import (
     MindMapProgressEvent,
     MindMapRequest,
 )
+from ..schemas.faq import (
+    FAQCompleteEvent,
+    FAQErrorEvent,
+    FAQProgressEvent,
+    FAQRequest,
+)
 from ..services.cache import CacheService
 from ..services.unified_generation import get_unified_service
 
@@ -354,6 +360,53 @@ async def generate_mindmap_with_session(
             elif isinstance(event, MindMapErrorEvent):
                 yield {"event": "error", "data": event.model_dump_json()}
             elif isinstance(event, MindMapProgressEvent):
+                yield {"event": "progress", "data": event.model_dump_json()}
+            else:
+                yield {"data": event.model_dump_json()}
+
+    return EventSourceResponse(event_generator())
+
+
+@router.post(
+    "/generate/faq",
+    summary="Generate FAQ cards with checkpointing (SSE stream)",
+    description=(
+        "Generate FAQ question-answer cards from source content. "
+        "If the sources were previously used for other outputs in the same session, "
+        "the extracted content is reused."
+    ),
+)
+async def generate_faq_with_session(
+    request: FAQRequest,
+    api_keys: APIKeys = Depends(extract_api_keys),
+    session_id: str | None = Query(
+        None, description="Optional session ID for content reuse"
+    ),
+) -> EventSourceResponse:
+    """Generate FAQ with session-based checkpointing."""
+    logger.info(
+        f"=== Unified FAQ: provider={request.provider}, session={session_id} ==="
+    )
+
+    api_key = get_api_key_for_provider(request.provider, api_keys)
+    service = get_unified_service()
+
+    async def event_generator() -> AsyncIterator[dict]:
+        sources = [s.model_dump() for s in request.sources]
+
+        async for event in service.generate_faq(
+            sources=sources,
+            api_key=api_key,
+            provider=request.provider.value,
+            model=request.model,
+            user_id=api_keys.user_id,
+            session_id=session_id,
+        ):
+            if isinstance(event, FAQCompleteEvent):
+                yield {"event": "complete", "data": event.model_dump_json()}
+            elif isinstance(event, FAQErrorEvent):
+                yield {"event": "error", "data": event.model_dump_json()}
+            elif isinstance(event, FAQProgressEvent):
                 yield {"event": "progress", "data": event.model_dump_json()}
             else:
                 yield {"data": event.model_dump_json()}

@@ -25,6 +25,7 @@ from .summarize_sources import summarize_sources_node
 from .podcast_script import generate_podcast_script_node
 from .podcast_audio import synthesize_podcast_audio_node
 from .mindmap_nodes import generate_mindmap_node
+from .generate_faq import generate_faq_node
 from .generate_image import generate_image_node
 from .edit_image import edit_image_node
 from .image_prompt import build_image_prompt_node
@@ -50,6 +51,7 @@ __all__ = [
     "generate_podcast_script_node",
     "synthesize_podcast_audio_node",
     "generate_mindmap_node",
+    "generate_faq_node",
     "build_image_prompt_node",
     "generate_image_node",
     "edit_image_node",

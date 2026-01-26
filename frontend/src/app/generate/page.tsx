@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useGeneration } from "@/hooks/useGeneration";
 import { useMindMapGeneration } from "@/hooks/useMindMapGeneration";
 import { usePodcastGeneration } from "@/hooks/usePodcastGeneration";
+import { useFAQGeneration } from "@/hooks/useFAQGeneration";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UploadedFile } from "@/hooks/useUpload";
@@ -167,6 +168,15 @@ export default function GeneratePage() {
     reset: resetPodcast,
   } = usePodcastGeneration();
 
+  const {
+    state: faqState,
+    progress: faqProgress,
+    result: faqResult,
+    error: faqError,
+    generate: generateFAQ,
+    reset: resetFAQ,
+  } = useFAQGeneration();
+
   // Update content model when provider changes
   useEffect(() => {
     const options = contentModelOptions[provider] || [];
@@ -204,6 +214,7 @@ export default function GeneratePage() {
   const isImageType = outputType === "image_generate";
   const isMindMap = outputType === "mindmap";
   const isPodcast = outputType === "podcast";
+  const isFaq = outputType === "faq";
   const requiresImageKey = isImageType || (isContentType && enableImageGeneration);
 
   const hasRequiredApiKeys = (() => {
@@ -218,6 +229,9 @@ export default function GeneratePage() {
       // For Gemini provider, content key is used for both; for others, need separate podcast Gemini key
       const hasPodcastKey = provider === "gemini" ? hasGeminiKey : (enablePodcast && podcastGeminiApiKey.trim().length > 0);
       return hasContentKey && hasPodcastKey;
+    }
+    if (isFaq) {
+      return hasContentKey;
     }
     if (isImageType) {
       const needsContentKey = !isImageFreeTextMode && hasSources;
@@ -453,6 +467,16 @@ export default function GeneratePage() {
         effectivePodcastKey,
         user?.id
       );
+    } else if (isFaq) {
+      generateFAQ(
+        {
+          sources,
+          provider,
+          model: contentModel,
+        },
+        contentApiKey,
+        user?.id
+      );
     }
   }, [
     canGenerate,
@@ -481,6 +505,8 @@ export default function GeneratePage() {
     podcastStyle,
     podcastSpeakers,
     podcastDuration,
+    isFaq,
+    generateFAQ,
     generate,
     generateMindMap,
     generatePodcast,
@@ -509,6 +535,7 @@ export default function GeneratePage() {
     resetGeneration();
     resetMindMap();
     resetPodcast();
+    resetFAQ();
     setImageGenState("idle");
     setImageGenError(null);
     setGeneratedImageData(null);
@@ -517,20 +544,21 @@ export default function GeneratePage() {
     setSecondaryMarkdownContent(null);
     setSecondaryDownloadUrl(null);
     setIsSecondaryGenerating(false);
-  }, [resetGeneration, resetMindMap, resetPodcast]);
+  }, [resetGeneration, resetMindMap, resetPodcast, resetFAQ]);
 
   // Download handler
   const handleDownload = useCallback(() => {
-    if (downloadUrl) {
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = metadata?.title || "document";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-  }, [downloadUrl, metadata]);
+    const url = isFaq ? faqResult?.downloadUrl : downloadUrl;
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = isFaq
+      ? faqResult?.document.title || "faq"
+      : metadata?.title || "document";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [downloadUrl, faqResult, isFaq, metadata]);
 
   // Determine current state for right panel (map to panel's expected states)
   type PanelState = "idle" | "generating" | "success" | "error";
@@ -551,6 +579,12 @@ export default function GeneratePage() {
       if (podcastState === "complete") return "success";
       return "idle";
     }
+    if (isFaq) {
+      if (faqState === "generating") return "generating";
+      if (faqState === "error") return "error";
+      if (faqState === "complete") return "success";
+      return "idle";
+    }
     // Map hook state to panel state
     if (generationState === "generating") return "generating";
     if (generationState === "error") return "error";
@@ -562,6 +596,7 @@ export default function GeneratePage() {
     if (isImageType) return imageGenState === "generating" ? 50 : (imageGenState === "success" ? 100 : 0);
     if (isMindMap) return mindMapProgress.percent;
     if (isPodcast) return podcastProgress.percent;
+    if (isFaq) return faqProgress.percent;
     return generationProgress;
   };
 
@@ -574,6 +609,7 @@ export default function GeneratePage() {
     }
     if (isMindMap) return mindMapProgress.message || "Processing...";
     if (isPodcast) return podcastProgress.message || "Processing...";
+    if (isFaq) return faqProgress.message || "Processing...";
     return generationStatus;
   };
 
@@ -581,6 +617,7 @@ export default function GeneratePage() {
     if (isImageType) return imageGenError;
     if (isMindMap) return mindMapError;
     if (isPodcast) return podcastError;
+    if (isFaq) return faqError;
     return generationError;
   };
 
@@ -1017,6 +1054,8 @@ export default function GeneratePage() {
                   downloadUrl={downloadUrl}
                   mindMapTree={mindMapTree}
                   podcastResult={podcastResult}
+                  faqDocument={faqResult?.document || null}
+                  faqDownloadUrl={faqResult?.downloadUrl || null}
                   metadata={metadata}
                   imageData={generatedImageData}
                   imageFormat={generatedImageFormat}

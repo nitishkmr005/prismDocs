@@ -19,6 +19,7 @@ OutputType = Literal[
     "presentation_pptx",
     "podcast",
     "mindmap",
+    "faq",
     "image_generate",
     "image_edit",
 ]
@@ -189,6 +190,8 @@ def get_output_branch(state: UnifiedWorkflowState) -> str:
         return "podcast"
     elif output_type == "mindmap":
         return "mindmap"
+    elif output_type == "faq":
+        return "faq"
     elif output_type == "image_generate":
         return "image_generate"
     elif output_type == "image_edit":
@@ -216,6 +219,7 @@ def requires_content_extraction(output_type: str) -> bool:
         "presentation_pptx",
         "podcast",
         "mindmap",
+        "faq",
         "image_generate",
     )
 
