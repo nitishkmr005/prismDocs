@@ -44,7 +44,7 @@ class FAQRequest(BaseModel):
         max_length=1,
     )
     faq_count: int = Field(default=10, ge=3, le=30)
-    answer_format: FAQAnswerFormat = FAQAnswerFormat.CONCISE
+    answer_format: FAQAnswerFormat = FAQAnswerFormat.BULLETED
     detail_level: FAQDetailLevel = FAQDetailLevel.MEDIUM
     mode: FAQMode = FAQMode.BALANCED
     audience: FAQAudiencePersona = FAQAudiencePersona.GENERAL_READER
@@ -59,7 +59,7 @@ class FAQRequest(BaseModel):
                         {"type": "url", "url": "https://example.com/article"}
                     ],
                     "faq_count": 10,
-                    "answer_format": "concise",
+                    "answer_format": "bulleted",
                     "detail_level": "medium",
                     "mode": "balanced",
                     "audience": "general_reader",

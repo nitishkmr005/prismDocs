@@ -134,7 +134,7 @@ export default function GeneratePage() {
 
   // FAQ generation specific state
   const [faqCount, setFaqCount] = useState(10);
-  const [faqAnswerFormat, setFaqAnswerFormat] = useState<FAQAnswerFormat>("concise");
+  const [faqAnswerFormat, setFaqAnswerFormat] = useState<FAQAnswerFormat>("bulleted");
   const [faqDetailLevel, setFaqDetailLevel] = useState<FAQDetailLevel>("medium");
   const [faqMode, setFaqMode] = useState<FAQMode>("balanced");
   const [faqAudience, setFaqAudience] = useState<FAQAudiencePersona>("general_reader");
