@@ -494,7 +494,7 @@ export default function HomePage() {
       num: "03",
       title: "Export",
       desc: "Download in multiple professional formats instantly",
-      formats: ["PDF", "PPTX", "MD", "Audio"]
+      formats: ["PDF", "PPTX", "MD", "Audio", "FAQ"]
     }
   ];
 
@@ -560,7 +560,7 @@ export default function HomePage() {
         </svg>
       ),
       title: "Multi-Format Output",
-      desc: "PDF, PPTX, Markdown, Mind Maps, Podcasts and more."
+      desc: "PDF, PPTX, Markdown, Mind Maps, Podcasts, FAQ Cards and more."
     },
     {
       icon: (
@@ -638,6 +638,13 @@ export default function HomePage() {
                 Upload a PDF, URL, or document. Get professional reports, presentations,
                 mind maps, and podcasts. Your API keys, your data, your control.
               </p>
+
+              <div className="inline-flex items-center gap-3 rounded-full border border-amber-200/60 bg-amber-100/80 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/30 dark:text-amber-300 animate-reveal-up delay-250">
+                <span className="mono-label rounded-full bg-amber-500 px-2 py-0.5 text-xs text-black">
+                  NEW
+                </span>
+                <span>FAQ Cards — generate polished Q&A carousels in seconds.</span>
+              </div>
 
               {/* CTA buttons */}
               <div className="flex flex-col sm:flex-row gap-4 animate-reveal-up delay-300">
