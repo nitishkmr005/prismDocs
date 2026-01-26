@@ -680,10 +680,10 @@ export default function HomePage() {
               Examples
             </span>
             <h2 className="editorial-heading text-4xl md:text-5xl text-slate-900 dark:text-white mb-4">
-              Sample Outputs
+              See the Workflow, End to End
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400">
-              Documents generated entirely by PrismDocs. Watch the full workflow in action.
+              From raw sources to polished deliverables—watch PrismDocs build the full stack of outputs in minutes.
             </p>
           </div>
 
@@ -702,7 +702,7 @@ export default function HomePage() {
                   controls
                   playsInline
                   preload="metadata"
-                  poster="/screenshots/Slides_PDF.png"
+                  poster="/sampleOutputs/PrismDocs_Final_Web.jpg"
                 >
                   <source src="/sampleOutputs/PrismDocs_Final_Web.mp4" type="video/mp4" />
                 </video>
