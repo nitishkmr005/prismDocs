@@ -4,14 +4,10 @@ Application layer for document generator.
 This layer contains:
 - nodes/                  - LangGraph workflow nodes
 - parsers/                - Content parsers for various file formats
-- graph_workflow.py       - Original document generation workflow
 - unified_workflow.py     - Unified workflow for all content types
 - unified_state.py        - State model for unified workflow
 - checkpoint_manager.py   - Session-based checkpointing for state reuse
 """
-
-# Re-export commonly used items for backward compatibility
-from .graph_workflow import run_workflow, build_workflow
 
 # Unified workflow exports
 from .unified_workflow import (
@@ -38,9 +34,6 @@ from .checkpoint_manager import (
 )
 
 __all__ = [
-    # Legacy document workflow
-    "run_workflow",
-    "build_workflow",
     # Unified workflow (no checkpointing)
     "build_unified_workflow",
     "run_unified_workflow",
